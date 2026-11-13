@@ -336,13 +336,13 @@ def context_map(core_pnus):
         geo = json.loads(json.dumps(mapping(to_ll(g))), parse_float=lambda s: round(float(s), 7))
         feats.append({"type": "Feature", "geometry": geo,
                       "properties": {"jibun": m.group(1) if m else p["jibun"], "jimok": m.group(2).strip() if m else ""}})
-    # 주변 건물: 이미 받아 둔 GIS건물통합정보(연세로12길 주변 띠만 있음) 중 구현 필지 밖, 반경 100m 안에 있는 것. 회색 매스로만 쓴다.
+    # 주변 건물: 이미 받아 둔 GIS건물통합정보(연세로12길 주변 띠만 있음) 중 구현 필지 밖, 반경 150m 안에 있는 것. 회색 매스로만 쓴다.
     # 300m 전체를 채우면 너무 복잡해 보여서 건물은 가까운 곳만 두고, 그 바깥은 필지만 흐리게 그린다.
     bld_circle = Point(0, 0).buffer(CONTEXT_BLD_RADIUS_M, 64)
     core = shapely_union([to_m(shape(f["geometry"]).buffer(0)) for f in src if f["properties"]["pnu"] in core_pnus])
     blds, seen = [], set()
-    # LT_C_BLDGINFO_r100.json: 교회 반경 100m 박스로 따로 받은 파일(있으면 합친다). 두 파일에 겹치는 건물은 대표점으로 한 번만 쓴다.
-    srcs = [ROOT / "data/raw/vworld" / n for n in ("LT_C_BLDGINFO_bbox.json", "LT_C_BLDGINFO_r100.json")]
+    # LT_C_BLDGINFO_r150.json: 교회 반경 150m 박스로 따로 받은 파일(있으면 합친다). 두 파일에 겹치는 건물은 대표점으로 한 번만 쓴다.
+    srcs = [ROOT / "data/raw/vworld" / n for n in ("LT_C_BLDGINFO_bbox.json", "LT_C_BLDGINFO_r150.json")]
     bfeats = [f for s in srcs if s.exists() for f in json.load(open(s))["response"]["result"]["featureCollection"]["features"]]
     for f in bfeats:
         g = to_m(shape(f["geometry"]).buffer(0))

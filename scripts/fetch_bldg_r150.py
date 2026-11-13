@@ -1,7 +1,7 @@
 """창천교회(47-2 지오코딩 점) 반경 150m를 덮는 박스로 V-World GIS건물통합정보(LT_C_BLDGINFO)를 받아
-data/raw/vworld/LT_C_BLDGINFO_r100.json 에 저장한다. export_web.py 가 이 파일을 읽어 주변 회색 건물로 쓴다.
+data/raw/vworld/LT_C_BLDGINFO_r150.json 에 저장한다. export_web.py 가 이 파일을 읽어 주변 회색 건물로 쓴다.
 박스는 반경 + 여유(MARGIN_M)로 잡아 경계에 걸친 건물도 받는다. 원 안 판정은 export_web.py 가 대표점으로 한다.
-사용: .venv/bin/python -I scripts/fetch_bldg_r100.py
+사용: .venv/bin/python -I scripts/fetch_bldg_r150.py
 """
 import http.client, json, os, time, urllib.error, urllib.parse, urllib.request
 from pathlib import Path
@@ -9,7 +9,7 @@ from pyproj import Transformer
 
 ROOT = Path(__file__).resolve().parent.parent
 RADIUS_M, MARGIN_M = 150, 30
-OUT = ROOT / "data/raw/vworld/LT_C_BLDGINFO_r100.json"
+OUT = ROOT / "data/raw/vworld/LT_C_BLDGINFO_r150.json"
 
 
 def env(k):
