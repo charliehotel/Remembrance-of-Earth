@@ -76,13 +76,14 @@
   #tip { position: fixed; z-index: 10; pointer-events: none; display: none; background: rgba(30,30,30,.92); color: #fff;
          font-size: 12px; padding: 4px 8px; border-radius: 5px; white-space: nowrap; transform: translate(-100%, -50%); }
   #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  .lbl { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none;
+  .lbl { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); pointer-events: none;
+         width: max-content; max-width: 9.5em; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; text-align: center;
          background: rgba(255,255,255,.9); border: 1px solid #0002; border-radius: 4px; padding: 1px 6px; font-size: 11.5px; line-height: 1.4;
          color: #222; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
   .lbl::after { content: ""; position: absolute; left: 50%; bottom: -4px; margin-left: -4px; border: 4px solid transparent; border-bottom: 0; border-top-color: rgba(255,255,255,.9); }
   .lbl.C { border-color: #c98a0080; }
   .lbl.sel { border-color: #d33; font-weight: 700; }
-  .lbl .more { color: #888; font-size: 10.5px; margin-left: 3px; }
+  .lbl .more { display: inline-block; white-space: nowrap; color: #888; font-size: 10.5px; margin-left: 3px; }
   .sw { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 5px; border: 1px solid #0003; }
 </style>
 </head>
@@ -281,6 +282,11 @@ function init(S) {
   // 글꼴 서버 없이 쓰려고 MapLibre symbol 레이어 대신 HTML 오버레이로 그린다.
   const labelsEl = document.getElementById("labels");
   const ringMid = r => { const n = r.length - 1 || 1; let x = 0, y = 0; for (let i = 0; i < n; i++) { x += r[i][0]; y += r[i][1]; } return [x / n, y / n]; };
+  // 지도 라벨용 짧은 상호: 괄호 안 내용((주)·(신촌점)·영문 병기 등)과 끝의 "OO점" 지점명은 뺀다. 전체 이름은 클릭하면 사이드바에 나온다.
+  const labelName = b => { const full = bizName(b);
+    let n = full.replace(/\s*[\(（][^)）]*[\)）]?\s*/g, " ").trim();
+    n = n.replace(/\s+\S*점$/, "").trim();
+    return n || full; };
   let parcelMid = null, labels = [];
   function buildLabels(y) {
     if (!parcelMid) { parcelMid = {}; S.parcels.features.forEach(f => parcelMid[f.properties.jibun] = bbox(f.geometry)); }
@@ -295,7 +301,7 @@ function init(S) {
       const at = mine ? ringMid(mine.geometry.coordinates[0]) : parcelMid[jibun];
       if (!at) return;
       const el = document.createElement("div"); el.className = "lbl " + act[0].grade;
-      el.textContent = bizName(act[0]);
+      el.textContent = labelName(act[0]);
       if (act.length > 1) { const m = document.createElement("span"); m.className = "more"; m.textContent = `+${act.length - 1}`; el.appendChild(m); }
       el.title = act.map(bizName).join(", ");
       labelsEl.appendChild(el);
