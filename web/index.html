@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>대지의 기억 · 연세로12길</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<style>
+  html, body { margin: 0; height: 100%; font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  #map { position: absolute; inset: 0; background: #e9e6df; }
+  #bar { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); width: min(760px, 92vw);
+         background: rgba(255,255,255,.94); border-radius: 10px; padding: 10px 16px 12px; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  #bar .row { display: flex; align-items: baseline; gap: 12px; }
+  #year { font-size: 28px; font-weight: 700; min-width: 70px; }
+  #slider { flex: 1; }
+  #side { position: absolute; top: 12px; left: 12px; width: 300px; max-height: calc(100% - 140px); display: flex; flex-direction: column;
+          background: rgba(255,255,255,.94); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-size: 13px; }
+  #sideHead { display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 14px; border-bottom: 1px solid #0001; }
+  #sideHead .brand { flex: 1; line-height: 1.25; }
+  #sideHead .ko { font-size: 17px; font-weight: 700; }
+  #sideHead .en { font-size: 11px; color: #777; letter-spacing: .02em; }
+  #sideToggle { border: 1px solid #bbb; background: #fff; border-radius: 6px; width: 28px; height: 28px; font-size: 12px; cursor: pointer; padding: 0; }
+  #sideBody { overflow: auto; padding: 12px 14px; }
+  .intro { font-size: 12.5px; color: #444; line-height: 1.6; margin: 0 0 10px; }
+  #q { width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 13px; }
+  #results { margin: 4px 0 0; padding: 0; list-style: none; border: 1px solid #ddd; border-radius: 6px; max-height: 210px; overflow: auto; background: #fff; }
+  #results li { padding: 6px 9px; cursor: pointer; font-size: 12.5px; border-bottom: 1px solid #eee; }
+  #results li:last-child { border-bottom: 0; }
+  #results li:hover, #results li.sel { background: #eef3ff; }
+  #results .sub { color: #777; font-size: 11px; }
+  #results .none { color: #777; cursor: default; }
+  .sec { margin-top: 12px; padding-top: 10px; border-top: 1px solid #0001; }
+  #q { margin-bottom: 8px; }
+  #results { margin: -4px 0 8px; }
+  .b.off { opacity: .45; }
+  .b.off .n { font-weight: 400; }
+  .b.on .n { font-weight: 700; }
+  .legend2 { font-size: 11.5px; color: #555; margin: 6px 0; line-height: 1.7; }
+  .legend2 i { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin-right: 5px; border-top: 3px solid; }
+  .note2 { margin: 6px 0; padding: 6px 8px; border-radius: 6px; background: #fff3e0; font-size: 12px; line-height: 1.5; color: #5a3b00; }
+  .note2.err { background: #fdeaea; color: #6d1f1f; }
+  .jump { color: #1a5fd0; cursor: pointer; text-decoration: underline; }
+  .b.focus { background: #fff4f2; border-left-color: #d33; opacity: 1; }
+  .focuscard { margin: 8px 0; padding: 8px 10px; border: 2px solid #d33; border-radius: 8px; background: #fff7f5; }
+  .focuscard .n { font-size: 15px; font-weight: 700; }
+  .focuscard .m { color: #555; font-size: 12px; margin-top: 3px; line-height: 1.5; }
+  #side.collapsed { width: auto; }
+  #side.collapsed #sideHead { border-bottom: 0; padding: 6px; }
+  #side.collapsed .brand, #side.collapsed #sideBody { display: none; }
+  #side h2 { margin: 0 0 6px; font-size: 15px; }
+  #side .hint { color: #777; }
+  .b { margin: 6px 0; padding-left: 8px; border-left: 3px solid #bbb; }
+  .b.A { border-color: #2b7a4b; } .b.C { border-color: #c98a00; }
+  .b .n { font-weight: 600; }
+  .b .m { color: #666; font-size: 12px; }
+  .tag { display: inline-block; font-size: 11px; padding: 0 5px; border-radius: 3px; background: #eee; margin-left: 4px; }
+  .tag.warn { background: #fde7c4; }
+  #legend { position: absolute; top: 12px; right: 92px; max-width: calc(100vw - 430px); background: rgba(255,255,255,.94); border-radius: 10px;
+            padding: 8px 12px; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.25); line-height: 1.7; }
+  #bar .row2 { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  #bar button { border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+  #bar button.on { background: #2b6cff; color: #fff; border-color: #2b6cff; }
+  #bar button:disabled { opacity: .4; cursor: default; }
+  #loop { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; user-select: none; }
+  #hint { font-size: 12px; color: #555; margin-left: auto; }
+  .maplibregl-ctrl button.rot { font-size: 18px; line-height: 29px; text-align: center; }
+  .maplibregl-ctrl-group.rotgrid { display: grid; grid-template-columns: 29px 29px; }
+  .maplibregl-ctrl-group.rotgrid button:nth-child(2n) { border-left: 1px solid #ddd; }
+  .maplibregl-ctrl-group button.on, .maplibregl-ctrl-group button.on:not(:disabled):hover { background: #2b6cff; color: #fff; }
+  .maplibregl-ctrl-group button.on .maplibregl-ctrl-icon { filter: invert(1); }
+  .maplibregl-ctrl-group.keys { display: grid; grid-template-columns: repeat(3, 22px); padding: 3px; gap: 2px; background: #fff; }
+  .maplibregl-ctrl-group.keys button { width: 22px; height: 22px; border: 1px solid #ccc !important; border-radius: 4px; font: 600 11px/20px system-ui, sans-serif;
+    color: #333; text-align: center; padding: 0; }
+  .maplibregl-ctrl-group.keys button.on { background: #2b6cff; color: #fff; border-color: #2b6cff !important; }
+  .maplibregl-ctrl-group.keys .gap { width: 22px; height: 22px; }
+  #tip { position: fixed; z-index: 10; pointer-events: none; display: none; background: rgba(30,30,30,.92); color: #fff;
+         font-size: 12px; padding: 4px 8px; border-radius: 5px; white-space: nowrap; transform: translate(-100%, -50%); }
+  .sw { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 5px; border: 1px solid #0003; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="tip"></div>
+<div id="side">
+  <div id="sideHead">
+    <div class="brand"><div class="ko">대지의 기억</div><div class="en">Remembrance of Earth</div></div>
+    <button id="sideToggle" title="사이드바 접기">◀</button>
+  </div>
+  <div id="sideBody">
+    <p class="intro">골목은 바뀌어도 땅은 기억합니다. 대지가 기억하는 골목과 건물, 상점의 모습을 시간 슬라이더로 보여 줍니다.</p>
+    <div class="sec">
+      <h2>연세로12길 창천교회 인근(데모)</h2>
+      <input id="q" type="search" placeholder="지번 또는 상호 검색 (예: 2-7, 아웃백)" autocomplete="off">
+      <ul id="results" hidden></ul>
+      <div id="detail"><div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div></div>
+    </div>
+  </div>
+</div>
+<div id="legend">
+  <div><span class="sw" style="background:#d9a066"></span>건물(대장 기준 현존, 사용승인 이후)</div>
+  <div><span class="sw" style="background:#cfd8c4"></span>업소 근거 있는 필지</div>
+  <div><span class="sw" style="background:#f4f1ea"></span>그 해 근거 없음(=없었다는 뜻 아님)</div>
+  <div><span class="sw" style="background:#d4d4d4"></span>도로</div>
+  <div><span class="sw" style="background:#efede8;opacity:.8"></span>주변(창천교회 반경 300m, 아직 미구현)</div>
+</div>
+<div id="bar">
+  <div class="row"><div id="year">2026</div><input id="slider" type="range" min="1992" max="2026" value="2026" step="1"></div>
+  <div class="row2">
+    <button id="play" title="재생/정지 (스페이스)">▶ 재생</button>
+    <label id="loop" title="체크하면 끝에서 처음으로 돌아가 계속 재생"><input type="checkbox" id="loopChk"> 반복</label>
+    <button id="speed" title="배속">1×</button>
+    <button id="mode" title="날기/걷기 전환">🚶 걷기 모드</button>
+    <span id="hint"></span>
+  </div>
+</div>
+<script src="vendor/maplibre-gl.js"></script>
+<script src="scene.js"></script>
+<script>
+const FIRST_SURVEY = 2008;  // 로드뷰 간판 조사 첫 해
+init(window.SCENE);
+
+function init(S) {
+  const bizByParcel = {};
+  S.businesses.forEach(b => (bizByParcel[b.jibun] ||= []).push(b));
+  const evByParcel = {};
+  S.building_events.forEach(e => (evByParcel[e.jibun] ||= []).push(e));
+  const yr = s => s ? parseInt(s.slice(0, 4)) : null;
+
+  // 그 해에 영업 근거가 있는 업소. 등급 A: 인허가~폐업(없으면 열림), 등급 C: 첫~마지막 간판 관찰
+  function activeBiz(jibun, y) {
+    return (bizByParcel[jibun] || []).filter(b => {
+      if (b.grade === "C") return yr(b.sign_first) <= y && y <= yr(b.sign_last);
+      const s = yr(b.start), e = yr(b.end);
+      return s <= y && (e == null || y <= e);
+    });
+  }
+  const buildingsAt = y => S.buildings.features.filter(f => f.properties.start <= y);
+
+  const map = new maplibregl.Map({
+    container: "map", style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e9e6df" } }] },
+    locale: { "NavigationControl.ZoomIn": "확대 ( = 또는 + )", "NavigationControl.ZoomOut": "축소 ( - )",
+              "NavigationControl.ResetBearing": "북쪽을 위로 ( \\ )" },
+    center: [126.9395, 37.5589], zoom: 17.2, pitch: 55, bearing: -20, maxPitch: 85
+  });
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true }));
+  map.keyboard.disable();   // 방향키는 직접 처리(날기: 화면 이동, 걷기: 이동)
+  const keyBtns = [];
+  class Rot {
+    onAdd() {
+      this.el = document.createElement("div"); this.el.className = "maplibregl-ctrl maplibregl-ctrl-group rotgrid";
+      // 왼쪽 열: 좌우 30° 회전, 오른쪽 열: 시점 높낮이(누르고 있으면 계속 기울어진다)
+      [["↺", -30, "반시계 30° 회전 ( [ 또는 Q )"], ["↑", "KeyR", "시점 올리기 · 수평 쪽으로 ( R 또는 PageUp )"],
+       ["↻", 30, "시계 30° 회전 ( ] 또는 E )"], ["↓", "KeyF", "시점 내리기 · 내려다보기 ( F 또는 PageDown )"]].forEach(([t, d, tip]) => {
+        const b = document.createElement("button"); b.className = "rot"; b.textContent = t; b.title = tip;
+        if (typeof d === "number") b.onclick = () => rotate(d);
+        else {
+          b.dataset.code = d; keyBtns.push(b);
+          b.addEventListener("pointerdown", e => { e.preventDefault();
+            if (walking) keys.add(d);
+            else map.easeTo({ pitch: clampP(map.getPitch() + (d === "KeyR" ? 10 : -10)), duration: 250 }); });
+          ["pointerup", "pointerleave"].forEach(ev => b.addEventListener(ev, () => keys.delete(d)));
+        }
+        this.el.appendChild(b);
+      });
+      return this.el;
+    }
+    onRemove() { this.el.remove(); }
+  }
+  map.addControl(new Rot());
+  // 조작 키 안내: 누르고 있으면 해당 키를 누른 것과 같다(걷기 모드), ↑↓는 날기 모드에서도 시점 높이를 바꾼다
+  const KEYPAD = [
+    ["", null], ["W", "KeyW", "앞으로 ( W 또는 ↑ )"], ["", null],
+    ["A", "KeyA", "왼쪽으로 ( A 또는 ← )"], ["S", "KeyS", "뒤로 ( S 또는 ↓ )"], ["D", "KeyD", "오른쪽으로 ( D 또는 → )"]];
+  class Keys {
+    onAdd() {
+      this.el = document.createElement("div"); this.el.className = "maplibregl-ctrl maplibregl-ctrl-group keys";
+      KEYPAD.forEach(([t, code, tipText]) => {
+        if (!code) { const g = document.createElement("span"); g.className = "gap"; this.el.appendChild(g); return; }
+        const b = document.createElement("button"); b.textContent = t; b.title = tipText; b.dataset.code = code;
+        b.addEventListener("pointerdown", e => { e.preventDefault(); keys.add(code); });
+        ["pointerup", "pointerleave"].forEach(ev => b.addEventListener(ev, () => keys.delete(code)));
+        keyBtns.push(b); this.el.appendChild(b);
+      });
+      return this.el;
+    }
+    onRemove() { this.el.remove(); }
+  }
+  map.addControl(new Keys());
+  // 키 → 버튼 대응(키를 누르는 동안 해당 버튼이 파랗게 켜진다). 단축키가 둘이면 둘 다 적용
+  const litBtns = [], lit = (el, codes) => { if (el) { el.dataset.codes = codes; litBtns.push(el); } };
+  const ctl = document.querySelector(".maplibregl-ctrl-group");
+  lit(document.querySelector(".maplibregl-ctrl-zoom-in"), "Equal NumpadAdd");
+  lit(document.querySelector(".maplibregl-ctrl-zoom-out"), "Minus NumpadSubtract");
+  lit(document.querySelector(".maplibregl-ctrl-compass"), "Backslash");
+  const KC = { "↺": "BracketLeft KeyQ", "↻": "BracketRight KeyE", "↑": "KeyR PageUp", "↓": "KeyF PageDown",
+               W: "KeyW ArrowUp", A: "KeyA ArrowLeft", S: "KeyS ArrowDown", D: "KeyD ArrowRight" };
+  document.querySelectorAll("button.rot, .keys button").forEach(b => lit(b, KC[b.textContent]));
+  // 기본 title 툴팁은 환경에 따라 뜨지 않으므로 직접 그린다
+  const tip = document.getElementById("tip");
+  document.querySelectorAll(".maplibregl-ctrl-group button").forEach(b => {
+    const t = b.title; if (!t) return; b.dataset.tip = t; b.removeAttribute("title");
+    b.addEventListener("mouseenter", () => { const r = b.getBoundingClientRect();
+      tip.textContent = t; tip.style.left = (r.left - 8) + "px"; tip.style.top = (r.top + r.height / 2) + "px"; tip.style.display = "block"; });
+    b.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+  function rotate(d) {
+    if (walking) { heading = (heading + d + 360) % 360; applyWalkCam(); }
+    else map.easeTo({ bearing: map.getBearing() + d, duration: 350 });
+  }
+
+  map.on("load", () => {
+    const xs = [], ys = [];
+    const walk = c => typeof c[0] === "number" ? (xs.push(c[0]), ys.push(c[1])) : c.forEach(walk);
+    S.parcels.features.forEach(f => walk(f.geometry.coordinates));
+    map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]],
+      { padding: { top: 60, bottom: 150, left: 340, right: 60 }, pitch: 55, bearing: -20, duration: 0 });
+    // 주변 맥락(창천교회 반경 300m): 아직 구현하지 않은 곳이라 흐리게만 그린다. 클릭·검색 대상 아님.
+    if (S.context) {
+      map.addSource("ctx-parcels", { type: "geojson", data: S.context.parcels });
+      map.addSource("ctx-bld", { type: "geojson", data: S.context.buildings });
+      map.addSource("ctx-ring", { type: "geojson", data: S.context.boundary });
+      map.addLayer({ id: "ctx-fill", type: "fill", source: "ctx-parcels", paint: {
+        "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#dedcd6", "#efede8"], "fill-opacity": 0.85 } });
+      map.addLayer({ id: "ctx-line", type: "line", source: "ctx-parcels", paint: { "line-color": "#c9c5bc", "line-width": 0.5 } });
+      map.addLayer({ id: "ctx-bld", type: "fill-extrusion", source: "ctx-bld", paint: {
+        "fill-extrusion-color": "#d6d3cc", "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.45 } });
+      map.addLayer({ id: "ctx-ring", type: "line", source: "ctx-ring", paint: {
+        "line-color": "#a49d8f", "line-width": 1.5, "line-dasharray": [3, 3] } });
+    }
+    S.parcels.features.forEach((f, i) => f.id = i);
+    map.addSource("parcels", { type: "geojson", data: S.parcels });
+    map.addSource("buildings", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addLayer({ id: "parcel-fill", type: "fill", source: "parcels", paint: {
+      "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#d4d4d4", ["==", ["feature-state", "evidence"], true], "#cfd8c4", "#f4f1ea"] } });
+    map.addLayer({ id: "parcel-line", type: "line", source: "parcels", paint: { "line-color": "#999", "line-width": 0.8 } });
+    map.addLayer({ id: "parcel-sel-fill", type: "fill", source: "parcels", filter: ["==", ["get", "jibun"], ""],
+      paint: { "fill-color": "#d33", "fill-opacity": 0.18 } });
+    map.addLayer({ id: "parcel-sel", type: "line", source: "parcels", filter: ["==", ["get", "jibun"], ""],
+      paint: { "line-color": "#d33", "line-width": 4 } });
+    map.addLayer({ id: "bld", type: "fill-extrusion", source: "buildings", filter: ["!=", ["get", "hide"], 1], paint: {
+      "fill-extrusion-base": ["coalesce", ["get", "base"], 0],
+      "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
+      "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.92 } });
+    const none = ["==", ["get", "jibun"], ""];
+    map.addLayer({ id: "span-fill", type: "fill", source: "parcels", filter: none, paint: { "fill-color": "#f08a00", "fill-opacity": 0.2 } });
+    map.addLayer({ id: "span-line", type: "line", source: "parcels", filter: none,
+      paint: { "line-color": "#e07800", "line-width": 3, "line-dasharray": [2, 1.5] } });
+    map.addSource("me", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addLayer({ id: "me", type: "fill-extrusion", source: "me", layout: { visibility: "none" }, paint: {
+      "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"],
+      "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 1 } });
+    update();
+  });
+
+  let selected = null, focusBiz = null;
+  const fmt = d => { if (!d) return ""; const m = d.split("-"); return `${m[0]}년` + (m[1] ? ` ${+m[1]}월` : "") + (m[2] ? ` ${+m[2]}일` : ""); };
+  const bizName = b => b.name === "상호" ? "상호 미확인 간판" : b.name;
+  function bizPeriod(b) {
+    if (b.grade === "C") return `${fmt(b.sign_first)}부터 ${fmt(b.sign_last)}까지 확인됨`;
+    return `${fmt(b.start) || "시작 미상"}부터 영업(인허가), ` + (b.end ? `${fmt(b.end)} 폐업(${b.end_basis})` : "폐업 기록 없음");
+  }
+  function update() {
+    const y = +document.getElementById("slider").value;
+    document.getElementById("year").textContent = y;
+    map.getSource("buildings").setData({ type: "FeatureCollection", features: buildingsAt(y) });
+    S.parcels.features.forEach(f => map.setFeatureState({ source: "parcels", id: f.id }, { evidence: activeBiz(f.properties.jibun, y).length > 0 }));
+    if (selected) show(selected);
+  }
+  document.getElementById("slider").addEventListener("input", update);
+
+  const GRADE = { A: "인허가 기록", C: "간판 기록" };
+  const EMPTY_HTML = '<div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div>';
+  function clearSelection() {
+    selected = null; focusBiz = null;
+    const none = ["==", ["get", "jibun"], ""];
+    ["parcel-sel", "parcel-sel-fill", "span-fill", "span-line"].forEach(id => map.setFilter(id, none));
+    document.getElementById("detail").innerHTML = EMPTY_HTML;
+  }
+  function show(jibun) {
+    selected = jibun;
+    map.setFilter("parcel-sel", ["==", ["get", "jibun"], jibun]);
+    map.setFilter("parcel-sel-fill", ["==", ["get", "jibun"], jibun]);
+    const y = +document.getElementById("slider").value;
+    const p = S.parcels.features.find(f => f.properties.jibun === jibun).properties;
+    const act = activeBiz(jibun, y);
+    const blds = buildingsAt(y).filter(f => f.properties.jibun === jibun && !f.properties.part).map(f => f.properties);
+    const evs = (evByParcel[jibun] || []).filter(e => e.end && yr(e.end) <= y);
+    // ---- 건물 바닥 윤곽과 필지의 겹침 점검 ----
+    const allB = buildingsAt(y).filter(f => !f.properties.part);
+    const own = allB.filter(f => f.properties.jibun === jibun).map(f => f.properties);
+    const onThis = allB.filter(f => f.properties.jibun !== jibun && (f.properties.spans || []).some(x => x.jibun === jibun)).map(f => f.properties);
+    const spanSet = new Set(), footBids = [...own, ...onThis].map(b => b.bid);
+    own.forEach(b => (b.spans || []).forEach(x => x.jibun !== jibun && spanSet.add(x.jibun)));
+    onThis.forEach(b => spanSet.add(b.jibun));
+    onThis.forEach(b => (b.spans || []).forEach(x => x.jibun !== jibun && spanSet.add(x.jibun)));
+    const sf = spanSet.size ? ["in", ["get", "jibun"], ["literal", [...spanSet]]] : ["==", ["get", "jibun"], ""];
+    map.setFilter("span-fill", sf); map.setFilter("span-line", sf);
+    const jl = j => `<span class="jump" data-j="${j}">${j}</span>`;
+    const pnote = [];
+    own.forEach(b => {
+      const sp = b.spans || [], mine = (sp.find(x => x.jibun === jibun) || {}).pct || 0, others = sp.filter(x => x.jibun !== jibun);
+      if (!sp.length) pnote.push(`<div class="note2 err">${b.start}년 사용승인 건물(${b.floors_up}층)은 대장에 이 필지(${jibun})로 기록돼 있으나, 지도 위 윤곽은 어느 필지와도 겹치지 않습니다. 도면 위치가 어긋났거나 옛 필지 구획일 수 있습니다.</div>`);
+      else if (others.length) pnote.push(`<div class="note2">${b.start}년 사용승인 건물(${b.floors_up}층)은 이 필지에 ${mine}%만 걸쳐 있고, ` +
+        others.map(x => `${jl(x.jibun)}${x.jimok === "도" ? "(도로)" : ""} ${x.pct}%`).join(", ") + `에도 걸쳐 있습니다.</div>`);
+    });
+    onThis.forEach(b => { const here = b.spans.find(x => x.jibun === jibun).pct;
+      pnote.push(`<div class="note2">${b.start}년 사용승인 ${jl(b.jibun)} 건물(${b.floors_up}층)이 이 필지 위에 ${here}% 걸쳐 있습니다.</div>`); });
+    let h = `<h2>창천동 ${jibun} <span class="tag">${y}년</span></h2>`;
+    if (spanSet.size) h += `<div class="legend2"><i style="border-color:#d33"></i>선택 필지 ` +
+      (spanSet.size ? `<i style="border-color:#e07800;border-top-style:dashed"></i>건물이 걸친 다른 필지` : "") + `</div>`;
+    h += pnote.join("");
+    h += `<div class="m">${p.anchor || ""}</div>`;
+    if (focusBiz && focusBiz.jibun === jibun) h += `<div class="focuscard"><div class="n">${bizName(focusBiz)}</div>
+      <div class="m">${focusBiz.license_type || "업종 미상"}${focusBiz.category ? " · " + focusBiz.category : ""} · 창천동 ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
+    h += "<b>건물</b>" + (blds.length ? blds.map(b =>
+      `<div class="b A"><div class="n">${b.floors_up}층 ${b.height}m<span class="tag">${b.flags.includes("landmark_proxy") ? b.start + " 건축" : b.start + " 사용승인"}</span>${b.flags.includes("old_date") ? '<span class="tag warn">옛 날짜: 대장 확인 필요</span>' : ""}${b.flags.includes("landmark_proxy") ? '<span class="tag warn">현 건물 모양으로 대신 표시</span>' : ""}</div>
+       <div class="m">${b.height_basis}${b.start_note ? "<br>" + b.start_note : ""}</div></div>`).join("") : '<div class="hint">이 해의 건물 자료 없음</div>');
+    if (evs.length) h += evs.map(e => `<div class="m">· ${e.end} ${e.end_basis}${e.structure ? " (" + e.structure + ")" : ""}</div>`).join("");
+    const all = (bizByParcel[jibun] || []).slice().sort((x, z) => (x.start || "").localeCompare(z.start || ""));
+    h += `<br><b>영업 이력</b><span class="tag">${all.length}곳</span>`;
+    h += all.length ? all.map(b => {
+      const tags = [];
+      if (b.flags.includes("stale_open")) tags.push('<span class="tag warn">폐업신고 누락 의심</span>');
+      if (b.flags.includes("spans_rebuild")) tags.push('<span class="tag warn">재건축 시기와 겹침</span>');
+      if (b.grade === "C" && b.web_state === "strong") tags.push('<span class="tag">웹 언급 있음</span>');
+      const when = b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`;
+      return `<div class="b ${b.grade} ${act.includes(b) ? "on" : "off"} ${b === focusBiz ? "focus" : ""}"><div class="n">${bizName(b)}${tags.join("")}</div>
+        <div class="m">${b.license_type || "업종 미상"} ${b.floor || ""} · ${when}<br>${GRADE[b.grade]}</div></div>`;
+    }).join("") : '<div class="hint">이 필지에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>';
+    const det = document.getElementById("detail"); det.innerHTML = h;
+    det.querySelectorAll(".jump").forEach(a => a.onclick = () => { focusBiz = null; goParcel(a.dataset.j); });
+  }
+  const side = document.getElementById("side"), sideToggle = document.getElementById("sideToggle");
+  function setSide(open) {
+    side.classList.toggle("collapsed", !open);
+    sideToggle.textContent = open ? "◀" : "▶"; sideToggle.title = open ? "사이드바 접기" : "사이드바 펼치기";
+  }
+  sideToggle.onclick = () => setSide(side.classList.contains("collapsed"));
+  // ---------- 검색 ----------
+  const qInput = document.getElementById("q"), resultsEl = document.getElementById("results");
+  const norm = t => t.toLowerCase().replace(/창천동|번지|\s+/g, "").replace(/[–—~]/g, "-");
+  const bbox = g => { const xs = [], ys = []; const w = c => typeof c[0] === "number" ? (xs.push(c[0]), ys.push(c[1])) : c.forEach(w);
+    w(g.coordinates); return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]; };
+  function goParcel(jibun) {
+    show(jibun); setSide(true);
+    if (walking) return;
+    const f = S.parcels.features.find(f => f.properties.jibun === jibun);
+    map.easeTo({ center: bbox(f.geometry), zoom: 19, offset: [150, -40], duration: 900 });
+  }
+  function runSearch(q) {
+    const n = norm(q); if (!n) return [];
+    const ps = [], bs = [];
+    S.parcels.features.forEach(f => { const p = f.properties;
+      const rank = p.jibun === n ? 0 : (/\d/.test(n) && p.jibun.startsWith(n)) || (p.anchor && p.anchor.toLowerCase().includes(n)) ? 1 : -1;
+      if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun,
+        label: `창천동 ${p.jibun}${p.anchor ? " · " + p.anchor : ""}`,
+        sub: p.jimok === "도" ? "도로" : `상호 ${(bizByParcel[p.jibun] || []).length}곳 기록` }); });
+    S.businesses.forEach(b => { if (b.name !== "상호" && b.name.toLowerCase().replace(/\s+/g, "").includes(n))
+      bs.push({ rank: 2, type: "biz", biz: b, jibun: b.jibun, label: b.name,
+        sub: `창천동 ${b.jibun} ${b.floor || ""} · ${b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`}` }); });
+    ps.sort((a, b) => a.rank - b.rank || a.jibun.localeCompare(b.jibun, "en", { numeric: true }));
+    bs.sort((a, b) => (a.biz.start || "").localeCompare(b.biz.start || ""));
+    return ps.concat(bs).slice(0, 15);
+  }
+  let hits = [], hi = 0;
+  function renderResults() {
+    resultsEl.hidden = !qInput.value.trim();
+    resultsEl.innerHTML = !hits.length ? '<li class="none">검색 결과가 없습니다</li>' : hits.map((h, i) =>
+      `<li data-i="${i}" class="${i === hi ? "sel" : ""}">${h.type === "parcel" ? "📍 " : "🏪 "}${h.label}<div class="sub">${h.sub}</div></li>`).join("");
+  }
+  function choose(h) {
+    resultsEl.hidden = true;
+    if (h.type === "parcel") { focusBiz = null; qInput.value = h.label; }
+    else {
+      focusBiz = h.biz; qInput.value = h.biz.name;
+      const y0 = yr(h.biz.start) || yr(h.biz.sign_first) || +slider.min;
+      setYear(Math.min(Math.max(y0, +slider.min), +slider.max));   // 그 상점이 시작한 해로 이동
+    }
+    goParcel(h.jibun);
+  }
+  qInput.addEventListener("input", () => {
+    if (!qInput.value) { hits = []; resultsEl.hidden = true; clearSelection(); return; }   // x 버튼·전체 삭제 → 빈 화면
+    hits = runSearch(qInput.value); hi = 0; renderResults();
+  });
+  qInput.addEventListener("focus", () => { if (qInput.value.trim()) { hits = runSearch(qInput.value); renderResults(); } });
+  qInput.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (hits.length) { hi = (hi + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % hits.length; renderResults(); } }
+    else if (e.key === "Enter") { if (hits[hi]) choose(hits[hi]); }
+    else if (e.key === "Escape") { resultsEl.hidden = true; qInput.blur(); }
+  });
+  resultsEl.addEventListener("mousedown", e => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(hits[+li.dataset.i]); } });
+
+  map.on("click", e => {
+    if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
+    const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "parcel-fill"] })[0];
+    if (f) { focusBiz = null; show(f.properties.jibun); setSide(true); }
+    else { clearSelection(); qInput.value = ""; resultsEl.hidden = true; }   // 빈 땅 클릭 → 선택 해제
+  });
+
+  // ---------- 재생 ----------
+  const slider = document.getElementById("slider"), playBtn = document.getElementById("play"), speedBtn = document.getElementById("speed"), loopChk = document.getElementById("loopChk");
+  const SPEEDS = [1, 2, 4, 8]; let si = 0, playing = false, acc = 0, lastT = 0;
+  function setYear(v) { slider.value = v; update(); }
+  function setPlaying(on) {
+    playing = on; playBtn.textContent = on ? "■ 정지" : "▶ 재생"; playBtn.classList.toggle("on", on);
+    if (on && +slider.value >= +slider.max) setYear(slider.min);
+    lastT = performance.now(); acc = 0;
+  }
+  playBtn.onclick = () => setPlaying(!playing);
+  speedBtn.onclick = () => { si = (si + 1) % SPEEDS.length; speedBtn.textContent = SPEEDS[si] + "×"; };
+  // 1×는 초당 1년
+
+  // ---------- 걷기 ----------
+  const KX = 111320 * Math.cos(37.559 * Math.PI / 180), KY = 110540;
+  const modeBtn = document.getElementById("mode"), hint = document.getElementById("hint");
+  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, wpitch = 78, lookDragged = false; const keys = new Set();
+  const clampP = p => Math.max(0, Math.min(85, p));
+  const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
+    if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
+  const blocked = (x, y) => buildingsAt(+slider.value).some(f => inRing(x, y, f.geometry.coordinates[0]));
+  function startPos() {
+    const roads = S.parcels.features.filter(f => f.properties.jimok === "도");
+    const c = map.getCenter(); let best = null, bd = 1e9;
+    roads.forEach(f => { const ring = f.geometry.coordinates[0][0];
+      const m = ring.reduce((a, p) => [a[0] + p[0] / ring.length, a[1] + p[1] / ring.length], [0, 0]);
+      const d = Math.hypot((m[0] - c.lng) * KX, (m[1] - c.lat) * KY); if (d < bd && !blocked(m[0], m[1])) { bd = d; best = m; } });
+    return best || [c.lng, c.lat];
+  }
+  const box = (x, y, hx, hy, h, b, color, hd) => { // 헤딩 hd(도)로 회전한 상자
+    const s = Math.sin(hd * Math.PI / 180), co = Math.cos(hd * Math.PI / 180);
+    const pts = [[-hx, -hy], [hx, -hy], [hx, hy], [-hx, hy], [-hx, -hy]].map(([u, v]) =>
+      [x + (u * co + v * s) / KX, y + (-u * s + v * co) / KY]);
+    return { type: "Feature", properties: { base: b, top: h, color }, geometry: { type: "Polygon", coordinates: [pts] } };
+  };
+  function drawMe() {
+    const [x, y] = pos, fwd = [Math.sin(heading * Math.PI / 180) * 0.3 / KX, Math.cos(heading * Math.PI / 180) * 0.3 / KY];
+    map.getSource("me").setData({ type: "FeatureCollection", features: [
+      box(x, y, 0.22, 0.14, 0.85, 0, "#33415c", heading),            // 다리
+      box(x, y, 0.28, 0.17, 1.45, 0.85, "#d94f3d", heading),         // 몸
+      box(x, y, 0.1, 0.1, 1.7, 1.45, "#f1c9a5", heading),            // 머리(1.7m)
+      box(x + fwd[0], y + fwd[1], 0.05, 0.05, 1.62, 1.55, "#222", heading) // 시선 방향 표시
+    ] });
+  }
+  function applyWalkCam() { map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: 20.3 }); drawMe(); }
+  function setWalking(on) {
+    walking = on; modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
+    ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
+    map.setLayoutProperty("me", "visibility", on ? "visible" : "none");
+    if (on) { pos = pos || startPos(); applyWalkCam(); lastT = performance.now(); }
+    else map.easeTo({ pitch: 55, zoom: 18, duration: 600 });
+    hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · Shift 달리기";
+  }
+  modeBtn.onclick = () => setWalking(!walking);
+  window.addEventListener("keydown", e => {
+    if (e.target === qInput) return;   // 검색창에 입력 중에는 단축키를 쓰지 않는다
+    if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); return; }
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.code === "Backslash") { e.preventDefault(); e.stopPropagation(); if (walking) { heading = 0; wpitch = 78; applyWalkCam(); } else map.resetNorth(); return; }
+      if (!walking && /^(Equal|NumpadAdd)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); map.zoomIn(); return; }
+      if (!walking && /^(Minus|NumpadSubtract)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); map.zoomOut(); return; }
+    }
+    if (/^(KeyR|KeyF|PageUp|PageDown)$/.test(e.code) && !e.ctrlKey && !e.metaKey) {   // 시점 위아래
+      e.preventDefault(); const up = /^(KeyR|PageUp)$/.test(e.code);
+      if (walking) keys.add(up ? "KeyR" : "KeyF");
+      else map.easeTo({ pitch: clampP(map.getPitch() + (up ? 10 : -10)), duration: 250 });
+      return;
+    }
+    if (/^(KeyQ|KeyE|BracketLeft|BracketRight)$/.test(e.code)) { rotate(/^(KeyQ|BracketLeft)$/.test(e.code) ? -30 : 30); return; }
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && /^(Key[WASD]|Arrow(Up|Down|Left|Right))$/.test(e.code)) { e.preventDefault(); keys.add(e.code); document.activeElement.blur?.(); }
+  }, true);
+  window.addEventListener("keyup", e => { keys.delete(e.code); if (e.code === "PageUp") keys.delete("KeyR"); if (e.code === "PageDown") keys.delete("KeyF"); });
+  // 걷기 모드: 마우스를 누른 채 끌면 1인칭 게임처럼 둘러본다(좌우 = 방향, 위아래 = 시선 높이)
+  { const cv = map.getCanvas(); let drag = null;
+    cv.addEventListener("mousedown", e => { if (walking && e.button === 0) drag = { x: e.clientX, y: e.clientY, moved: 0 }; });
+    window.addEventListener("mousemove", e => { if (!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
+      heading = (heading + dx * 0.25 + 360) % 360; wpitch = clampP(wpitch - dy * 0.2); applyWalkCam();
+      if (drag.moved > 4) cv.style.cursor = "grabbing"; });
+    window.addEventListener("mouseup", () => { if (!drag) return; lookDragged = drag.moved > 4; drag = null; cv.style.cursor = "";
+      setTimeout(() => lookDragged = false, 0); }); }
+  window.addEventListener("blur", () => { keys.clear(); pressed.clear(); });
+  window.addEventListener("keydown", e => { if (e.target !== qInput) { pressed.add(e.code); flash.set(e.code, performance.now() + 180); } }, true);
+  window.addEventListener("keyup", e => pressed.delete(e.code), true);
+
+  function frame(t) {
+    const dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
+    if (playing) { acc += dt * SPEEDS[si]; if (acc >= 1) { const n = Math.floor(acc); acc -= n;
+      const atEnd = +slider.value >= +slider.max, wrap = loopChk.checked;
+      const v = atEnd && wrap ? +slider.min : Math.min(+slider.value + n, +slider.max);
+      setYear(v); if (v >= +slider.max && !wrap) setPlaying(false); } }
+    litBtns.forEach(b => b.classList.toggle("on", b.dataset.codes.split(" ").some(c => pressed.has(c) || keys.has(c) || (flash.get(c) || 0) > t)));
+    if (walking) {
+      const k = c => keys.has(c); let moved = false;
+      const tilt = (k("KeyR") ? 1 : 0) - (k("KeyF") ? 1 : 0);
+      if (tilt) { wpitch = clampP(wpitch + tilt * 60 * dt); moved = true; }
+      const f = (k("KeyW") || k("ArrowUp") ? 1 : 0) - (k("KeyS") || k("ArrowDown") ? 1 : 0), sd = (k("KeyD") || k("ArrowRight") ? 1 : 0) - (k("KeyA") || k("ArrowLeft") ? 1 : 0);
+      if (f || sd) {
+        const sp = (k("ShiftLeft") || k("ShiftRight") ? 3.5 : 1.4) * dt, h = heading * Math.PI / 180;
+        const dx = (Math.sin(h) * f + Math.cos(h) * sd) * sp, dy = (Math.cos(h) * f - Math.sin(h) * sd) * sp;
+        const nx = pos[0] + dx / KX, ny = pos[1] + dy / KY;   // 벽에 막히면 한 축씩 미끄러진다
+        if (!blocked(nx, ny)) pos = [nx, ny]; else if (!blocked(nx, pos[1])) pos = [nx, pos[1]]; else if (!blocked(pos[0], ny)) pos = [pos[0], ny];
+        moved = true;
+      }
+      if (moved) applyWalkCam();
+    } else {   // 날기 모드: W/A/S/D로 화면 기준 앞·뒤·좌·우로 지도를 민다
+      const k = c => keys.has(c), f = (k("KeyW") || k("ArrowUp") ? 1 : 0) - (k("KeyS") || k("ArrowDown") ? 1 : 0), sd = (k("KeyD") || k("ArrowRight") ? 1 : 0) - (k("KeyA") || k("ArrowLeft") ? 1 : 0);
+      if (f || sd) { const px = (k("ShiftLeft") || k("ShiftRight") ? 700 : 280) * dt; map.panBy([sd * px, -f * px], { duration: 0 }); }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(t => { lastT = t; frame(t); });
+  window.__scene = S; window.__map = map;
+}
+</script>
+</body>
+</html>
