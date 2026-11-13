@@ -75,12 +75,21 @@
   .maplibregl-ctrl-group.keys .gap { width: 22px; height: 22px; }
   #tip { position: fixed; z-index: 10; pointer-events: none; display: none; background: rgba(30,30,30,.92); color: #fff;
          font-size: 12px; padding: 4px 8px; border-radius: 5px; white-space: nowrap; transform: translate(-100%, -50%); }
+  #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .lbl { position: absolute; left: 0; top: 0; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none;
+         background: rgba(255,255,255,.9); border: 1px solid #0002; border-radius: 4px; padding: 1px 6px; font-size: 11.5px; line-height: 1.4;
+         color: #222; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .lbl::after { content: ""; position: absolute; left: 50%; bottom: -4px; margin-left: -4px; border: 4px solid transparent; border-bottom: 0; border-top-color: rgba(255,255,255,.9); }
+  .lbl.C { border-color: #c98a0080; }
+  .lbl.sel { border-color: #d33; font-weight: 700; }
+  .lbl .more { color: #888; font-size: 10.5px; margin-left: 3px; }
   .sw { display: inline-block; width: 12px; height: 12px; vertical-align: -1px; margin-right: 5px; border: 1px solid #0003; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div id="tip"></div>
+<div id="labels"></div>
 <div id="side">
   <div id="sideHead">
     <div class="brand"><div class="ko">대지의 기억</div><div class="en">Remembrance of Earth</div></div>
@@ -265,7 +274,96 @@ function init(S) {
     map.getSource("buildings").setData({ type: "FeatureCollection", features: buildingsAt(y) });
     S.parcels.features.forEach(f => map.setFeatureState({ source: "parcels", id: f.id }, { evidence: activeBiz(f.properties.jibun, y).length > 0 }));
     if (selected) show(selected);
+    buildLabels(y);
   }
+
+  // ---------- 상호 라벨: 그 해 영업 근거가 있는 필지의 건물 위에 상호를 띄운다 ----------
+  // 글꼴 서버 없이 쓰려고 MapLibre symbol 레이어 대신 HTML 오버레이로 그린다.
+  const labelsEl = document.getElementById("labels");
+  const ringMid = r => { const n = r.length - 1 || 1; let x = 0, y = 0; for (let i = 0; i < n; i++) { x += r[i][0]; y += r[i][1]; } return [x / n, y / n]; };
+  let parcelMid = null, labels = [];
+  function buildLabels(y) {
+    if (!parcelMid) { parcelMid = {}; S.parcels.features.forEach(f => parcelMid[f.properties.jibun] = bbox(f.geometry)); }
+    labelsEl.textContent = ""; labels = [];
+    const blds = buildingsAt(y).filter(f => !f.properties.part && f.properties.hide !== 1);
+    Object.keys(bizByParcel).forEach(jibun => {
+      const act = activeBiz(jibun, y); if (!act.length) return;
+      // 대표 상호: 인허가 기록(A) 우선, 그다음 가장 최근에 시작한 곳
+      act.sort((a, b) => (a.grade === "A" ? 0 : 1) - (b.grade === "A" ? 0 : 1) ||
+        (b.start || b.sign_first || "").localeCompare(a.start || a.sign_first || ""));
+      const mine = blds.filter(f => f.properties.jibun === jibun).sort((a, b) => b.properties.height - a.properties.height)[0];
+      const at = mine ? ringMid(mine.geometry.coordinates[0]) : parcelMid[jibun];
+      if (!at) return;
+      const el = document.createElement("div"); el.className = "lbl " + act[0].grade;
+      el.textContent = bizName(act[0]);
+      if (act.length > 1) { const m = document.createElement("span"); m.className = "more"; m.textContent = `+${act.length - 1}`; el.appendChild(m); }
+      el.title = act.map(bizName).join(", ");
+      labelsEl.appendChild(el);
+      // 걷기 모드용 간판 자리: 도로를 향한 벽면 가운데, 층 정보가 있으면 그 층 높이
+      const fl = act[0].floor, fn = /^\d+$/.test(fl) ? +fl : 1;
+      const signH = Math.min(fn > 1 ? (fn - 1) * 3.3 + 2.2 : 2.6, mine ? mine.properties.height - 0.3 : 3);
+      labels.push({ jibun, el, lngLat: at, h: mine ? mine.properties.height + 1 : 1, w: 0, hh: 0,
+        sign: mine ? facade(mine.geometry.coordinates[0]) : at, signH: Math.max(signH, 1.8) });
+    });
+    labels.forEach(l => { l.w = l.el.offsetWidth; l.hh = l.el.offsetHeight + 4; });
+    placeLabels();
+  }
+  // 건물 윤곽에서 도로와 맞닿은 가장 긴 변의 바깥 쪽 점(간판 위치). 도로에 닿은 변이 없으면 가장 긴 변.
+  const roadRings = () => S.parcels.features.filter(f => f.properties.jimok === "도")
+    .flatMap(f => f.geometry.type === "MultiPolygon" ? f.geometry.coordinates.map(p => p[0]) : [f.geometry.coordinates[0]]);
+  let roadsCache = null;
+  function facade(ring) {
+    roadsCache ||= roadRings();
+    const onRoad = (x, y) => roadsCache.some(r => inRing(x, y, r));
+    let best = null, bestLen = -1, any = null, anyLen = -1;
+    for (let i = 0; i < ring.length - 1; i++) {
+      const [x1, y1] = ring[i], [x2, y2] = ring[i + 1];
+      const ex = (x2 - x1) * KX, ey = (y2 - y1) * KY, len = Math.hypot(ex, ey); if (len < 1) continue;
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, nx = -ey / len, ny = ex / len;
+      for (const s of [1, -1]) {   // 변의 양쪽 중 건물 바깥 쪽
+        const ox = mx + s * nx * 0.4 / KX, oy = my + s * ny * 0.4 / KY;
+        if (inRing(ox, oy, ring)) continue;
+        if (len > anyLen) { anyLen = len; any = [ox, oy]; }
+        const fx = mx + s * nx * 2.5 / KX, fy = my + s * ny * 2.5 / KY;
+        if (onRoad(fx, fy) && len > bestLen) { bestLen = len; best = [ox, oy]; }
+      }
+    }
+    return best || any || ringMid(ring);
+  }
+  // 높이(m)까지 반영해 화면 좌표로 투영
+  function project3d(lngLat, h) {
+    const tr = map.transform, mc = maplibregl.MercatorCoordinate.fromLngLat(lngLat, h), m = tr.mercatorMatrix;
+    const x = mc.x, y = mc.y, z = mc.z;
+    const cx = m[0] * x + m[4] * y + m[8] * z + m[12], cy = m[1] * x + m[5] * y + m[9] * z + m[13], cw = m[3] * x + m[7] * y + m[11] * z + m[15];
+    if (cw <= 0) return null;
+    return [(cx / cw + 1) / 2 * tr.width, (1 - cy / cw) / 2 * tr.height, cw];
+  }
+  function placeLabels() {
+    if (!labels.length) return;
+    const W = map.transform.width, H = map.transform.height, placed = [];
+    const hide = !walking && map.getZoom() < 17;
+    labels.forEach(l => {
+      if (walking) {   // 걷기: 벽면 간판, 60m 넘게 떨어진 곳은 생략
+        const d = Math.hypot((l.sign[0] - pos[0]) * KX, (l.sign[1] - pos[1]) * KY);
+        l.p = d > 60 ? null : project3d(l.sign, l.signH);
+        l.s = Math.max(0.85, Math.min(1.5, 1.5 - d / 40));   // 가까울수록 크게
+      } else { l.p = hide ? null : project3d(l.lngLat, l.h); l.s = 1; }
+    });
+    // 선택 필지 → 카메라에 가까운 순으로 자리를 잡고, 겹치는 라벨은 숨긴다
+    const order = labels.filter(l => l.p).sort((a, b) => (b.jibun === selected) - (a.jibun === selected) || a.p[2] - b.p[2]);
+    labels.forEach(l => l.el.style.display = "none");
+    order.forEach(l => {
+      const [x, y] = l.p, w = l.w * l.s, hh = l.hh * l.s, r = [x - w / 2 - 2, y - hh - 2, x + w / 2 + 2, y + 2];
+      if (r[2] < 0 || r[0] > W || r[3] < 0 || r[1] > H) return;
+      if (placed.some(q => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return;
+      placed.push(r);
+      l.el.style.display = "";
+      l.el.classList.toggle("sel", l.jibun === selected);
+      l.el.style.transform = `translate(${x}px, ${y - 4}px) translate(-50%, -100%) scale(${l.s})`;
+      l.el.style.transformOrigin = "50% 100%";
+    });
+  }
+  map.on("render", placeLabels);
   document.getElementById("slider").addEventListener("input", update);
 
   const GRADE = { A: "인허가 기록", C: "간판 기록" };
@@ -369,7 +467,7 @@ function init(S) {
       `<li data-i="${i}" class="${i === hi ? "sel" : ""}">${h.type === "parcel" ? "📍 " : "🏪 "}${h.label}<div class="sub">${h.sub}</div></li>`).join("");
   }
   function choose(h) {
-    resultsEl.hidden = true;
+    resultsEl.hidden = true; qInput.blur();
     if (h.type === "parcel") { focusBiz = null; qInput.value = h.label; }
     else {
       focusBiz = h.biz; qInput.value = h.biz.name;
@@ -390,6 +488,7 @@ function init(S) {
   });
   resultsEl.addEventListener("mousedown", e => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(hits[+li.dataset.i]); } });
 
+  map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
     if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
     const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "parcel-fill"] })[0];
@@ -443,7 +542,8 @@ function init(S) {
   }
   function applyWalkCam() { map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: 20.3 }); drawMe(); }
   function setWalking(on) {
-    walking = on; modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
+    walking = on; if (on) qInput.blur();   // 검색창에 포커스가 남아 있으면 WASD가 무시된다
+    modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
     ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
     map.setLayoutProperty("me", "visibility", on ? "visible" : "none");
     if (on) { pos = pos || startPos(); applyWalkCam(); lastT = performance.now(); }
@@ -451,7 +551,15 @@ function init(S) {
     hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · Shift 달리기";
   }
   modeBtn.onclick = () => setWalking(!walking);
-  window.addEventListener("keydown", e => {
+  // 한글 입력 상태에서도 같은 키로 인식: code가 비거나 엉뚱할 때 key(자모)·keyCode로 되살린다
+  const JAMO = { "ㅈ": "KeyW", "ㅁ": "KeyA", "ㄴ": "KeyS", "ㅇ": "KeyD", "ㅂ": "KeyQ", "ㄷ": "KeyE", "ㄱ": "KeyR", "ㄹ": "KeyF",
+                 "ㅉ": "KeyW", "ㅃ": "KeyQ", "ㄸ": "KeyE", "ㄲ": "KeyR", "ㅆ": "KeyS" };
+  const KCODE = { 87: "KeyW", 65: "KeyA", 83: "KeyS", 68: "KeyD", 81: "KeyQ", 69: "KeyE", 82: "KeyR", 70: "KeyF" };
+  const kc = e => /^(Key[A-Z]|Arrow|Shift|Bracket|Page|Space|Backslash|Equal|Minus|Numpad)/.test(e.code || "") ? e.code
+    : JAMO[e.key] || (/^[a-z]$/i.test(e.key || "") ? "Key" + e.key.toUpperCase() : "") || KCODE[e.keyCode] || e.code || "";
+  window.addEventListener("keydown", ev => {
+    const e = { code: kc(ev), ctrlKey: ev.ctrlKey, metaKey: ev.metaKey, altKey: ev.altKey, target: ev.target,
+                preventDefault: () => ev.preventDefault(), stopPropagation: () => ev.stopPropagation() };
     if (e.target === qInput) return;   // 검색창에 입력 중에는 단축키를 쓰지 않는다
     if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); return; }
     if (!e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -466,9 +574,10 @@ function init(S) {
       return;
     }
     if (/^(KeyQ|KeyE|BracketLeft|BracketRight)$/.test(e.code)) { rotate(/^(KeyQ|BracketLeft)$/.test(e.code) ? -30 : 30); return; }
+    if (/^Shift(Left|Right)$/.test(e.code)) { keys.add(e.code); return; }   // 달리기(걷기)·빠르게(날기)
     if (!e.ctrlKey && !e.metaKey && !e.altKey && /^(Key[WASD]|Arrow(Up|Down|Left|Right))$/.test(e.code)) { e.preventDefault(); keys.add(e.code); document.activeElement.blur?.(); }
   }, true);
-  window.addEventListener("keyup", e => { keys.delete(e.code); if (e.code === "PageUp") keys.delete("KeyR"); if (e.code === "PageDown") keys.delete("KeyF"); });
+  window.addEventListener("keyup", ev => { const c = kc(ev); keys.delete(c); if (c === "PageUp") keys.delete("KeyR"); if (c === "PageDown") keys.delete("KeyF"); });
   // 걷기 모드: 마우스를 누른 채 끌면 1인칭 게임처럼 둘러본다(좌우 = 방향, 위아래 = 시선 높이)
   { const cv = map.getCanvas(); let drag = null;
     cv.addEventListener("mousedown", e => { if (walking && e.button === 0) drag = { x: e.clientX, y: e.clientY, moved: 0 }; });
@@ -479,8 +588,8 @@ function init(S) {
     window.addEventListener("mouseup", () => { if (!drag) return; lookDragged = drag.moved > 4; drag = null; cv.style.cursor = "";
       setTimeout(() => lookDragged = false, 0); }); }
   window.addEventListener("blur", () => { keys.clear(); pressed.clear(); });
-  window.addEventListener("keydown", e => { if (e.target !== qInput) { pressed.add(e.code); flash.set(e.code, performance.now() + 180); } }, true);
-  window.addEventListener("keyup", e => pressed.delete(e.code), true);
+  window.addEventListener("keydown", e => { if (e.target !== qInput) { const c = kc(e); pressed.add(c); flash.set(c, performance.now() + 180); } }, true);
+  window.addEventListener("keyup", e => pressed.delete(kc(e)), true);
 
   function frame(t) {
     const dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
@@ -497,8 +606,9 @@ function init(S) {
       if (f || sd) {
         const sp = (k("ShiftLeft") || k("ShiftRight") ? 3.5 : 1.4) * dt, h = heading * Math.PI / 180;
         const dx = (Math.sin(h) * f + Math.cos(h) * sd) * sp, dy = (Math.cos(h) * f - Math.sin(h) * sd) * sp;
+        const stuck = blocked(pos[0], pos[1]);   // 연도를 바꿔 내 자리에 건물이 생겼다면 벽을 무시하고 빠져나온다
         const nx = pos[0] + dx / KX, ny = pos[1] + dy / KY;   // 벽에 막히면 한 축씩 미끄러진다
-        if (!blocked(nx, ny)) pos = [nx, ny]; else if (!blocked(nx, pos[1])) pos = [nx, pos[1]]; else if (!blocked(pos[0], ny)) pos = [pos[0], ny];
+        if (stuck || !blocked(nx, ny)) pos = [nx, ny]; else if (!blocked(nx, pos[1])) pos = [nx, pos[1]]; else if (!blocked(pos[0], ny)) pos = [pos[0], ny];
         moved = true;
       }
       if (moved) applyWalkCam();
@@ -509,7 +619,7 @@ function init(S) {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(t => { lastT = t; frame(t); });
-  window.__scene = S; window.__map = map;
+  window.__scene = S; window.__map = map; window.__walkTo = p => { pos = p; applyWalkCam(); };
 }
 </script>
 </body>
