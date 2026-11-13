@@ -13,6 +13,9 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# 대장·필지와 맞지 않아 제외: B025는 브이월드에만 있고(승인 1994-02-05, 대지 247.03㎡) 건축HUB 대장에 없으며,
+# 도형이 2-46·2-44·2-45 경계에 걸쳐 필지 확정 불가. 2-46 대장은 2003년 학림빌딩 1채뿐.
+EXCLUDE_BIDS = {"B025"}
 LANDMARK_START = {"B098": 1906}  # 창천감리교회 본당
 OUT = ROOT / "web"
 
@@ -307,6 +310,101 @@ def rc(p):
     return list(csv.DictReader(open(ROOT / p, encoding="utf-8-sig")))
 
 
+# ---- 공사 기간(건축HUB 대장). 착공~사용승인 동안 크레인과 함께 건물이 올라간다. 날짜 단위는 소수 연도.
+import datetime
+HUB = ROOT / "data/raw/hub"
+_hub = lambda n: json.loads((HUB / f"{n}.json").read_text())
+BR, AP, SR, DEMOL = _hub("br_title"), _hub("ap_basis"), _hub("sr_title"), _hub("ap_demol")
+MIN_BUILD = 0.5   # 착공~승인이 이보다 짧으면 승인 0.5년 전부터 올린다
+FALLBACK = 1.0    # 대장에 날짜가 없으면 승인 1년 전부터(가정)
+
+
+def yf(s):
+    """YYYYMMDD(일·월이 00이면 중순) → 소수 연도. 빈 값은 None."""
+    s = (s or "").strip()
+    if len(s) != 8 or not s.isdigit():
+        return None
+    y, m, d = int(s[:4]), int(s[4:6]) or 6, int(s[6:]) or 15
+    return round(y + (datetime.date(y, m, d).timetuple().tm_yday - 1) / 365.25, 3)
+
+
+def iso(s):
+    s = (s or "").strip()
+    return f"{s[:4]}-{s[4:6]}-{s[6:]}" if len(s) == 8 else ""
+
+
+def phase(jibun, approved8):
+    """현존 건물 → (a, b, a_iso, b_iso, 근거). 승인일이 1993 이전(1992 이전 포함)이어도 계산한다."""
+    ya = yf(approved8)
+    cand = [r for r in BR.get(jibun) or [] if yf(r["useAprDay"]) and abs(yf(r["useAprDay"]) - ya) < 1.2]
+    cand.sort(key=lambda r: (not r["pmsDay"].strip(), abs(yf(r["useAprDay"]) - ya)))
+    if not cand:
+        if ya < 1993:
+            return None
+        return round(ya - FALLBACK, 3), ya, "", iso(approved8), "대장에 공사 날짜 없음: 사용승인 1년 전부터 가정"
+    r = cand[0]
+    b = yf(r["useAprDay"])
+    st = r["stcnsDay"].strip()
+    if not yf(st):  # 표제부에 착공일이 없으면 인허가 기본개요의 실착공일
+        st = next((q.get("realStcnsDay", "") for q in AP.get(jibun) or []
+                   if q["archGbCdNm"].strip() == "신축" and yf(q.get("realStcnsDay", ""))), "")
+    if yf(st):
+        a, basis, ai = yf(st), "착공일~사용승인일", iso(st)
+    elif yf(r["pmsDay"]):
+        a, basis, ai = yf(r["pmsDay"]), "허가일~사용승인일(착공일 없음)", iso(r["pmsDay"])
+    else:
+        return round(b - FALLBACK, 3), b, "", iso(r["useAprDay"]), "대장에 공사 날짜 없음: 사용승인 1년 전부터 가정"
+    if b - a < MIN_BUILD:
+        a, basis = round(b - MIN_BUILD, 3), basis + ", 공사기간이 짧아 6개월로 늘려 표시"
+    return a, b, ai, iso(r["useAprDay"]), basis
+
+
+# ---- 철거된 옛 건물. 모양 정보는 없으므로 대장의 구조(목구조/벽돌)로 종류만 정해 필지 안쪽 윤곽에 세운다.
+GHOST = {"2-2": "tile", "2-23": "slab", "2-46": "tile", "2-6": "tile", "47-39": "slab"}
+GHOST_COL = {"tile": ["#a56f52", "#9a6a4a", "#b07a58"], "slab": ["#cdc6b9", "#bdb4a4", "#d3c8b5"]}
+GHOST_AREA = {"2-2": 82, "2-23": 59, "2-46": 64, "2-6": 125, "47-39": 109}  # 철거·말소 대장의 연면적(㎡). 단층이라 바닥면적으로 본다
+DEMOL_KEY = {"47-39": "47-2"}   # 철거멸실대장에는 분할 전 지번(47-2)으로 올라 있다
+
+
+def ghosts(parcel_geoms, new_start):
+    """new_start: 필지 → 새 건물 착공(a). 철거 시점 = 철거 기간(있으면) / 아니면 min(말소일, 착공 0.25년 전)."""
+    feats, info = [], {}
+    for jib, kind in GHOST.items():
+        a = new_start.get(jib)
+        if a is None or jib not in parcel_geoms:
+            continue
+        dm = [r for r in DEMOL.get(DEMOL_KEY.get(jib, jib)) or [] if yf(r["demolStrtDay"])]
+        if dm and jib not in ("2-46", "2-6", "2-23"):
+            ds, de = yf(dm[0]["demolStrtDay"]), yf(dm[0]["demolEndDay"]) or yf(dm[0]["demolStrtDay"])
+            basis = "철거멸실대장의 철거 기간"
+        else:
+            sh = [yf(r["shterDay"]) for r in SR.get(jib) or [] if yf(r["shterDay"])]
+            de = min([a - 0.25] + sh)
+            ds, basis = de - 0.12, ("말소일" if sh and min(sh) < a - 0.25 else "새 건물 착공 직전") + " 이전"
+        ds = min(ds, de - 0.12)   # 철거 장면이 화면에서 보이도록 최소 약 1.5개월
+        g = parcel_geoms[jib]
+        o = g.centroid.coords[0]
+        loc = _loc(list(g.exterior.coords), o) if g.geom_type == "Polygon" else _loc(list(max(g.geoms, key=lambda x: x.area).exterior.coords), o)
+        fp = loc.buffer(-1.3)
+        if fp.is_empty or fp.area < 15:
+            fp = loc.buffer(-0.5)
+        if fp.area > GHOST_AREA[jib]:  # 대장 규모에 맞춰 필지 중심 쪽으로 줄인다
+            from shapely.affinity import scale as sscale
+            k = math.sqrt(GHOST_AREA[jib] / fp.area)
+            fp = sscale(fp, k, k, origin=fp.centroid)
+        col = GHOST_COL[kind][sum(map(ord, jib)) % 3]
+        if kind == "tile":   # 박공 지붕은 계단식 박스로 근사: 벽 3.2m + 지붕 2단
+            layers = [(fp, 0, 3.2, col), (fp.buffer(-1.0), 3.2, 4.2, "#6f4a38"), (fp.buffer(-2.2), 4.2, 5.0, "#6f4a38")]
+        else:
+            layers = [(fp, 0, 3.6, col), (fp.buffer(-0.5), 3.6, 4.1, "#9d9486")]
+        for part, (poly, b0, t0, c0) in enumerate(layers):
+            for ring in _geo(poly, o):
+                feats.append({"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [ring]},
+                              "properties": {"jibun": jib, "kind": kind, "base": b0, "top": t0, "color": c0, "dstart": ds, "dend": de}})
+        info[jib] = {"kind": kind, "dend": de, "basis": basis}
+    return {"type": "FeatureCollection", "features": feats}, info
+
+
 # ---- 주변 맥락 지도: 창천교회(지오코딩 지점) 반경 300m 안의 연속지적도 필지. 아직 구현하지 않은 곳이라 흐리게만 그린다.
 CONTEXT_RADIUS_M = 300
 CONTEXT_BLD_RADIUS_M = 150  # 회색 주변 건물은 이 반경 안만
@@ -391,26 +489,29 @@ def main():
         h = float(p["height_m"] or 0)
         fl = int(p["floors_up"] or 0)
         yr = int(p["approved"][:4]) if p["approved"] else None
-        if yr is None or (h == 0 and fl == 0):
+        if yr is None or (h == 0 and fl == 0) or p["bid"] in EXCLUDE_BIDS:
             excluded.append(p["bid"])
             continue
         flags = []
         basis = "대장·브이월드 높이"
         note = ""
-        if p["bid"] in LANDMARK_START:  # 사용자 제공: 창천교회 1906년 건축. 대장 사용승인(1994)은 현 건물
-            note = f"창천교회 1906년 건축(사용자 제공). 대장 사용승인 {yr}년은 현 건물이며, 그 이전 시기는 현 건물 모양으로 대신 표시"
-            yr = LANDMARK_START[p["bid"]]
+        if p["bid"] in LANDMARK_START:  # 창천교회: 1906년 창설(사용자 제공). 현 건물은 대장상 1989 허가·착공, 1994 사용승인
+            note = f"창천교회 1906년 창설(사용자 제공). 이 건물은 대장 기준 {yr}년 사용승인"
             flags.append("landmark_proxy")
+            note += ". 항공사진상 1990년에 이미 지붕이 보여 공사 애니메이션 없이 처음부터 완공 모습으로 표시"
+            yr = LANDMARK_START[p["bid"]]
+        ph = phase(p["jibun"], p["approved"]) if p["approved"] and "landmark_proxy" not in flags else None
         if h == 0:
             h, basis = round(fl * 3.3, 1), "층수×3.3m 추정"
-        if yr < 1990 and "landmark_proxy" not in flags:
+        if yr < 1990:
             flags.append("old_date")
+        pp = {"a": ph[0], "b": ph[1], "a_s": ph[2], "b_s": ph[3], "pbasis": ph[4]} if ph else {}
         ms = massing(p["bid"], f["geometry"]["coordinates"][0]) if f["geometry"]["type"] == "Polygon" else None
         for k, (r2, b2, t2, c2) in enumerate(ms or []):
             feats.append({"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [r2]},
                           "properties": {"bid": p["bid"], "jibun": p["jibun"], "start": yr, "height": t2, "base": b2, "color": c2,
                                          "part": 1, "floors_up": fl, "floors_down": 0, "height_basis": "사진 기반 근사 형상",
-                                         "flags": ";".join(flags), "start_note": ""}})
+                                         "flags": ";".join(flags), "start_note": "", **pp}})
         # 건물 바닥 면적 중 각 필지와 겹치는 비율(%). 5% 미만 조각은 도면 오차로 보고 버린다. 면적비는 아핀 변환에 불변이라 경위도 그대로 계산해도 된다.
         bgm = shape(f["geometry"]).buffer(0)
         spans = sorted(({"jibun": k, "jimok": v[1], "pct": round(bgm.intersection(v[0]).area / bgm.area * 100)}
@@ -420,8 +521,14 @@ def main():
                       "properties": {"bid": p["bid"], "jibun": p["jibun"], "start": yr, "height": h, "spans": spans,
                                      "floors_up": fl, "floors_down": int(p["floors_down"] or 0),
                                      "height_basis": basis, "flags": ";".join(flags), "start_note": note,
-                                     "base": 0, "color": "", "part": 0, "hide": 1 if ms else 0}})
+                                     "base": 0, "color": "", "part": 0, "hide": 1 if ms else 0, **pp}})
     buildings = {"type": "FeatureCollection", "features": feats}
+    new_start = {}
+    for f in feats:
+        pr = f["properties"]
+        if pr["part"] == 0 and pr.get("a") is not None:
+            new_start[pr["jibun"]] = max(pr["a"], new_start.get(pr["jibun"], 0))  # 2-46은 대장상 2003 건물이 현 건물(B025 1994는 도면 날짜 오류 의심)
+    ghost_fc, ghost_info = ghosts({k: v[0] for k, v in pgeom.items()}, new_start)
 
     biz = []
     for b in rc("data/timeline_businesses.csv"):
@@ -431,7 +538,7 @@ def main():
     bev = [{k: b[k] for k in ("jibun", "status", "start", "end", "end_basis", "structure", "use", "floors_up", "grade")}
            for b in rc("data/timeline_buildings.csv") if b["status"] != "현존"]
     scene = {"parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
-             "excluded_buildings": excluded, "context": context, "year_min": 1992, "year_max": 2026}
+             "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "year_min": 1992, "year_max": 2026}
     txt = json.dumps(scene, ensure_ascii=False)
     (OUT / "scene.json").write_text(txt)
     (OUT / "scene.js").write_text("window.SCENE=" + txt + ";")  # file:// 에서도 열리도록 script 로 읽는다

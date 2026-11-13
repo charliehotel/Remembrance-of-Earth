@@ -114,7 +114,7 @@
   <div><span class="sw" style="background:#efede8;opacity:.8"></span>주변(창천교회 반경 300m, 아직 미구현)</div>
 </div>
 <div id="bar">
-  <div class="row"><div id="year">2026</div><input id="slider" type="range" min="1992" max="2026" value="2026" step="1"></div>
+  <div class="row"><div id="year">2026</div><input id="slider" type="range" min="1992" max="2026.99" value="2026" step="any"></div>
   <div class="row2">
     <button id="play" title="재생/정지 (스페이스)">▶ 재생</button>
     <label id="loop" title="체크하면 끝에서 처음으로 돌아가 계속 재생"><input type="checkbox" id="loopChk"> 반복</label>
@@ -144,7 +144,67 @@ function init(S) {
       return s <= y && (e == null || y <= e);
     });
   }
-  const buildingsAt = y => S.buildings.features.filter(f => f.properties.start <= y);
+  // ---- 시간 T는 소수 연도(1993.5 = 1993년 중반). 공사 중(a≤T<b)인 건물은 크레인과 함께 올라가고, 완공(T≥b)이면 전체가 보인다.
+  const KXm = 111320 * Math.cos(37.559 * Math.PI / 180), KYm = 110540;
+  const Tnow = () => +document.getElementById("slider").value;
+  const yearOf = T => Math.floor(T + 1e-6);
+  const isBuilt = (p, T) => p.a != null ? T >= p.b : p.start <= yearOf(T);
+  const buildingsAt = T => S.buildings.features.filter(f => isBuilt(f.properties, T));
+  const ease = p => p * p * (3 - 2 * p);
+  const bldH = {};   // 건물별 최종 높이(부위 있으면 부위 최고 높이)
+  S.buildings.features.forEach(f => { const p = f.properties; bldH[p.bid] = Math.max(bldH[p.bid] || 0, p.height || 0); });
+  const rectLL = (c, ang, a0, a1, hw) => {   // c 기준 방향 ang(rad)으로 a0~a1 m, 폭 ±hw m 직사각형(경위도)
+    const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
+    return [[a0, -hw], [a1, -hw], [a1, hw], [a0, hw], [a0, -hw]].map(([a, w]) => [c[0] + (ux * a + nx * w) / KXm, c[1] + (uy * a + ny * w) / KYm]);
+  };
+  const cbox = (c, ang, a0, a1, hw, base, top, color) => ({ type: "Feature", geometry: { type: "Polygon", coordinates: [rectLL(c, ang, a0, a1, hw)] }, properties: { base, top, color } });
+  function craneFeats(f, p, T) {   // 타워크레인: 기둥 + 회전하는 붐 + 균형추 + 매달린 짐
+    const ring = f.geometry.coordinates[0], c = ringMid(ring), H = bldH[f.properties.bid] || 10;
+    const mh = Math.max(12, H * ease(p) + 8), seed = f.properties.bid.split("").reduce((a, ch) => a + ch.charCodeAt(0), 0);
+    const ang = seed + T * 5, Y = "#f2c230";
+    const hook = 12 + 3 * Math.sin(T * 40 + seed);
+    return [cbox(c, 0, -0.6, 0.6, 0.6, 0, mh, Y), cbox(c, ang, -5, 14, 0.35, mh, mh + 0.9, Y), cbox(c, ang, -5, -2.6, 0.7, mh - 0.8, mh + 1.4, "#555"),
+            cbox(c, 0, -0.9, 0.9, 0.9, mh, mh + 1.9, "#e8b020"), cbox(c, ang, hook - 0.08, hook + 0.08, 0.08, mh - 5, mh, "#333"),
+            cbox(c, ang, hook - 0.9, hook + 0.9, 0.9, mh - 6.2, mh - 5, "#c0392b")];
+  }
+  const ghostColor = (g, q) => q > 0.35 ? "#8c867c" : g.color;
+  let lastSig = "", lastDone = -1;
+  function dyn(T) {
+    const bld = [], crane = [], ghost = []; let nb = 0, prog = false;
+    for (const f of S.buildings.features) {
+      const p = f.properties;
+      if (isBuilt(p, T)) { bld.push(f); if (!p.part) nb++; continue; }
+      if (p.a == null || T < p.a) continue;
+      const q = (T - p.a) / (p.b - p.a), hv = (bldH[p.bid] || p.height) * ease(q);
+      prog = true;
+      if (p.part) { if (p.base >= hv) continue; bld.push({ ...f, properties: { ...p, height: Math.min(p.height, hv) } }); }
+      else { bld.push({ ...f, properties: { ...p, height: Math.min(p.height, hv) } }); if (p.hide !== 1) crane.push(...craneFeats(f, q, T)); }
+      if (p.part && !crane.some(c => c._b === p.bid)) { const m = S.buildings.features.find(g => g.properties.bid === p.bid && !g.properties.part); if (m) { const cf = craneFeats(m, q, T); cf.forEach(x => x._b = p.bid); crane.push(...cf); } }
+    }
+    for (const f of S.ghosts.features) {
+      const g = f.properties;
+      if (T >= g.dend) continue;
+      if (T < g.dstart) { ghost.push(f); continue; }
+      prog = true; const q = (T - g.dstart) / (g.dend - g.dstart), k = Math.max(1 - q, 0.06), sh = Math.sin(T * 300) * 0.25 * (1 - q);
+      const sx = sh / KXm;
+      ghost.push({ type: "Feature", geometry: { type: "Polygon", coordinates: f.geometry.coordinates.map(r => r.map(([x, y]) => [x + sx, y])) },
+                   properties: { ...g, base: g.base * k, top: Math.max(g.top * k, 0.3), color: ghostColor(g, q) } });
+    }
+    const sig = prog ? "p" + Math.round(T * 240) : "s" + bld.length + ":" + ghost.length;
+    return { bld, crane, ghost, sig, nb };
+  }
+  function refreshDyn(T, force) {
+    const d = dyn(T);
+    if (force || d.sig !== lastSig) {
+      lastSig = d.sig;
+      map.getSource("buildings").setData({ type: "FeatureCollection", features: d.bld });
+      map.getSource("cranes").setData({ type: "FeatureCollection", features: d.crane });
+      map.getSource("ghosts").setData({ type: "FeatureCollection", features: d.ghost });
+    }
+    return d.nb;
+  }
+  const setYearLabel = T => { const y = yearOf(T), m = Math.min(12, Math.floor((T - y) * 12 + 1e-6) + 1);
+    document.getElementById("year").innerHTML = `${y}<span style="font-size:.45em;opacity:.55;margin-left:4px">${m}월</span>`; };
 
   const map = new maplibregl.Map({
     container: "map", style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e9e6df" } }] },
@@ -251,6 +311,11 @@ function init(S) {
       "fill-extrusion-base": ["coalesce", ["get", "base"], 0],
       "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
       "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.92 } });
+    map.addSource("cranes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addSource("ghosts", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    const ext = { "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 0.95 };
+    map.addLayer({ id: "ghost", type: "fill-extrusion", source: "ghosts", paint: { ...ext, "fill-extrusion-opacity": 0.9 } });
+    map.addLayer({ id: "crane", type: "fill-extrusion", source: "cranes", paint: ext });
     const none = ["==", ["get", "jibun"], ""];
     map.addLayer({ id: "span-fill", type: "fill", source: "parcels", filter: none, paint: { "fill-color": "#f08a00", "fill-opacity": 0.2 } });
     map.addLayer({ id: "span-line", type: "line", source: "parcels", filter: none,
@@ -270,13 +335,14 @@ function init(S) {
     return `${fmt(b.start) || "시작 미상"}부터 영업(인허가), ` + (b.end ? `${fmt(b.end)} 폐업(${b.end_basis})` : "폐업 기록 없음");
   }
   function update() {
-    const y = +document.getElementById("slider").value;
-    document.getElementById("year").textContent = y;
-    map.getSource("buildings").setData({ type: "FeatureCollection", features: buildingsAt(y) });
+    const T = Tnow(), y = yearOf(T);
+    setYearLabel(T); lastY = y;
+    lastDone = refreshDyn(T, true);
     S.parcels.features.forEach(f => map.setFeatureState({ source: "parcels", id: f.id }, { evidence: activeBiz(f.properties.jibun, y).length > 0 }));
     if (selected) show(selected);
-    buildLabels(y);
+    buildLabels(y, T);
   }
+  let lastY = 0;
 
   // ---------- 상호 라벨: 그 해 영업 근거가 있는 필지의 건물 위에 상호를 띄운다 ----------
   // 글꼴 서버 없이 쓰려고 MapLibre symbol 레이어 대신 HTML 오버레이로 그린다.
@@ -288,10 +354,10 @@ function init(S) {
     n = n.replace(/\s+\S*점$/, "").trim();
     return n || full; };
   let parcelMid = null, labels = [];
-  function buildLabels(y) {
+  function buildLabels(y, T) {
     if (!parcelMid) { parcelMid = {}; S.parcels.features.forEach(f => parcelMid[f.properties.jibun] = bbox(f.geometry)); }
     labelsEl.textContent = ""; labels = [];
-    const blds = buildingsAt(y).filter(f => !f.properties.part && f.properties.hide !== 1);
+    const blds = buildingsAt(T).filter(f => !f.properties.part && f.properties.hide !== 1);
     Object.keys(bizByParcel).forEach(jibun => {
       const act = activeBiz(jibun, y); if (!act.length) return;
       // 대표 상호: 인허가 기록(A) 우선, 그다음 가장 최근에 시작한 곳
@@ -384,13 +450,15 @@ function init(S) {
     selected = jibun;
     map.setFilter("parcel-sel", ["==", ["get", "jibun"], jibun]);
     map.setFilter("parcel-sel-fill", ["==", ["get", "jibun"], jibun]);
-    const y = +document.getElementById("slider").value;
+    const T = Tnow(), y = yearOf(T);
     const p = S.parcels.features.find(f => f.properties.jibun === jibun).properties;
     const act = activeBiz(jibun, y);
-    const blds = buildingsAt(y).filter(f => f.properties.jibun === jibun && !f.properties.part).map(f => f.properties);
+    const inprog = S.buildings.features.filter(f => f.properties.jibun === jibun && !f.properties.part && f.properties.a != null && T >= f.properties.a && T < f.properties.b).map(f => f.properties);
+    const gi = (S.ghost_info || {})[jibun], ghostNow = gi && T < gi.dend;
+    const blds = buildingsAt(T).filter(f => f.properties.jibun === jibun && !f.properties.part).map(f => f.properties);
     const evs = (evByParcel[jibun] || []).filter(e => e.end && yr(e.end) <= y);
     // ---- 건물 바닥 윤곽과 필지의 겹침 점검 ----
-    const allB = buildingsAt(y).filter(f => !f.properties.part);
+    const allB = buildingsAt(T).filter(f => !f.properties.part);
     const own = allB.filter(f => f.properties.jibun === jibun).map(f => f.properties);
     const onThis = allB.filter(f => f.properties.jibun !== jibun && (f.properties.spans || []).some(x => x.jibun === jibun)).map(f => f.properties);
     const spanSet = new Set(), footBids = [...own, ...onThis].map(b => b.bid);
@@ -416,9 +484,12 @@ function init(S) {
     h += `<div class="m">${p.anchor || ""}</div>`;
     if (focusBiz && focusBiz.jibun === jibun) h += `<div class="focuscard"><div class="n">${bizName(focusBiz)}</div>
       <div class="m">${focusBiz.license_type || "업종 미상"}${focusBiz.category ? " · " + focusBiz.category : ""} · 창천동 ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
+    if (ghostNow) h += `<div class="note2">${T < (S.ghosts.features.find(f => f.properties.jibun === jibun) || { properties: { dstart: 0 } }).properties.dstart ? "화면의 옛 건물은" : "철거 중인 옛 건물은"} <b>모양을 알 수 없어 ${gi.kind === "tile" ? "기와 단층(갈색)" : "슬래브 건물(회색)"}으로 가정해 세운 것</b>입니다. ${Math.floor(gi.dend)}년 철거 전까지의 모습은 대장과 항공사진으로 확인하지 못한 추정입니다.</div>`;
+    h += inprog.map(b => `<div class="b A"><div class="n">공사 중 ${b.floors_up}층 ${b.height}m<span class="tag">${b.a_s ? b.a_s + " 착공" : "착공일 없음"} → ${b.b_s} 사용승인</span></div>
+      <div class="m">공사 기간 ${(b.b - b.a).toFixed(1)}년 · ${b.pbasis}</div></div>`).join("");
     h += "<b>건물</b>" + (blds.length ? blds.map(b =>
       `<div class="b A"><div class="n">${b.floors_up}층 ${b.height}m<span class="tag">${b.flags.includes("landmark_proxy") ? b.start + " 건축" : b.start + " 사용승인"}</span>${b.flags.includes("old_date") ? '<span class="tag warn">옛 날짜: 대장 확인 필요</span>' : ""}${b.flags.includes("landmark_proxy") ? '<span class="tag warn">현 건물 모양으로 대신 표시</span>' : ""}</div>
-       <div class="m">${b.height_basis}${b.start_note ? "<br>" + b.start_note : ""}</div></div>`).join("") : '<div class="hint">이 해의 건물 자료 없음</div>');
+       <div class="m">${b.height_basis}${b.a_s ? "<br>공사 " + b.a_s + " ~ " + b.b_s + " (" + (b.b - b.a).toFixed(1) + "년)" : ""}${b.start_note ? "<br>" + b.start_note : ""}</div></div>`).join("") : '<div class="hint">${inprog.length ? "아직 준공 전입니다" : "이 해의 건물 자료 없음"}</div>');
     if (evs.length) h += evs.map(e => `<div class="m">· ${e.end} ${e.end_basis}${e.structure ? " (" + e.structure + ")" : ""}</div>`).join("");
     const all = (bizByParcel[jibun] || []).slice().sort((x, z) => (x.start || "").localeCompare(z.start || ""));
     h += `<br><b>영업 이력</b><span class="tag">${all.length}곳</span>`;
@@ -497,18 +568,18 @@ function init(S) {
   map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
     if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
-    const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "parcel-fill"] })[0];
+    const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "ghost", "parcel-fill"] })[0];
     if (f) { focusBiz = null; show(f.properties.jibun); setSide(true); }
     else { clearSelection(); qInput.value = ""; resultsEl.hidden = true; }   // 빈 땅 클릭 → 선택 해제
   });
 
   // ---------- 재생 ----------
   const slider = document.getElementById("slider"), playBtn = document.getElementById("play"), speedBtn = document.getElementById("speed"), loopChk = document.getElementById("loopChk");
-  const SPEEDS = [1, 2, 4, 8]; let si = 0, playing = false, acc = 0, lastT = 0;
+  const SPEEDS = [0.5, 1, 2, 4, 8]; let si = 1, playing = false, acc = 0, lastT = 0;
   function setYear(v) { slider.value = v; update(); }
   function setPlaying(on) {
     playing = on; playBtn.textContent = on ? "■ 정지" : "▶ 재생"; playBtn.classList.toggle("on", on);
-    if (on && +slider.value >= +slider.max) setYear(slider.min);
+    if (on && +slider.value >= +slider.max - 0.01) setYear(slider.min);
     lastT = performance.now(); acc = 0;
   }
   playBtn.onclick = () => setPlaying(!playing);
@@ -599,10 +670,13 @@ function init(S) {
 
   function frame(t) {
     const dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
-    if (playing) { acc += dt * SPEEDS[si]; if (acc >= 1) { const n = Math.floor(acc); acc -= n;
-      const atEnd = +slider.value >= +slider.max, wrap = loopChk.checked;
-      const v = atEnd && wrap ? +slider.min : Math.min(+slider.value + n, +slider.max);
-      setYear(v); if (v >= +slider.max && !wrap) setPlaying(false); } }
+    if (playing) {   // 소수 연도로 매끄럽게 흐른다(1×는 초당 1년). 연이 바뀌거나 건물이 준공될 때만 전체 갱신
+      let v = +slider.value + dt * SPEEDS[si];
+      if (v >= +slider.max) { if (loopChk.checked) v = +slider.min; else { v = +slider.max; setPlaying(false); } }
+      slider.value = v;
+      const T = Tnow(), nb = isFinite(T) ? refreshDyn(T) : lastDone;
+      if (yearOf(T) !== lastY || nb !== lastDone) update(); else setYearLabel(T);
+    }
     litBtns.forEach(b => b.classList.toggle("on", b.dataset.codes.split(" ").some(c => pressed.has(c) || keys.has(c) || (flash.get(c) || 0) > t)));
     if (walking) {
       const k = c => keys.has(c); let moved = false;
