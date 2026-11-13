@@ -309,7 +309,7 @@ def rc(p):
 
 # ---- 주변 맥락 지도: 창천교회(지오코딩 지점) 반경 300m 안의 연속지적도 필지. 아직 구현하지 않은 곳이라 흐리게만 그린다.
 CONTEXT_RADIUS_M = 300
-CONTEXT_BLD_RADIUS_M = 100  # 회색 주변 건물은 이 반경 안만
+CONTEXT_BLD_RADIUS_M = 150  # 회색 주변 건물은 이 반경 안만
 
 
 def context_map(core_pnus):
