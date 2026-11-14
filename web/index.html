@@ -602,6 +602,7 @@ function init(S) {
   const modeBtn = document.getElementById("mode"), hint = document.getElementById("hint");
   const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 70, wdist = 5, applying = false, lookDragged = false; const keys = new Set();
   const clampP = p => Math.max(0, Math.min(85, p));
+  const WP_MAX = 125, clampW = p => Math.max(0, Math.min(WP_MAX, p));   // 걷기: 85° 넘는 값은 '올려다보기'(투영 중심 이동)
   const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
     if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
   const blocked = (x, y) => buildingsAt(+slider.value).some(f => inRing(x, y, f.geometry.coordinates[0]));
@@ -632,13 +633,15 @@ function init(S) {
     ] });
   }
   const WD_MIN = 4, WD_MAX = 60, WD_DEF = 5, WP_DEF = 70, ZMAX = 23.9, EYE = 1.2;
-  const mapW = () => 78271.517 * Math.cos(pos[1] * Math.PI / 180) * 1.5 * map.getContainer().clientHeight;   // 줌 z에서 카메라 거리(m) = mapW / 2^z
+  const WFOV = 60, FOV0 = 36.87;
+  const mapW = () => 78271.517 * Math.cos(pos[1] * Math.PI / 180) * (0.5 / Math.tan(map.transform.fov * Math.PI / 360)) * map.getContainer().clientHeight;   // 줌 z에서 카메라 거리(m) = mapW / 2^z
   const distToZoom = D => Math.min(ZMAX, Math.log2(mapW() / D));
   function applyWalkCam() {   // 어깨 뒤 시점: 카메라는 캐릭터 뒤 wdist(m), 캐릭터는 화면 왼쪽 아래
     const w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
     const z = distToZoom(wdist); wdist = mapW() / Math.pow(2, z);
+    const up = Math.max(0, wpitch - 85) / (WP_MAX - 85);   // 0~1: 얼마나 올려다보는가
     applying = true;
-    map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: z, padding: { top: h * 0.25, right: w * 0.2, bottom: 0, left: 0 } });
+    map.jumpTo({ center: pos, bearing: heading, pitch: Math.min(wpitch, 85), zoom: z, padding: { top: h * (0.25 + 0.4 * up), right: w * 0.2 * (1 - up), bottom: 0, left: 0 } });
     applying = false; drawMe(); updateOccluders();
   }
   const setDist = f => { wdist = Math.max(WD_MIN, Math.min(WD_MAX, wdist * f)); applyWalkCam(); };
@@ -681,8 +684,8 @@ function init(S) {
     modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
     ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom", "scrollZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
     map.setLayoutProperty("me", "visibility", on ? "visible" : "none"); window.Avatar?.setVisible(on);
-    if (on) { if (!pos) { pos = startPos(); face = heading; } anim = "idle"; applyWalkCam(); lastT = performance.now(); }
-    else { updateOccluders(); map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
+    if (on) { map.transform.fov = WFOV; if (!pos) { pos = startPos(); face = heading; } anim = "idle"; applyWalkCam(); lastT = performance.now(); }
+    else { map.transform.fov = FOV0; updateOccluders(); map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
     hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · +/- 거리 · \\ 초기화 · Shift 달리기";
   }
   modeBtn.onclick = () => setWalking(!walking);
@@ -720,7 +723,7 @@ function init(S) {
     cv.addEventListener("mousedown", e => { if (walking && e.button === 0) drag = { x: e.clientX, y: e.clientY, moved: 0 }; });
     window.addEventListener("mousemove", e => { if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
-      heading = (heading + dx * 0.25 + 360) % 360; wpitch = clampP(wpitch - dy * 0.2); applyWalkCam();
+      heading = (heading + dx * 0.25 + 360) % 360; wpitch = clampW(wpitch - dy * 0.2); applyWalkCam();
       if (drag.moved > 4) cv.style.cursor = "grabbing"; });
     window.addEventListener("mouseup", () => { if (!drag) return; lookDragged = drag.moved > 4; drag = null; cv.style.cursor = "";
       setTimeout(() => lookDragged = false, 0); }); }
@@ -741,7 +744,7 @@ function init(S) {
     if (walking) {
       const k = c => keys.has(c); let moved = false;
       const tilt = (k("KeyR") ? 1 : 0) - (k("KeyF") ? 1 : 0);
-      if (tilt) { wpitch = clampP(wpitch + tilt * 60 * dt); moved = true; }
+      if (tilt) { wpitch = clampW(wpitch + tilt * 60 * dt); moved = true; }
       const f = (k("KeyW") || k("ArrowUp") ? 1 : 0) - (k("KeyS") || k("ArrowDown") ? 1 : 0), sd = (k("KeyD") || k("ArrowRight") ? 1 : 0) - (k("KeyA") || k("ArrowLeft") ? 1 : 0);
       if (f || sd) {
         const sp = (k("ShiftLeft") || k("ShiftRight") ? 3.5 : 1.4) * dt, h = heading * Math.PI / 180;
