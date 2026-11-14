@@ -126,12 +126,11 @@ def massing(bid, ring):
             add(g, h0, h1, STONE)
         add(PB, 3.0, 4.5, STONE)                                                # 아치 위 띠
         add(PB.buffer(-0.35), 4.5, 4.9, STONE)                                  # 난간
-        for c in CEN:                                                           # 개구부 안쪽 어두운 바닥판(깊이감) + 남쪽 아치엔 문
+        for c in CEN:                                                           # 개구부 안쪽 어두운 바닥판(깊이감)
             add(sbox(0.7, c - 1.6, 1.0, c + 1.6).intersection(PB.buffer(0.05)), 0.05, 1.9, "#2a2622")
             for i in range(3):
                 hw = 1.6 * (1 - (i + 0.6) / 4.2)
                 add(sbox(0.7, c - hw, 1.0, c + hw).intersection(PB.buffer(0.05)), 1.9 + i * 0.37, 1.9 + (i + 1) * 0.37, "#2a2622")
-        add(sbox(0.4, CEN[2] - 1.2, 0.7, CEN[2] + 1.2).intersection(PB.buffer(0.05)), 0.05, 2.6, "#1e1e24")   # 남쪽 아치의 유리문
         for c in CEN:                                                           # 아치 위 삼각 박공(돌출 0.18m, 회색 음영)
             for i, hw in enumerate((1.7, 1.3, 0.9, 0.5)):
                 add(sbox(-5, c - hw, 1.0, c + hw).intersection(PB.buffer(0.18)), 3.1 + i * 0.35, 3.1 + (i + 1) * 0.35, "#cfc8b8")

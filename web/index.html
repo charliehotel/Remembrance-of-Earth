@@ -149,7 +149,7 @@
   <div id="hint"></div>
 </div>
 <script src="vendor/maplibre-gl.js"></script>
-<script src="scene.js"></script>
+<script>document.write('<script src="scene.js?t=' + Date.now() + '"><\/script>');</script>
 <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }</script>
 <script type="module" src="avatar.js"></script>
 <script type="module" src="npc.js"></script>
