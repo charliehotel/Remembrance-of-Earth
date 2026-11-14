@@ -142,6 +142,7 @@ function update(dt, W) {
         n.gt -= dt; if (n.gt <= 0) { n.gt = rand(3, 8); const g = GESTURES.filter(k => n.actions[k]); if (g.length) setAnim(n, pick(g), true); }
         break; }
     }
+    if (n.phone) n.phone.visible = n.mode === "call";
     const l = window.Avatar.local(n.pos[0], n.pos[1]);
     n.obj.position.set(l.x, 0, l.z);
     n.obj.rotation.y = Math.PI - n.heading * Math.PI / 180;
@@ -150,6 +151,21 @@ function update(dt, W) {
   for (const g of groups) {   // 모두 모였으면 이야기하다가, 시간이 지나면 같이 옮겨 간다
     if (g.members.every(m => m.mode === "talk")) { g.timer -= dt; if (g.timer <= 0) { g.timer = rand(25, 50); newSite(g, W, g.center); } }
   }
+}
+
+function makePhone(model) {   // 머리 뼈의 왼쪽 귀 옆에 붙이는 작은 스마트폰(전화 중에만 보인다)
+  const head = model.getObjectByName("head"), hm = model.getObjectByName("head-mesh") || head;
+  if (!head) return null;
+  model.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(hm), c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3());
+  const ear = head.worldToLocal(new THREE.Vector3(bb.max.x + 0.01, c.y + sz.y * 0.05, c.z));   // 캐릭터 왼쪽 = +x
+  const ws = head.getWorldScale(new THREE.Vector3()).x || 1;
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.12, 0.012), new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.4 }));
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.105), new THREE.MeshBasicMaterial({ color: 0x66b8ff }));
+  scr.position.x = -0.0065; scr.rotation.y = -Math.PI / 2;   // 화면은 머리 쪽(안쪽)이 아니라 바깥이 아닌 뺨 방향
+  g.add(body, scr); g.rotation.set(0, 0, -0.15); g.scale.setScalar(1 / ws); g.position.copy(ear); g.visible = false;
+  head.add(g); return g;
 }
 
 async function start() {
@@ -164,7 +180,8 @@ async function start() {
     const obj = new THREE.Group(); obj.add(model); window.Avatar.scene.add(obj);
     const mixer = new THREE.AnimationMixer(model), actions = {};
     CLIPS.forEach(k => { const c = THREE.AnimationClip.findByName(gltf.animations, k); if (c) actions[k] = mixer.clipAction(c); });
-    const n = { obj, mixer, actions, cur: null, pos: null, heading: rand(0, 360), speed: spec.speed, role: spec.role, mode: "stand", timer: 0 };
+    const phone = spec.role === "caller" ? makePhone(model) : null;
+    const n = { obj, mixer, actions, cur: null, pos: null, heading: rand(0, 360), speed: spec.speed, role: spec.role, mode: "stand", timer: 0, phone };
     mixer.addEventListener("finished", e => { if (n.mode === "talk" && e.action === n.cur) setAnim(n, "idle"); });   // 몸짓이 끝나면 다시 서 있기
     if (spec.role === "talker") (gmap[spec.group] ||= { members: [], center: null, timer: rand(25, 50) }).members.push(n), n.group = gmap[spec.group];
     else n.pos = pickSpot(W);
