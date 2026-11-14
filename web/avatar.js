@@ -9,7 +9,7 @@ const HEIGHT_M = 1.7;   // 캐릭터 키(m)
 const state = { map: null, pos: null, heading: 0, visible: false, ready: false };
 let renderer, scene, camera, origin, mPerUnit, avatar, mixer;
 const actions = {}; let current = null, wanted = "idle";
-const clock = new THREE.Clock();
+const clock = new THREE.Clock(), updaters = [];
 
 // three 좌표계: x = 동, y = 위, z = 남. 단위는 m. 원점은 처음 캐릭터를 둔 자리.
 function placeAvatar() {
@@ -48,7 +48,8 @@ const layer = {
   },
   render(gl, matrix) {
     if (!avatar || !origin || !state.visible) return;
-    mixer.update(clock.getDelta());
+    const dt = Math.min(clock.getDelta(), 0.1);
+    mixer.update(dt); updaters.forEach(f => f(dt));
     const s = mPerUnit;
     const l = new THREE.Matrix4().makeTranslation(origin.x, origin.y, 0)
       .scale(new THREE.Vector3(s, -s, s))
@@ -63,6 +64,13 @@ const layer = {
 
 window.Avatar = {
   isReady: () => state.ready,
+  get scene() { return scene; },
+  addUpdater: f => updaters.push(f),                       // 매 프레임 f(dt) 호출(걷기 모드가 켜져 있을 때)
+  local(lng, lat) {                                        // 경위도 -> three 좌표(m). 아직 기준점이 없으면 null
+    if (!origin) return null;
+    const m = maplibregl.MercatorCoordinate.fromLngLat([lng, lat], 0);
+    return { x: (m.x - origin.x) / mPerUnit, z: (m.y - origin.y) / mPerUnit };
+  },
   set(pos, heading, anim = "idle") {   // heading = 캐릭터가 바라보는 방위, anim = idle | walk | sprint
     state.pos = pos; state.heading = heading; wanted = anim; play(anim);
     placeAvatar(); state.map?.triggerRepaint();

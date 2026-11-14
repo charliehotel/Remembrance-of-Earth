@@ -127,6 +127,7 @@
 <script src="scene.js"></script>
 <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }</script>
 <script type="module" src="avatar.js"></script>
+<script type="module" src="npc.js"></script>
 <script>
 const FIRST_SURVEY = 2008;  // 로드뷰 간판 조사 첫 해
 init(window.SCENE);
@@ -606,6 +607,12 @@ function init(S) {
   const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
     if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
   const blocked = (x, y) => buildingsAt(+slider.value).some(f => inRing(x, y, f.geometry.coordinates[0]));
+  // 행인(npc.js)이 걸을 수 있는 곳: 도로 필지 안이면서 건물이 없는 곳
+  { const rings = []; S.parcels.features.filter(f => f.properties.jimok === "도").forEach(f =>
+      (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(poly => rings.push(poly[0])));
+    const xs = rings.flat().map(p => p[0]), ys = rings.flat().map(p => p[1]);
+    window.NpcWorld = { KX, KY, bbox: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)],
+      free: (x, y) => rings.some(r => inRing(x, y, r)) && !curBld.some(f => inRing(x, y, f.geometry.coordinates[0])) }; }
   function startPos() {
     const roads = S.parcels.features.filter(f => f.properties.jimok === "도");
     const c = map.getCenter(); let best = null, bd = 1e9;
