@@ -56,8 +56,15 @@ const layer = {
       .multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
     camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix).multiply(l);
     renderer.resetState();
-    renderer.clearDepth();   // 반투명 건물도 깊이를 쓰기 때문에, 캐릭터는 깊이를 비우고 위에 그린다
+    // 1) 행인: 건물과 깊이를 비교해서 그린다(건물 뒤에 있으면 가려진다)
+    avatar.visible = false;
     renderer.render(scene, camera);
+    // 2) 내 캐릭터: 반투명 건물도 깊이를 쓰기 때문에, 깊이를 비우고 위에 그린다(행인은 이 패스에서 제외)
+    const hidden = scene.children.filter(o => o !== avatar && !o.isLight && o.visible);
+    hidden.forEach(o => o.visible = false); avatar.visible = true;
+    renderer.clearDepth();
+    renderer.render(scene, camera);
+    hidden.forEach(o => o.visible = true);
     state.map.triggerRepaint();   // 애니메이션을 계속 돌린다
   },
 };
