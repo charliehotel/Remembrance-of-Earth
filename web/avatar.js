@@ -8,6 +8,7 @@ const HEIGHT_M = 1.7;   // 캐릭터 키(m)
 
 const state = { map: null, pos: null, heading: 0, visible: false, ready: false };
 let renderer, scene, camera, origin, mPerUnit, avatar, mixer;
+const actions = {}; let current = null, wanted = "idle";
 const clock = new THREE.Clock();
 
 // three 좌표계: x = 동, y = 위, z = 남. 단위는 m. 원점은 처음 캐릭터를 둔 자리.
@@ -17,6 +18,11 @@ function placeAvatar() {
   const m = maplibregl.MercatorCoordinate.fromLngLat(state.pos, 0);
   avatar.position.set((m.x - origin.x) / mPerUnit, 0, (m.y - origin.y) / mPerUnit);
   avatar.rotation.y = Math.PI - state.heading * Math.PI / 180;   // 모델 정면(+z)을 헤딩(북=0, 시계방향)으로
+}
+
+function play(name, fade = 0.2) {   // 동작을 부드럽게 바꾼다
+  const next = actions[name]; if (!next || next === current) return;
+  next.reset().play(); if (current) current.crossFadeTo(next, fade, false); current = next;
 }
 
 const layer = {
@@ -33,8 +39,8 @@ const layer = {
       model.scale.setScalar(HEIGHT_M / size.y);
       avatar = new THREE.Group(); avatar.add(model); avatar.visible = state.visible; scene.add(avatar);
       mixer = new THREE.AnimationMixer(model);
-      const idle = THREE.AnimationClip.findByName(gltf.animations, "idle");
-      if (idle) mixer.clipAction(idle).play();
+      ["idle", "walk", "sprint"].forEach(n => { const c = THREE.AnimationClip.findByName(gltf.animations, n); if (c) actions[n] = mixer.clipAction(c); });
+      play(wanted, 0);
       state.ready = true; placeAvatar();
       window.dispatchEvent(new Event("avatar-ready"));
       map.triggerRepaint();
@@ -56,8 +62,8 @@ const layer = {
 
 window.Avatar = {
   isReady: () => state.ready,
-  set(pos, heading) {
-    state.pos = pos; state.heading = heading;
+  set(pos, heading, anim = "idle") {   // heading = 캐릭터가 바라보는 방위, anim = idle | walk | sprint
+    state.pos = pos; state.heading = heading; wanted = anim; play(anim);
     placeAvatar(); state.map?.triggerRepaint();
   },
   setVisible(on) { state.visible = on; if (avatar) avatar.visible = on; state.map?.triggerRepaint(); },
