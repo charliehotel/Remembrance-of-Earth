@@ -55,6 +55,7 @@ const layer = {
       .multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2));
     camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix).multiply(l);
     renderer.resetState();
+    renderer.clearDepth();   // 반투명 건물도 깊이를 쓰기 때문에, 캐릭터는 깊이를 비우고 위에 그린다
     renderer.render(scene, camera);
     state.map.triggerRepaint();   // 애니메이션을 계속 돌린다
   },

@@ -57,12 +57,12 @@
   .tag.warn { background: #fde7c4; }
   #legend { position: absolute; top: 12px; right: 92px; max-width: calc(100vw - 430px); background: rgba(255,255,255,.94); border-radius: 10px;
             padding: 8px 12px; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.25); line-height: 1.7; }
-  #bar .row2 { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-  #bar button { border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
+  #bar .row2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+  #bar button { white-space: nowrap; border: 1px solid #bbb; background: #fff; border-radius: 6px; padding: 3px 10px; font-size: 13px; cursor: pointer; }
   #bar button.on { background: #2b6cff; color: #fff; border-color: #2b6cff; }
   #bar button:disabled { opacity: .4; cursor: default; }
   #loop { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; user-select: none; }
-  #hint { font-size: 12px; color: #555; margin-left: auto; }
+  #hint { flex: 1 0 100%; font-size: 12px; line-height: 1.5; color: #555; margin-top: 2px; }
   .maplibregl-ctrl button.rot { font-size: 18px; line-height: 29px; text-align: center; }
   .maplibregl-ctrl-group.rotgrid { display: grid; grid-template-columns: 29px 29px; }
   .maplibregl-ctrl-group.rotgrid button:nth-child(2n) { border-left: 1px solid #ddd; }
@@ -600,7 +600,7 @@ function init(S) {
   // ---------- 걷기 ----------
   const KX = 111320 * Math.cos(37.559 * Math.PI / 180), KY = 110540;
   const modeBtn = document.getElementById("mode"), hint = document.getElementById("hint");
-  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 70, wdist = 5, applying = false, lookDragged = false; const keys = new Set();
+  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 70, wps = 70, occDirty = false, lastOcc = 0, wdist = 5, applying = false, lookDragged = false; const keys = new Set();
   const clampP = p => Math.max(0, Math.min(85, p));
   const WP_MAX = 125, clampW = p => Math.max(0, Math.min(WP_MAX, p));   // 걷기: 85° 넘는 값은 '올려다보기'(투영 중심 이동)
   const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
@@ -639,10 +639,10 @@ function init(S) {
   function applyWalkCam() {   // 어깨 뒤 시점: 카메라는 캐릭터 뒤 wdist(m), 캐릭터는 화면 왼쪽 아래
     const w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
     const z = distToZoom(wdist); wdist = mapW() / Math.pow(2, z);
-    const up = Math.max(0, wpitch - 85) / (WP_MAX - 85);   // 0~1: 얼마나 올려다보는가
+    const x = Math.max(0, Math.min(1, (wps - 70) / (WP_MAX - 70))), up = x * x * (3 - 2 * x);   // 0~1: 얼마나 올려다보는가(부드럽게 이어지도록 70°부터 시작)
     applying = true;
-    map.jumpTo({ center: pos, bearing: heading, pitch: Math.min(wpitch, 85), zoom: z, padding: { top: h * (0.25 + 0.4 * up), right: w * 0.2 * (1 - up), bottom: 0, left: 0 } });
-    applying = false; drawMe(); updateOccluders();
+    map.jumpTo({ center: pos, bearing: heading, pitch: Math.min(wps, 85), zoom: z, padding: { top: h * (0.25 + 0.4 * up), right: w * 0.2 * (1 - up), bottom: 0, left: 0 } });
+    applying = false; drawMe(); occDirty = true;
   }
   const setDist = f => { wdist = Math.max(WD_MIN, Math.min(WD_MAX, wdist * f)); applyWalkCam(); };
   map.on("zoomend", () => { if (!walking || applying) return;   // 지도 버튼으로 바뀐 줌도 거리로 받아들인다
@@ -684,9 +684,10 @@ function init(S) {
     modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
     ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom", "scrollZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
     map.setLayoutProperty("me", "visibility", on ? "visible" : "none"); window.Avatar?.setVisible(on);
-    if (on) { map.transform.fov = WFOV; if (!pos) { pos = startPos(); face = heading; } anim = "idle"; applyWalkCam(); lastT = performance.now(); }
+    if (on) { wps = wpitch; map.transform.fov = WFOV; if (!pos) { pos = startPos(); face = heading; } anim = "idle"; applyWalkCam(); lastT = performance.now(); }
     else { map.transform.fov = FOV0; updateOccluders(); map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
-    hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · +/- 거리 · \\ 초기화 · Shift 달리기";
+    hint.innerHTML = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게"
+      : "W/A/S/D·방향키 이동 · Shift 달리기 · 마우스 드래그 둘러보기<br>[ ] 회전 · R/F 위아래 · +/- 거리 · \\ 초기화";
   }
   modeBtn.onclick = () => setWalking(!walking);
   window.addEventListener("avatar-ready", () => { window.Avatar.setVisible(walking); if (walking) drawMe(); });
@@ -744,7 +745,9 @@ function init(S) {
     if (walking) {
       const k = c => keys.has(c); let moved = false;
       const tilt = (k("KeyR") ? 1 : 0) - (k("KeyF") ? 1 : 0);
-      if (tilt) { wpitch = clampW(wpitch + tilt * 60 * dt); moved = true; }
+      if (tilt) wpitch = clampW(wpitch + tilt * 60 * dt);
+      if (Math.abs(wpitch - wps) > 0.02) { wps += (wpitch - wps) * Math.min(1, dt * 16); moved = true; }   // 시점은 목표값을 향해 부드럽게 따라간다
+      if (occDirty && t - lastOcc > 120) { occDirty = false; lastOcc = t; updateOccluders(); }
       const f = (k("KeyW") || k("ArrowUp") ? 1 : 0) - (k("KeyS") || k("ArrowDown") ? 1 : 0), sd = (k("KeyD") || k("ArrowRight") ? 1 : 0) - (k("KeyA") || k("ArrowLeft") ? 1 : 0);
       if (f || sd) {
         const sp = (k("ShiftLeft") || k("ShiftRight") ? 3.5 : 1.4) * dt, h = heading * Math.PI / 180;
