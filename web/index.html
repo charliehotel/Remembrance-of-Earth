@@ -170,7 +170,7 @@ function init(S) {
             cbox(c, ang, hook - 0.9, hook + 0.9, 0.9, mh - 6.2, mh - 5, "#c0392b")];
   }
   const ghostColor = (g, q) => q > 0.35 ? "#8c867c" : g.color;
-  let lastSig = "", lastDone = -1;
+  let lastSig = "", lastDone = -1, curBld = [], occKey = "";
   function dyn(T) {
     const bld = [], crane = [], ghost = []; let nb = 0, prog = false;
     for (const f of S.buildings.features) {
@@ -199,6 +199,7 @@ function init(S) {
     const d = dyn(T);
     if (force || d.sig !== lastSig) {
       lastSig = d.sig;
+      curBld = d.bld; occKey = "";
       map.getSource("buildings").setData({ type: "FeatureCollection", features: d.bld });
       map.getSource("cranes").setData({ type: "FeatureCollection", features: d.crane });
       map.getSource("ghosts").setData({ type: "FeatureCollection", features: d.ghost });
@@ -212,7 +213,7 @@ function init(S) {
     container: "map", style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e9e6df" } }] },
     locale: { "NavigationControl.ZoomIn": "확대 ( = 또는 + )", "NavigationControl.ZoomOut": "축소 ( - )",
               "NavigationControl.ResetBearing": "북쪽을 위로 ( \\ )" },
-    center: [126.9395, 37.5589], zoom: 17.2, pitch: 55, bearing: -20, maxPitch: 85
+    center: [126.9395, 37.5589], zoom: 17.2, pitch: 55, bearing: -20, maxPitch: 85, maxZoom: 26
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }));
   map.keyboard.disable();   // 방향키는 직접 처리(날기: 화면 이동, 걷기: 이동)
@@ -289,6 +290,7 @@ function init(S) {
     // 주변 맥락(창천교회 반경 300m): 아직 구현하지 않은 곳이라 흐리게만 그린다. 클릭·검색 대상 아님.
     if (S.context) {
       map.addSource("ctx-parcels", { type: "geojson", data: S.context.parcels });
+      S.context.buildings.features.forEach((f, i) => f.properties.cid = i);
       map.addSource("ctx-bld", { type: "geojson", data: S.context.buildings });
       map.addSource("ctx-ring", { type: "geojson", data: S.context.boundary });
       map.addLayer({ id: "ctx-fill", type: "fill", source: "ctx-parcels", paint: {
@@ -296,6 +298,8 @@ function init(S) {
       map.addLayer({ id: "ctx-line", type: "line", source: "ctx-parcels", paint: { "line-color": "#c9c5bc", "line-width": 0.5 } });
       map.addLayer({ id: "ctx-bld", type: "fill-extrusion", source: "ctx-bld", paint: {
         "fill-extrusion-color": "#d6d3cc", "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.45 } });
+      map.addLayer({ id: "ctx-bld-x", type: "fill-extrusion", source: "ctx-bld", filter: ["in", ["get", "cid"], ["literal", [-1]]], paint: {   // 카메라를 가리는 주변 건물
+        "fill-extrusion-color": "#d6d3cc", "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.1 } });
       map.addLayer({ id: "ctx-ring", type: "line", source: "ctx-ring", paint: {
         "line-color": "#a49d8f", "line-width": 1.5, "line-dasharray": [3, 3] } });
     }
@@ -313,6 +317,10 @@ function init(S) {
       "fill-extrusion-base": ["coalesce", ["get", "base"], 0],
       "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
       "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.92 } });
+    map.addLayer({ id: "bld-x", type: "fill-extrusion", source: "buildings", filter: ["in", ["get", "bid"], ["literal", [""]]], paint: {   // 카메라를 가리는 건물(반투명)
+      "fill-extrusion-base": ["coalesce", ["get", "base"], 0],
+      "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
+      "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.2 } });
     map.addSource("cranes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     map.addSource("ghosts", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     const ext = { "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 0.95 };
@@ -592,7 +600,7 @@ function init(S) {
   // ---------- 걷기 ----------
   const KX = 111320 * Math.cos(37.559 * Math.PI / 180), KY = 110540;
   const modeBtn = document.getElementById("mode"), hint = document.getElementById("hint");
-  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 70, wzoom = 20.3, applying = false, lookDragged = false; const keys = new Set();
+  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 70, wdist = 5, applying = false, lookDragged = false; const keys = new Set();
   const clampP = p => Math.max(0, Math.min(85, p));
   const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
     if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
@@ -623,23 +631,58 @@ function init(S) {
       box(x + fwd[0], y + fwd[1], 0.05, 0.05, 1.62, 1.55, "#222", heading) // 시선 방향 표시
     ] });
   }
-  const WZ_MIN = 18.8, WZ_MAX = 22, WZ_DEF = 20.3, WP_DEF = 70;
-  function applyWalkCam() {   // 어깨 뒤 시점: 캐릭터를 화면 왼쪽 아래에 두고, 줌(거리)·피치는 저장한 값을 쓴다
+  const WD_MIN = 4, WD_MAX = 60, WD_DEF = 5, WP_DEF = 70, ZMAX = 23.9, EYE = 1.2;
+  const mapW = () => 78271.517 * Math.cos(pos[1] * Math.PI / 180) * 1.5 * map.getContainer().clientHeight;   // 줌 z에서 카메라 거리(m) = mapW / 2^z
+  const distToZoom = D => Math.min(ZMAX, Math.log2(mapW() / D));
+  function applyWalkCam() {   // 어깨 뒤 시점: 카메라는 캐릭터 뒤 wdist(m), 캐릭터는 화면 왼쪽 아래
     const w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
+    const z = distToZoom(wdist); wdist = mapW() / Math.pow(2, z);
     applying = true;
-    map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: wzoom, padding: { top: h * 0.3, right: w * 0.22, bottom: 0, left: 0 } });
-    applying = false; drawMe();
+    map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: z, padding: { top: h * 0.25, right: w * 0.2, bottom: 0, left: 0 } });
+    applying = false; drawMe(); updateOccluders();
   }
-  const setDist = dz => { wzoom = Math.max(WZ_MIN, Math.min(WZ_MAX, wzoom + dz)); applyWalkCam(); };
-  map.on("zoomend", () => { if (!walking || applying) return;   // 휠·지도 버튼으로 바뀐 줌도 거리로 받아들이고 캐릭터를 다시 중심에 둔다
-    wzoom = Math.max(WZ_MIN, Math.min(WZ_MAX, map.getZoom())); applyWalkCam(); });
+  const setDist = f => { wdist = Math.max(WD_MIN, Math.min(WD_MAX, wdist * f)); applyWalkCam(); };
+  map.on("zoomend", () => { if (!walking || applying) return;   // 지도 버튼으로 바뀐 줌도 거리로 받아들인다
+    wdist = Math.max(WD_MIN, Math.min(WD_MAX, mapW() / Math.pow(2, map.getZoom()))); applyWalkCam(); });
+  // 카메라와 캐릭터 사이에 낀 건물은 반투명 레이어로 옮긴다
+  function updateOccluders() {
+    let bids = [], cids = [];
+    if (walking && map.getLayer("bld-x")) {
+      const cp = map.transform.getCameraPosition(), C = [(cp.lngLat.lng - pos[0]) * KX, (cp.lngLat.lat - pos[1]) * KY], ca = cp.altitude;
+      const dx = -C[0], dy = -C[1], hAt = t => ca + (EYE - ca) * t;
+      const hit = (ring, H) => {
+        let tmin = Infinity, tmax = -Infinity;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const ax = (ring[j][0] - pos[0]) * KX - C[0], ay = (ring[j][1] - pos[1]) * KY - C[1];
+          const ex = (ring[i][0] - ring[j][0]) * KX, ey = (ring[i][1] - ring[j][1]) * KY, den = dx * ey - dy * ex;
+          if (Math.abs(den) < 1e-9) continue;
+          const t = (ax * ey - ay * ex) / den, u = (ax * dy - ay * dx) / den;
+          if (t >= 0 && t <= 1 && u >= 0 && u <= 1) { tmin = Math.min(tmin, t); tmax = Math.max(tmax, t); }
+        }
+        if (inRing(cp.lngLat.lng, cp.lngLat.lat, ring)) { tmin = 0; if (tmax < 0) tmax = 0; }
+        return tmax >= 0 && Math.min(hAt(tmin), hAt(tmax)) < H;
+      };
+      const seen = new Set();
+      curBld.forEach(f => { const p = f.properties; if (!seen.has(p.bid) && hit(f.geometry.coordinates[0], p.height || 0)) seen.add(p.bid); });
+      bids = [...seen];
+      S.context.buildings.features.forEach(f => { if (hit(f.geometry.coordinates[0], f.properties.height || 0)) cids.push(f.properties.cid); });
+    }
+    const key = bids.join() + "|" + cids.join(); if (key === occKey) return; occKey = key;
+    const B = bids.length ? bids : [""], C = cids.length ? cids : [-1], hide = ["!=", ["get", "hide"], 1];
+    map.setFilter("bld", ["all", hide, ["!", ["in", ["get", "bid"], ["literal", B]]]]);
+    map.setFilter("bld-x", ["all", hide, ["in", ["get", "bid"], ["literal", B]]]);
+    if (map.getLayer("ctx-bld-x")) {
+      map.setFilter("ctx-bld", ["!", ["in", ["get", "cid"], ["literal", C]]]);
+      map.setFilter("ctx-bld-x", ["in", ["get", "cid"], ["literal", C]]);
+    }
+  }
   function setWalking(on) {
     walking = on; if (on) qInput.blur();   // 검색창에 포커스가 남아 있으면 WASD가 무시된다
     modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
-    ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
+    ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom", "scrollZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
     map.setLayoutProperty("me", "visibility", on ? "visible" : "none"); window.Avatar?.setVisible(on);
-    if (on) { pos = pos || startPos(); face = heading; anim = "idle"; applyWalkCam(); lastT = performance.now(); }
-    else { map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
+    if (on) { if (!pos) { pos = startPos(); face = heading; } anim = "idle"; applyWalkCam(); lastT = performance.now(); }
+    else { updateOccluders(); map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
     hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · +/- 거리 · \\ 초기화 · Shift 달리기";
   }
   modeBtn.onclick = () => setWalking(!walking);
@@ -656,9 +699,9 @@ function init(S) {
     if (e.target === qInput) return;   // 검색창에 입력 중에는 단축키를 쓰지 않는다
     if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); return; }
     if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (e.code === "Backslash") { e.preventDefault(); e.stopPropagation(); if (walking) { heading = 0; face = 0; wpitch = WP_DEF; wzoom = WZ_DEF; applyWalkCam(); } else map.resetNorth(); return; }
-      if (/^(Equal|NumpadAdd)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); if (walking) setDist(0.4); else map.zoomIn(); return; }
-      if (/^(Minus|NumpadSubtract)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); if (walking) setDist(-0.4); else map.zoomOut(); return; }
+      if (e.code === "Backslash") { e.preventDefault(); e.stopPropagation(); if (walking) { heading = 0; face = 0; wpitch = WP_DEF; wdist = WD_DEF; applyWalkCam(); } else map.resetNorth(); return; }
+      if (/^(Equal|NumpadAdd)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); if (walking) setDist(1 / 1.25); else map.zoomIn(); return; }
+      if (/^(Minus|NumpadSubtract)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); if (walking) setDist(1.25); else map.zoomOut(); return; }
     }
     if (/^(KeyR|KeyF|PageUp|PageDown)$/.test(e.code) && !e.ctrlKey && !e.metaKey) {   // 시점 위아래
       e.preventDefault(); const up = /^(KeyR|PageUp)$/.test(e.code);
@@ -673,6 +716,7 @@ function init(S) {
   window.addEventListener("keyup", ev => { const c = kc(ev); keys.delete(c); if (c === "PageUp") keys.delete("KeyR"); if (c === "PageDown") keys.delete("KeyF"); });
   // 걷기 모드: 마우스를 누른 채 끌면 1인칭 게임처럼 둘러본다(좌우 = 방향, 위아래 = 시선 높이)
   { const cv = map.getCanvas(); let drag = null;
+    cv.addEventListener("wheel", e => { if (!walking) return; e.preventDefault(); setDist(e.deltaY > 0 ? 1.12 : 1 / 1.12); }, { passive: false });
     cv.addEventListener("mousedown", e => { if (walking && e.button === 0) drag = { x: e.clientX, y: e.clientY, moved: 0 }; });
     window.addEventListener("mousemove", e => { if (!drag) return;
       const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
