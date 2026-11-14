@@ -142,7 +142,7 @@ function update(dt, W) {
         n.gt -= dt; if (n.gt <= 0) { n.gt = rand(3, 8); const g = GESTURES.filter(k => n.actions[k]); if (g.length) setAnim(n, pick(g), true); }
         break; }
     }
-    if (n.phone) n.phone.visible = n.mode === "call";
+    updatePhone(n.phone, n.mode === "call");
     const l = window.Avatar.local(n.pos[0], n.pos[1]);
     n.obj.position.set(l.x, 0, l.z);
     n.obj.rotation.y = Math.PI - n.heading * Math.PI / 180;
@@ -153,19 +153,48 @@ function update(dt, W) {
   }
 }
 
-function makePhone(model) {   // 머리 뼈의 왼쪽 귀 옆에 붙이는 작은 스마트폰(전화 중에만 보인다)
-  const head = model.getObjectByName("head"), hm = model.getObjectByName("head-mesh") || head;
-  if (!head) return null;
-  model.updateMatrixWorld(true);
-  const bb = new THREE.Box3().setFromObject(hm), c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3());
-  const ear = head.worldToLocal(new THREE.Vector3(bb.max.x + 0.01, c.y + sz.y * 0.05, c.z));   // 캐릭터 왼쪽 = +x
-  const ws = head.getWorldScale(new THREE.Vector3()).x || 1;
-  const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.12, 0.012), new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.4 }));
-  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.105), new THREE.MeshBasicMaterial({ color: 0x66b8ff }));
-  scr.position.x = -0.0065; scr.rotation.y = -Math.PI / 2;   // 화면은 머리 쪽(안쪽)이 아니라 바깥이 아닌 뺨 방향
-  g.add(body, scr); g.rotation.set(0, 0, -0.15); g.scale.setScalar(1 / ws); g.position.copy(ear); g.visible = false;
-  head.add(g); return g;
+function handTip(model, bone) {   // 팔 뼈에 가장 멀리 붙은 꼭짓점들의 평균 = 손 위치(뼈 좌표)
+  const sm = []; model.traverse(o => { if (o.isSkinnedMesh) sm.push(o); });
+  for (const m of sm) {
+    const bi = m.skeleton.bones.indexOf(bone); if (bi < 0) continue;
+    const g = m.geometry, pos = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
+    const mat = new THREE.Matrix4().multiplyMatrices(m.skeleton.boneInverses[bi], m.bindMatrix), pts = [];
+    for (let v = 0; v < pos.count; v++) {
+      let w = 0; for (let k = 0; k < 4; k++) if (si.getComponent(v, k) === bi) w += sw.getComponent(v, k);
+      if (w > 0.5) pts.push(new THREE.Vector3().fromBufferAttribute(pos, v).applyMatrix4(mat));
+    }
+    if (!pts.length) continue;
+    const mx = Math.max(...pts.map(p => p.length())), far = pts.filter(p => p.length() > mx * 0.8);
+    return far.reduce((a, p) => a.add(p), new THREE.Vector3()).divideScalar(far.length);
+  }
+  return null;
+}
+
+function makePhone(model) {   // 양손에 폰을 하나씩 준비하고, 전화 중에는 앞으로 나온 손의 것만 보여 준다
+  const hands = [];
+  for (const name of ["arm-left", "arm-right"]) {
+    const bone = model.getObjectByName(name), tip = bone && handTip(model, bone); if (!tip) continue;
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.15, 0.014), new THREE.MeshStandardMaterial({ color: 0x15171c, roughness: 0.4 })));
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.073, 0.13), new THREE.MeshBasicMaterial({ color: 0x7cc4ff })); scr.position.z = 0.0075; g.add(scr);
+    g.visible = false; bone.add(g); hands.push({ bone, tip, g });
+  }
+  return hands.length ? { hands, model } : null;
+}
+const _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _v = new THREE.Vector3(), _tilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(-1.9, 0, 0));
+function updatePhone(ph, on) {
+  if (!ph) return;
+  if (!on) { ph.hands.forEach(h => h.g.visible = false); return; }
+  ph.model.updateMatrixWorld(true);
+  let best = null, bz = -Infinity;
+  for (const h of ph.hands) { const z = ph.model.worldToLocal(h.bone.localToWorld(_v.copy(h.tip))).z; if (z > bz) { bz = z; best = h; } }
+  for (const h of ph.hands) {
+    h.g.visible = h === best; if (h !== best) continue;
+    const ws = h.bone.getWorldScale(new THREE.Vector3()).x || 1;
+    h.g.scale.setScalar(1 / ws); h.g.position.copy(h.tip);
+    h.bone.getWorldQuaternion(_q); ph.model.getWorldQuaternion(_q2);
+    h.g.quaternion.copy(_q.invert().multiply(_q2).multiply(_tilt));   // 화면이 위(얼굴 쪽)를 보게 모델 기준으로 고정
+  }
 }
 
 async function start() {
