@@ -125,6 +125,8 @@
 </div>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="scene.js"></script>
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }</script>
+<script type="module" src="avatar.js"></script>
 <script>
 const FIRST_SURVEY = 2008;  // 로드뷰 간판 조사 첫 해
 init(window.SCENE);
@@ -325,6 +327,7 @@ function init(S) {
       "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"],
       "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 1 } });
     update();
+    window.__map = map; window.__mapReady = true; window.dispatchEvent(new Event("map-ready"));   // avatar.js가 three.js 레이어를 붙인다
   });
 
   let selected = null, focusBiz = null;
@@ -609,6 +612,9 @@ function init(S) {
     return { type: "Feature", properties: { base: b, top: h, color }, geometry: { type: "Polygon", coordinates: [pts] } };
   };
   function drawMe() {
+    if (window.Avatar?.isReady()) {   // 3D 캐릭터가 준비되면 상자 대신 쓴다
+      window.Avatar.set(pos, heading); map.getSource("me").setData({ type: "FeatureCollection", features: [] }); return;
+    }
     const [x, y] = pos, fwd = [Math.sin(heading * Math.PI / 180) * 0.3 / KX, Math.cos(heading * Math.PI / 180) * 0.3 / KY];
     map.getSource("me").setData({ type: "FeatureCollection", features: [
       box(x, y, 0.22, 0.14, 0.85, 0, "#33415c", heading),            // 다리
@@ -622,12 +628,13 @@ function init(S) {
     walking = on; if (on) qInput.blur();   // 검색창에 포커스가 남아 있으면 WASD가 무시된다
     modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
     ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
-    map.setLayoutProperty("me", "visibility", on ? "visible" : "none");
+    map.setLayoutProperty("me", "visibility", on ? "visible" : "none"); window.Avatar?.setVisible(on);
     if (on) { pos = pos || startPos(); applyWalkCam(); lastT = performance.now(); }
     else map.easeTo({ pitch: 55, zoom: 18, duration: 600 });
     hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · Shift 달리기";
   }
   modeBtn.onclick = () => setWalking(!walking);
+  window.addEventListener("avatar-ready", () => { window.Avatar.setVisible(walking); if (walking) drawMe(); });
   // 한글 입력 상태에서도 같은 키로 인식: code가 비거나 엉뚱할 때 key(자모)·keyCode로 되살린다
   const JAMO = { "ㅈ": "KeyW", "ㅁ": "KeyA", "ㄴ": "KeyS", "ㅇ": "KeyD", "ㅂ": "KeyQ", "ㄷ": "KeyE", "ㄱ": "KeyR", "ㄹ": "KeyF",
                  "ㅉ": "KeyW", "ㅃ": "KeyQ", "ㄸ": "KeyE", "ㄲ": "KeyR", "ㅆ": "KeyS" };
