@@ -592,7 +592,7 @@ function init(S) {
   // ---------- 걷기 ----------
   const KX = 111320 * Math.cos(37.559 * Math.PI / 180), KY = 110540;
   const modeBtn = document.getElementById("mode"), hint = document.getElementById("hint");
-  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 78, lookDragged = false; const keys = new Set();
+  const pressed = new Set(), flash = new Map(); let walking = false, pos = null, heading = 0, face = 0, anim = "idle", wpitch = 70, wzoom = 20.3, applying = false, lookDragged = false; const keys = new Set();
   const clampP = p => Math.max(0, Math.min(85, p));
   const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
     if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
@@ -623,15 +623,24 @@ function init(S) {
       box(x + fwd[0], y + fwd[1], 0.05, 0.05, 1.62, 1.55, "#222", heading) // 시선 방향 표시
     ] });
   }
-  function applyWalkCam() { map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: 20.3 }); drawMe(); }
+  const WZ_MIN = 18.8, WZ_MAX = 22, WZ_DEF = 20.3, WP_DEF = 70;
+  function applyWalkCam() {   // 어깨 뒤 시점: 캐릭터를 화면 왼쪽 아래에 두고, 줌(거리)·피치는 저장한 값을 쓴다
+    const w = map.getContainer().clientWidth, h = map.getContainer().clientHeight;
+    applying = true;
+    map.jumpTo({ center: pos, bearing: heading, pitch: wpitch, zoom: wzoom, padding: { top: h * 0.3, right: w * 0.22, bottom: 0, left: 0 } });
+    applying = false; drawMe();
+  }
+  const setDist = dz => { wzoom = Math.max(WZ_MIN, Math.min(WZ_MAX, wzoom + dz)); applyWalkCam(); };
+  map.on("zoomend", () => { if (!walking || applying) return;   // 휠·지도 버튼으로 바뀐 줌도 거리로 받아들이고 캐릭터를 다시 중심에 둔다
+    wzoom = Math.max(WZ_MIN, Math.min(WZ_MAX, map.getZoom())); applyWalkCam(); });
   function setWalking(on) {
     walking = on; if (on) qInput.blur();   // 검색창에 포커스가 남아 있으면 WASD가 무시된다
     modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
     ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
     map.setLayoutProperty("me", "visibility", on ? "visible" : "none"); window.Avatar?.setVisible(on);
     if (on) { pos = pos || startPos(); face = heading; anim = "idle"; applyWalkCam(); lastT = performance.now(); }
-    else map.easeTo({ pitch: 55, zoom: 18, duration: 600 });
-    hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · Shift 달리기";
+    else { map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
+    hint.textContent = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게" : "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · 마우스 드래그로 둘러보기 · +/- 거리 · \\ 초기화 · Shift 달리기";
   }
   modeBtn.onclick = () => setWalking(!walking);
   window.addEventListener("avatar-ready", () => { window.Avatar.setVisible(walking); if (walking) drawMe(); });
@@ -647,9 +656,9 @@ function init(S) {
     if (e.target === qInput) return;   // 검색창에 입력 중에는 단축키를 쓰지 않는다
     if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); return; }
     if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (e.code === "Backslash") { e.preventDefault(); e.stopPropagation(); if (walking) { heading = 0; wpitch = 78; applyWalkCam(); } else map.resetNorth(); return; }
-      if (!walking && /^(Equal|NumpadAdd)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); map.zoomIn(); return; }
-      if (!walking && /^(Minus|NumpadSubtract)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); map.zoomOut(); return; }
+      if (e.code === "Backslash") { e.preventDefault(); e.stopPropagation(); if (walking) { heading = 0; face = 0; wpitch = WP_DEF; wzoom = WZ_DEF; applyWalkCam(); } else map.resetNorth(); return; }
+      if (/^(Equal|NumpadAdd)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); if (walking) setDist(0.4); else map.zoomIn(); return; }
+      if (/^(Minus|NumpadSubtract)$/.test(e.code)) { e.preventDefault(); e.stopPropagation(); if (walking) setDist(-0.4); else map.zoomOut(); return; }
     }
     if (/^(KeyR|KeyF|PageUp|PageDown)$/.test(e.code) && !e.ctrlKey && !e.metaKey) {   // 시점 위아래
       e.preventDefault(); const up = /^(KeyR|PageUp)$/.test(e.code);
