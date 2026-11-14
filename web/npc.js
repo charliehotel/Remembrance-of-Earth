@@ -1,7 +1,6 @@
 // 걷기 모드의 행인(사람·동물). 역할마다 행동이 다르다.
 //  walker : 도로를 걷다가 서 있거나 건물을 구경한다
 //  watcher: 건물을 올려다보며 구경하고, 가끔 다른 곳으로 옮겨 간다
-//  caller : 서서 전화하고, 가끔 걸으면서 자리를 옮긴다
 //  talker : 2~3명이 한 곳에 모여(gather) 마주 보고 이야기하다(talk), 다 같이 다른 곳으로 옮긴다
 //  pet    : 동물. 걷다가 먹거나(eat) 춤춘다(dance)
 import * as THREE from "three";
@@ -15,14 +14,15 @@ const P = (role, group) => ({ url: human(), h: 1.7, speed: 1.25, role, group });
 const SPECS = [
   P("walker"), P("walker"), P("walker"), P("walker"),
   P("watcher"), P("watcher"),
-  P("caller"), P("caller"),
+  P("walker"), P("walker"),
   P("talker", 0), P("talker", 0), P("talker", 0),   // 이야기 모임 A (3명)
   P("talker", 1), P("talker", 1),                   // 이야기 모임 B (2명)
   animal("dog", 0.6, 1.1), animal("fox", 0.55, 1.0), animal("cat", 0.35, 0.9),
   animal("bunny", 0.4, 0.8), animal("pig", 0.6, 0.7), animal("panda", 0.9, 0.7),
 ];
-const CLIPS = ["idle", "walk", "holding-left", "interact-left", "interact-right", "emote-yes", "emote-no", "eat", "dance"];
-const PHONE = ["holding-left", "interact-left"];   // 전화 자세로 쓸 동작(앞에서부터 있는 것). 화면에서 어색하면 이 순서를 바꾼다
+const CLIPS = ["idle", "walk", "interact-left", "interact-right", "emote-yes", "emote-no", "eat", "dance"];
+// (전화 동작은 핸드폰 모델 없이는 빈손으로 멈춘 것처럼 보여서 뺐다)
+   // 전화 자세로 쓸 동작(앞에서부터 있는 것). 화면에서 어색하면 이 순서를 바꾼다
 const GESTURES = ["emote-yes", "emote-no", "interact-left", "interact-right"];
 
 const rng = (() => { let a = 20260101; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })();
@@ -68,10 +68,6 @@ function startWatch(n, W) {
   const p = nearestBuilding(n, W); if (!p) return startStand(n);
   n.mode = "watch"; n.timer = rand(8, 18); n.look = p; n.phase = rand(0, 6.28); setAnim(n, "idle");
 }
-function startCall(n) {
-  const a = PHONE.find(k => n.actions[k]); if (!a) return startStand(n);
-  n.mode = "call"; n.timer = rand(15, 30); n.base = n.heading; n.phase = rand(0, 6.28); setAnim(n, a);
-}
 function startWalk(n, W, dmin = 6, dmax = 20) {   // 갈 수 있는 목표 찾기
   for (let i = 0; i < 8; i++) {
     const t = pickSpot(W, n.pos, dmin, dmax); if (!t) break;
@@ -86,7 +82,6 @@ function startTalk(n, W) {
 
 function think(n, W) {   // 한 행동이 끝났을 때 다음 행동 고르기
   const was = n.mode;
-  if (n.role === "caller") { if (was === "call") startWalk(n, W, 4, 10); else startCall(n); return; }
   if (n.role === "watcher") { if (was === "watch") startWalk(n, W, 8, 25); else startWatch(n, W); return; }
   const r = rng();   // walker, pet
   if (was === "wander") { if (r < 0.3 && n.role === "walker") startWatch(n, W); else if (r < 0.65) startStand(n); else startWalk(n, W); }
@@ -126,9 +121,6 @@ function update(dt, W) {
       case "watch": {   // 건물 쪽을 보며 천천히 좌우로 둘러본다
         turnTo(n, bearing(n, n.look, W) + Math.sin(clockT * 0.5 + n.phase) * 28, dt, 3);
         n.timer -= dt; if (n.timer <= 0) think(n, W); break; }
-      case "call":
-        turnTo(n, n.base + Math.sin(clockT * 0.3 + n.phase) * 20, dt, 2);
-        n.timer -= dt; if (n.timer <= 0) think(n, W); break;
       case "wander": {
         const r = moveToward(n, n.target, n.speed, dt, W);
         if (r === "arrived") think(n, W); else if (r === "blocked") startStand(n, rand(1, 3)); break; }
@@ -172,8 +164,7 @@ async function start() {
     npcs.push(n);
     if (spec.role === "talker") continue;
     setAnim(n, "idle"); mixer.update(rand(0, 2));
-    if (spec.role === "caller") startCall(n);
-    else if (spec.role === "watcher") startWatch(n, W);
+    if (spec.role === "watcher") startWatch(n, W);
     else startStand(n, rand(0, 4));
   }
   for (const g of Object.values(gmap)) {   // 모임 장소를 정하고, 멤버는 근처에서 시작해 걸어와 모인다
