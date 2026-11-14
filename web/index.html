@@ -60,6 +60,20 @@
   .flr .fh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 4px; }
   .flr .fs { color: #666; font-size: 12px; flex-basis: 100%; }
   .flr .hint { margin: 2px 0 4px; }
+  .flr .fh[data-fk] { cursor: pointer; }
+  .flr .fh[data-fk]:hover b { text-decoration: underline; }
+  .flr.sel { border-left-color: #e63946; background: #fff3f3; }
+  #fstack { position: absolute; right: 12px; bottom: 96px; z-index: 5; width: 54px; background: rgba(255,255,255,.95); border-radius: 10px;
+            box-shadow: 0 1px 6px rgba(0,0,0,.25); padding: 6px 5px; font: 12px system-ui, sans-serif; }
+  #fstack[hidden] { display: none; }
+  #fstack .ft { text-align: center; font-weight: 700; margin-bottom: 4px; color: #555; font-size: 11px; }
+  #fstack button { position: relative; display: block; width: 100%; margin: 2px 0; padding: 3px 0; border: 1px solid #ccc; border-radius: 5px; background: #fff; cursor: pointer; font: 600 12px system-ui, sans-serif; }
+  #fstack button.ug { background: #f1f1f1; color: #666; }
+  #fstack button.on { background: #e63946; border-color: #e63946; color: #fff; }
+  #fstack button.live::after { content: ""; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #2b7a4b; }
+  #fstack button.iso { margin-top: 6px; font-size: 11px; background: #fff; border-color: #888; }
+  #fstack button.iso.on { background: #333; border-color: #333; color: #fff; }
+  #fstack .fn { margin-top: 4px; font-size: 10px; line-height: 1.35; color: #666; width: 150px; margin-left: -96px; background: rgba(255,255,255,.95); padding: 4px 6px; border-radius: 6px; }
   .flr .reg { margin: 3px 0 4px; padding: 4px 7px; background: #eef3fb; border-radius: 5px; font-size: 12px; color: #334; line-height: 1.5; }
   .flr .reg .tag { background: #d9e4f7; }
   .b details { margin: 2px 0 0; font-size: 12px; }
@@ -101,6 +115,7 @@
 <div id="map"></div>
 <div id="tip"></div>
 <div id="labels"></div>
+<div id="fstack" hidden></div>
 <div id="side">
   <div id="sideHead">
     <div class="brand"><div class="ko">대지의 기억</div><div class="en">Remembrance of Earth</div></div>
@@ -337,6 +352,9 @@ function init(S) {
     const ext = { "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 0.95 };
     map.addLayer({ id: "ghost", type: "fill-extrusion", source: "ghosts", paint: { ...ext, "fill-extrusion-opacity": 0.9 } });
     map.addLayer({ id: "crane", type: "fill-extrusion", source: "cranes", paint: ext });
+    map.addSource("floor-sel", { type: "geojson", data: { type: "FeatureCollection", features: [] } });   // 선택한 층 강조 슬래브
+    map.addLayer({ id: "floor-sel", type: "fill-extrusion", source: "floor-sel", paint: {
+      "fill-extrusion-color": "#e63946", "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 0.88 } });
     const none = ["==", ["get", "jibun"], ""];
     map.addLayer({ id: "span-fill", type: "fill", source: "parcels", filter: none, paint: { "fill-color": "#f08a00", "fill-opacity": 0.2 } });
     map.addLayer({ id: "span-line", type: "line", source: "parcels", filter: none,
@@ -349,7 +367,7 @@ function init(S) {
     window.__map = map; window.__mapReady = true; window.dispatchEvent(new Event("map-ready"));   // avatar.js가 three.js 레이어를 붙인다
   });
 
-  let selected = null, focusBiz = null;
+  let selected = null, focusBiz = null, selFloor = null, floorJ = null, lastFloors = null, isolate = false;
   const fmt = d => { if (!d) return ""; const m = d.split("-"); return `${m[0]}년` + (m[1] ? ` ${+m[1]}월` : "") + (m[2] ? ` ${+m[2]}일` : ""); };
   const bizName = b => b.name === "상호" ? "상호 미확인 간판" : b.name;
   function bizPeriod(b) {
@@ -498,12 +516,53 @@ function init(S) {
   const GRADE = { A: "인허가 기록", C: "간판 기록" };
   const EMPTY_HTML = '<div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div>';
   function clearSelection() {
-    selected = null; focusBiz = null;
+    selected = null; focusBiz = null; selFloor = null; floorJ = null; lastFloors = null;
     const none = ["==", ["get", "jibun"], ""];
     ["parcel-sel", "parcel-sel-fill", "span-fill", "span-line"].forEach(id => map.setFilter(id, none));
     document.getElementById("detail").innerHTML = EMPTY_HTML;
+    applyFloor(); renderStack();
+  }
+  // ---------- 지도 위 층 선택: 건물 높이를 지상층수로 똑같이 나눈 근사 층 높이로 그 층 구간만 강조한다 ----------
+  const outwardRing = (ring, d) => { const c = ringMid(ring);   // 건물 벽과 겹쳐 깜빡이지 않게 윤곽을 d m 바깥으로 민다
+    return ring.map(([x, y]) => { const vx = (x - c[0]) * KXm, vy = (y - c[1]) * KYm, L = Math.hypot(vx, vy) || 1;
+      return [x + vx / L * d / KXm, y + vy / L * d / KYm]; }); };
+  function applyFloor() {
+    const src = map.getSource("floor-sel"); if (!src) return;
+    const feats = [];
+    if (selected && selFloor && /^\d+$/.test(selFloor)) {
+      const k = +selFloor;
+      buildingsAt(Tnow()).filter(f => f.properties.jibun === selected && !f.properties.part && (f.properties.floors_up || 0) >= k).forEach(f => {
+        const H = bldH[f.properties.bid] || f.properties.height, fu = f.properties.floors_up, h = H / fu;
+        feats.push({ type: "Feature", properties: { base: (k - 1) * h, top: k * h + (k === fu ? 0.2 : 0.02) },
+          geometry: { type: "Polygon", coordinates: f.geometry.coordinates.map((r, i) => i ? r : outwardRing(r, 0.25)) } });
+      });
+    }
+    src.setData({ type: "FeatureCollection", features: feats });
+    // '이 필지만 보기': 층을 고른 동안 다른 건물·주변 회색 건물을 숨겨 낮은 층도 보이게 한다
+    const iso = isolate && selected && selFloor, base = ["!=", ["get", "hide"], 1];
+    map.setFilter("bld", iso ? ["all", base, ["==", ["get", "jibun"], selected]] : base);
+    ["ctx-bld", "ctx-bld-x"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
+  }
+  function pickFloor(k) {
+    selFloor = selFloor === k ? null : k;
+    if (!selected) return;
+    const body = document.getElementById("sideBody"), st = body.scrollTop;
+    show(selected); body.scrollTop = st;
+  }
+  function renderStack() {
+    const el = document.getElementById("fstack"), L = lastFloors;
+    const ks = L && selected === L.jibun ? L.keys.filter(k => k !== "?") : [];
+    if (!ks.length) { el.hidden = true; return; }
+    const name = k => k === "R" ? "옥탑" : k[0] === "B" ? k : k + "F";
+    el.innerHTML = `<div class="ft">층 선택</div>` + ks.map(k => `<button data-fk="${k}" class="${selFloor === k ? "on" : ""} ${/^\d+$/.test(k) ? "" : "ug"} ${L.live(k) ? "live" : ""}" title="${k === "R" ? "옥탑" : floorLabel(k)} · 상호 ${L.count(k)}곳${L.live(k) ? " (그 해 영업 근거 있음)" : ""}">${name(k)}</button>`).join("") +
+      (selFloor ? `<button class="iso ${isolate ? "on" : ""}" data-iso="1" title="다른 건물을 숨겨 이 필지의 층만 보여 줍니다">${isolate ? "전체" : "단독"}</button>` : "") +
+      (selFloor ? `<div class="fn">${/^\d+$/.test(selFloor) ? "층 높이는 건물 높이÷층수로 나눈 근사입니다." + (L.landmark ? " 랜드마크는 형상이 박스가 아니어서 위치가 더 어긋납니다." : "") : "지하·옥탑은 지도에 표시하지 않습니다."}</div>` : "");
+    el.hidden = false;
+    el.querySelectorAll("button[data-fk]").forEach(b => b.onclick = () => pickFloor(b.dataset.fk));
+    const ib = el.querySelector("button[data-iso]"); if (ib) ib.onclick = () => { isolate = !isolate; applyFloor(); renderStack(); };
   }
   function show(jibun) {
+    if (jibun !== floorJ) { selFloor = null; floorJ = jibun; }
     selected = jibun;
     map.setFilter("parcel-sel", ["==", ["get", "jibun"], jibun]);
     map.setFilter("parcel-sel-fill", ["==", ["get", "jibun"], jibun]);
@@ -565,16 +624,20 @@ function init(S) {
     if (byFloor["?"]) keys.push("?");
     const regHtml = rows => rows.length ? `<div class="reg"><b>건축물대장 층별개요</b> <span class="tag">현재 대장 기준</span>` + rows.map(r =>
       `<div>${r.use}${r.etc && r.etc !== r.use ? " · " + r.etc : ""} · ${r.area}㎡${r.area_excl ? "(연면적 제외)" : ""} · ${r.struct}${r.att ? " · 부속건축물" : ""}${multiPk ? ` · ${r.apr.slice(0, 4)}년 사용승인 건물` : ""}${r.label !== "1층" && /^중/.test(r.label) ? ` · ${r.label}` : ""}</div>`).join("") + `</div>` : "";
+    lastFloors = { jibun, keys, count: k => (byFloor[k] || []).length, live: k => (byFloor[k] || []).some(b => act.includes(b)),
+      landmark: blds.some(b => (b.flags || []).includes("landmark_proxy")) };
     h += all.length || topFl ? keys.map(k => {
       const list = byFloor[k] || [], now = list.filter(b => act.includes(b)), reg = regBy[k] || [];
       const head = k === "?" ? "층 미상" : k === "R" ? "옥탑" : floorLabel(k);
       const regUse = [...new Set(reg.map(r => r.use))].join(", ");
       const sum = (!list.length ? "상호 근거 없음" : now.length ? `${y}년 영업 근거: ${now.map(labelOf).join(", ")}` : `${y}년 영업 근거 없음`) + (regUse ? ` · 대장 용도: ${regUse}` : "");
-      return `<div class="flr ${now.length ? "has" : ""}"><div class="fh"><b>${head}</b><span class="tag">${list.length}곳</span><span class="fs">${sum}</span></div>` + regHtml(reg) +
+      return `<div class="flr ${now.length ? "has" : ""} ${selFloor === k ? "sel" : ""}"><div class="fh" ${k === "?" ? "" : `data-fk="${k}" title="클릭하면 지도에서 이 층을 강조합니다"`}><b>${head}</b><span class="tag">${list.length}곳</span><span class="fs">${sum}</span></div>` + regHtml(reg) +
         (list.length ? list.map(b => bizCard(b, act, k)).join("") : '<div class="hint">이 층에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>') + `</div>`;
     }).join("") : '<div class="hint">이 필지에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>';
     const det = document.getElementById("detail"); det.innerHTML = h;
     det.querySelectorAll(".jump").forEach(a => a.onclick = () => { focusBiz = null; goParcel(a.dataset.j); });
+    det.querySelectorAll(".fh[data-fk]").forEach(el => el.onclick = () => pickFloor(el.dataset.fk));
+    applyFloor(); renderStack();
   }
   const side = document.getElementById("side"), sideToggle = document.getElementById("sideToggle");
   function setSide(open) {
@@ -746,7 +809,7 @@ function init(S) {
     }
   }
   function setWalking(on) {
-    walking = on; if (on) qInput.blur();   // 검색창에 포커스가 남아 있으면 WASD가 무시된다
+    walking = on; if (on) { qInput.blur(); if (isolate) { isolate = false; applyFloor(); renderStack(); } }   // 검색창에 포커스가 남아 있으면 WASD가 무시된다. 걷기 모드는 자체 가림 처리를 쓰므로 '단독 보기'를 푼다
     modeBtn.textContent = on ? "🦅 날기 모드" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
     ["dragPan", "dragRotate", "touchZoomRotate", "doubleClickZoom", "scrollZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
     map.setLayoutProperty("me", "visibility", on ? "visible" : "none"); window.Avatar?.setVisible(on);
