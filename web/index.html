@@ -55,6 +55,14 @@
   .b .m { color: #666; font-size: 12px; }
   .tag { display: inline-block; font-size: 11px; padding: 0 5px; border-radius: 3px; background: #eee; margin-left: 4px; }
   .tag.warn { background: #fde7c4; }
+  .flr { margin: 8px 0; padding: 4px 0 2px 8px; border-left: 4px solid #ddd; }
+  .flr.has { border-left-color: #2b7a4b; background: #f6fbf8; }
+  .flr .fh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 4px; }
+  .flr .fs { color: #666; font-size: 12px; flex-basis: 100%; }
+  .flr .hint { margin: 2px 0 4px; }
+  .b details { margin: 2px 0 0; font-size: 12px; }
+  .b summary { cursor: pointer; color: #1a5fb4; }
+  .b .ev { margin-top: 3px; padding: 5px 7px; background: #f4f4f4; border-radius: 5px; color: #444; line-height: 1.55; }
   #legend { position: absolute; top: 12px; right: 92px; max-width: calc(100vw - 430px); background: rgba(255,255,255,.94); border-radius: 10px;
             padding: 8px 12px; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.25); line-height: 1.7; }
   #bar .row2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
@@ -346,6 +354,41 @@ function init(S) {
     if (b.grade === "C") return `${fmt(b.sign_first)}부터 ${fmt(b.sign_last)}까지 확인됨`;
     return `${fmt(b.start) || "시작 미상"}부터 영업(인허가), ` + (b.end ? `${fmt(b.end)} 폐업(${b.end_basis})` : "폐업 기록 없음");
   }
+  // ---------- 층별 영업 이력 ----------
+  const normFloor = t => { const m = /(?:지하\s*(\d+)\s*층?|B\s*(\d+))/i.exec(t); if (m) return "B" + (m[1] || m[2]);
+    const n = /(\d+)\s*층/.exec(t); return n ? n[1] : null; };
+  const floorLabel = k => k[0] === "B" ? `지하 ${k.slice(1)}층` : `${k}층`;
+  // [층 키 목록, 출처]. 인허가 주소의 층 표기 > 로드뷰 구획
+  function bizFloorInfo(b) {
+    if (b.floor) { const k = normFloor(b.floor.replace(/^(\d+)$/, "$1층")) || normFloor(b.floor); if (k) return [[k], "인허가 주소의 층 표기"]; }
+    const ks = [...new Set((b.sign_units || "").split("|").map(normFloor).filter(Boolean))];
+    return ks.length ? [ks, "로드뷰 간판 구획"] : [[], ""];
+  }
+  const bizFloors = b => bizFloorInfo(b)[0];
+  const labelOf = b => bizName(b);
+  function bizCard(b, act, fk) {
+    const tags = [];
+    if (b.flags.includes("stale_open")) tags.push('<span class="tag warn">폐업신고 누락 의심</span>');
+    if (b.flags.includes("spans_rebuild")) tags.push('<span class="tag warn">재건축 시기와 겹침</span>');
+    if (b.flags.includes("seen_after_close")) tags.push('<span class="tag warn">폐업 뒤에도 간판</span>');
+    if (b.grade === "C" && b.web_state === "strong") tags.push('<span class="tag">웹 언급 있음</span>');
+    const [fks, fsrc] = bizFloorInfo(b);
+    if (fks.length > 1) tags.push(`<span class="tag">${fks.map(floorLabel).join("·")}에 걸침</span>`);
+    const when = b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`;
+    const ev = [`<b>출처</b> ${b.source || "-"} (${GRADE[b.grade]})`, `<b>층</b> ${fsrc ? fsrc + (b.sign_units ? ` · 구획 ${b.sign_units.replace(/\|/g, ", ")}` : "") : "층 정보 없음"}`];
+    if (b.grade === "C") {
+      ev.push(`<b>간판 관찰</b> ${b.sign_first} ~ ${b.sign_last}${b.sign_count ? ` (${b.sign_count}회)` : ""}`);
+      if (b.start_after) ev.push(`<b>개업은</b> ${b.start_after} 이후, 폐업은 ${b.end_before || "?"} 이전 (그 사이 조사일 기준)`);
+    } else {
+      ev.push(`<b>시작</b> ${b.start || "미상"} (${b.start_basis || "-"}) · <b>끝</b> ${b.end ? b.end + " (" + b.end_basis + ")" : "기록 없음"}`);
+      if (b.sign_first) ev.push(`<b>간판 관찰</b> ${b.sign_first} ~ ${b.sign_last}${b.observed_as ? " · 간판 표기: " + b.observed_as : ""}`);
+      else ev.push("<b>간판 관찰</b> 없음 (간판 미관찰이 영업 없음의 증거는 아님)");
+    }
+    if (b.web_state && b.web_state !== "none") ev.push(`<b>웹 언급</b> ${b.web_state === "strong" ? "강함" : b.web_state === "weak" ? "약함" : "일반명사·체인"}${b.web_first ? " · 글 날짜 " + b.web_first + "~" + b.web_last : ""} (글 날짜는 영업 시기가 아님)`);
+    return `<div class="b ${b.grade} ${act.includes(b) ? "on" : "off"} ${b === focusBiz ? "focus" : ""}"><div class="n">${bizName(b)}${tags.join("")}</div>
+      <div class="m">${b.license_type || "업종 미상"}${b.category ? " · " + b.category : ""} · ${when}<br>${GRADE[b.grade]}</div>
+      <details><summary>근거 보기</summary><div class="ev">${ev.join("<br>")}</div></details></div>`;
+  }
   function update() {
     const T = Tnow(), y = yearOf(T);
     setYearLabel(T); lastY = y;
@@ -503,16 +546,22 @@ function init(S) {
       `<div class="b A"><div class="n">${b.floors_up}층 ${b.height}m<span class="tag">${b.flags.includes("landmark_proxy") ? b.start + " 건축" : b.start + " 사용승인"}</span>${b.flags.includes("old_date") ? '<span class="tag warn">옛 날짜: 대장 확인 필요</span>' : ""}${b.flags.includes("landmark_proxy") ? '<span class="tag warn">현 건물 모양으로 대신 표시</span>' : ""}</div>
        <div class="m">${b.height_basis}${b.a_s ? "<br>공사 " + b.a_s + " ~ " + b.b_s + " (" + (b.b - b.a).toFixed(1) + "년)" : ""}${b.start_note ? "<br>" + b.start_note : ""}</div></div>`).join("") : '<div class="hint">${inprog.length ? "아직 준공 전입니다" : "이 해의 건물 자료 없음"}</div>');
     if (evs.length) h += evs.map(e => `<div class="m">· ${e.end} ${e.end_basis}${e.structure ? " (" + e.structure + ")" : ""}</div>`).join("");
-    const all = (bizByParcel[jibun] || []).slice().sort((x, z) => (x.start || "").localeCompare(z.start || ""));
-    h += `<br><b>영업 이력</b><span class="tag">${all.length}곳</span>`;
-    h += all.length ? all.map(b => {
-      const tags = [];
-      if (b.flags.includes("stale_open")) tags.push('<span class="tag warn">폐업신고 누락 의심</span>');
-      if (b.flags.includes("spans_rebuild")) tags.push('<span class="tag warn">재건축 시기와 겹침</span>');
-      if (b.grade === "C" && b.web_state === "strong") tags.push('<span class="tag">웹 언급 있음</span>');
-      const when = b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`;
-      return `<div class="b ${b.grade} ${act.includes(b) ? "on" : "off"} ${b === focusBiz ? "focus" : ""}"><div class="n">${bizName(b)}${tags.join("")}</div>
-        <div class="m">${b.license_type || "업종 미상"} ${b.floor || ""} · ${when}<br>${GRADE[b.grade]}</div></div>`;
+    const all = (bizByParcel[jibun] || []).slice().sort((x, z) => (x.start || x.sign_first || "").localeCompare(z.start || z.sign_first || ""));
+    h += `<br><b>층별 영업 이력</b><span class="tag">${all.length}곳</span>`;
+    // 층 → 업소. 인허가 주소의 층 표기가 있으면 그것을, 없으면 로드뷰 구획(sign_units)을 쓴다. 둘 다 없으면 '층 미상'.
+    const byFloor = {}, put = (k, b) => (byFloor[k] ||= []).push(b);
+    all.forEach(b => { const fs = bizFloors(b); fs.length ? fs.forEach(k => put(k, b)) : put("?", b); });
+    const topFl = Math.max(0, ...blds.map(b => b.floors_up || 0), ...Object.keys(byFloor).map(k => /^\d+$/.test(k) ? +k : 0));
+    const keys = [];
+    for (let i = topFl; i >= 1; i--) keys.push(String(i));
+    Object.keys(byFloor).filter(k => k[0] === "B").sort().reverse().forEach(k => keys.push(k));
+    if (byFloor["?"]) keys.push("?");
+    h += all.length || topFl ? keys.map(k => {
+      const list = byFloor[k] || [], now = list.filter(b => act.includes(b));
+      const head = k === "?" ? "층 미상" : floorLabel(k);
+      const sum = !list.length ? "상호 근거 없음" : now.length ? `${y}년 영업 근거: ${now.map(labelOf).join(", ")}` : `${y}년 영업 근거 없음`;
+      return `<div class="flr ${now.length ? "has" : ""}"><div class="fh"><b>${head}</b><span class="tag">${list.length}곳</span><span class="fs">${sum}</span></div>` +
+        (list.length ? list.map(b => bizCard(b, act, k)).join("") : '<div class="hint">이 층에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>') + `</div>`;
     }).join("") : '<div class="hint">이 필지에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>';
     const det = document.getElementById("detail"); det.innerHTML = h;
     det.querySelectorAll(".jump").forEach(a => a.onclick = () => { focusBiz = null; goParcel(a.dataset.j); });

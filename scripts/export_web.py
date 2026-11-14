@@ -534,7 +534,7 @@ def main():
     for b in rc("data/timeline_businesses.csv"):
         biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "floor", "start", "end", "end_basis",
                                       "grade", "flags", "sign_first", "sign_last", "start_after", "end_before",
-                                      "web_state", "web_first", "web_last")})
+                                      "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
     bev = [{k: b[k] for k in ("jibun", "status", "start", "end", "end_basis", "structure", "use", "floors_up", "grade")}
            for b in rc("data/timeline_buildings.csv") if b["status"] != "현존"]
     scene = {"parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
