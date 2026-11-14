@@ -62,7 +62,7 @@
   #bar button.on { background: #2b6cff; color: #fff; border-color: #2b6cff; }
   #bar button:disabled { opacity: .4; cursor: default; }
   #loop { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; user-select: none; }
-  #hint { flex: 1 0 100%; font-size: 12px; line-height: 1.5; color: #555; margin-top: 2px; }
+  #hint { font-size: 12px; line-height: 1.5; color: #555; margin-top: 6px; }
   .maplibregl-ctrl button.rot { font-size: 18px; line-height: 29px; text-align: center; }
   .maplibregl-ctrl-group.rotgrid { display: grid; grid-template-columns: 29px 29px; }
   .maplibregl-ctrl-group.rotgrid button:nth-child(2n) { border-left: 1px solid #ddd; }
@@ -120,8 +120,8 @@
     <label id="loop" title="체크하면 끝에서 처음으로 돌아가 계속 재생"><input type="checkbox" id="loopChk"> 반복</label>
     <button id="speed" title="배속">1×</button>
     <button id="mode" title="날기/걷기 전환">🚶 걷기 모드</button>
-    <span id="hint"></span>
   </div>
+  <div id="hint"></div>
 </div>
 <script src="vendor/maplibre-gl.js"></script>
 <script src="scene.js"></script>
@@ -694,7 +694,7 @@ function init(S) {
     if (on) { wps = wpitch; map.transform.fov = WFOV; if (!pos) { pos = startPos(); face = heading; } anim = "idle"; applyWalkCam(); lastT = performance.now(); }
     else { map.transform.fov = FOV0; updateOccluders(); map.setPadding({ top: 0, right: 0, bottom: 0, left: 0 }); map.easeTo({ pitch: 55, zoom: 18, duration: 600 }); }
     hint.innerHTML = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게"
-      : "W/A/S/D·방향키 이동 · Shift 달리기 · 마우스 드래그 둘러보기<br>[ ] 회전 · R/F 위아래 · +/- 거리 · \\ 초기화";
+      : "W/A/S/D·방향키 이동 · Shift 달리기 · 마우스 드래그 둘러보기 · [ ] 회전 · R/F 위아래 · +/- 거리 · \\ 초기화";
   }
   modeBtn.onclick = () => setWalking(!walking);
   window.addEventListener("avatar-ready", () => { window.Avatar.setVisible(walking); if (walking) drawMe(); });
