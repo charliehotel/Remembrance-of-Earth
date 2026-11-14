@@ -537,7 +537,23 @@ def main():
                                       "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
     bev = [{k: b[k] for k in ("jibun", "status", "start", "end", "end_basis", "structure", "use", "floors_up", "grade")}
            for b in rc("data/timeline_buildings.csv") if b["status"] != "현존"]
-    scene = {"parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
+    # 건축물대장 층별개요(현존 건물): 층마다 용도·면적. 대장 작성 시점(crtnDay) 기준의 현재 상태이므로 과거 용도로 쓰지 않는다.
+    floors = {}
+    flr_raw = json.loads((ROOT / "data/raw/hub/br_flr.json").read_text(encoding="utf-8"))
+    apr = {x["mgmBldrgstPk"]: x["useAprDay"] for rows in json.loads((ROOT / "data/raw/hub/br_title.json").read_text(encoding="utf-8")).values() for x in rows}
+    for jb, rows in flr_raw.items():
+        for x in rows:
+            kind = {"지상": "", "지하": "B", "옥탑": "R"}.get(x["flrGbCdNm"].strip())
+            if kind is None:
+                continue
+            key = "R" if kind == "R" else kind + str(x["flrNo"])
+            d = str(apr.get(x["mgmBldrgstPk"]) or "")
+            floors.setdefault(jb, []).append({
+                "pk": x["mgmBldrgstPk"], "apr": f"{d[:4]}-{d[4:6]}-{d[6:8]}" if len(d) == 8 else "",
+                "att": 1 if x["mainAtchGbCd"] == "1" else 0, "key": key, "label": x["flrNoNm"].strip(),
+                "struct": x["strctCdNm"].strip(), "use": x["mainPurpsCdNm"].strip(), "etc": (x["etcPurps"] or "").strip(),
+                "area": x["area"], "area_excl": x["areaExctYn"] == "1", "crtn": x["crtnDay"]})
+    scene = {"floors": floors, "parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
              "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "year_min": 1992, "year_max": 2026}
     txt = json.dumps(scene, ensure_ascii=False)
     (OUT / "scene.json").write_text(txt)

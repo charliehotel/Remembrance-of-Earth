@@ -60,6 +60,8 @@
   .flr .fh { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 4px; }
   .flr .fs { color: #666; font-size: 12px; flex-basis: 100%; }
   .flr .hint { margin: 2px 0 4px; }
+  .flr .reg { margin: 3px 0 4px; padding: 4px 7px; background: #eef3fb; border-radius: 5px; font-size: 12px; color: #334; line-height: 1.5; }
+  .flr .reg .tag { background: #d9e4f7; }
   .b details { margin: 2px 0 0; font-size: 12px; }
   .b summary { cursor: pointer; color: #1a5fb4; }
   .b .ev { margin-top: 3px; padding: 5px 7px; background: #f4f4f4; border-radius: 5px; color: #444; line-height: 1.55; }
@@ -551,16 +553,24 @@ function init(S) {
     // 층 → 업소. 인허가 주소의 층 표기가 있으면 그것을, 없으면 로드뷰 구획(sign_units)을 쓴다. 둘 다 없으면 '층 미상'.
     const byFloor = {}, put = (k, b) => (byFloor[k] ||= []).push(b);
     all.forEach(b => { const fs = bizFloors(b); fs.length ? fs.forEach(k => put(k, b)) : put("?", b); });
-    const topFl = Math.max(0, ...blds.map(b => b.floors_up || 0), ...Object.keys(byFloor).map(k => /^\d+$/.test(k) ? +k : 0));
+    // 건축물대장 층별개요: 사용승인 이후 연도에만 붙인다. 용도는 대장 작성 시점(최근)의 현재 상태다.
+    const regAll = ((S.floors || {})[jibun] || []).filter(r => !r.apr || yr(r.apr) <= y);
+    const regBy = {}; regAll.forEach(r => (regBy[r.key] ||= []).push(r));
+    const multiPk = new Set(regAll.map(r => r.pk)).size > 1;
+    const topFl = Math.max(0, ...blds.map(b => b.floors_up || 0), ...Object.keys(byFloor).concat(Object.keys(regBy)).map(k => /^\d+$/.test(k) ? +k : 0));
     const keys = [];
+    if (regBy.R) keys.push("R");
     for (let i = topFl; i >= 1; i--) keys.push(String(i));
-    Object.keys(byFloor).filter(k => k[0] === "B").sort().reverse().forEach(k => keys.push(k));
+    [...new Set(Object.keys(byFloor).concat(Object.keys(regBy)))].filter(k => k[0] === "B").sort().forEach(k => keys.push(k));
     if (byFloor["?"]) keys.push("?");
+    const regHtml = rows => rows.length ? `<div class="reg"><b>건축물대장 층별개요</b> <span class="tag">현재 대장 기준</span>` + rows.map(r =>
+      `<div>${r.use}${r.etc && r.etc !== r.use ? " · " + r.etc : ""} · ${r.area}㎡${r.area_excl ? "(연면적 제외)" : ""} · ${r.struct}${r.att ? " · 부속건축물" : ""}${multiPk ? ` · ${r.apr.slice(0, 4)}년 사용승인 건물` : ""}${r.label !== "1층" && /^중/.test(r.label) ? ` · ${r.label}` : ""}</div>`).join("") + `</div>` : "";
     h += all.length || topFl ? keys.map(k => {
-      const list = byFloor[k] || [], now = list.filter(b => act.includes(b));
-      const head = k === "?" ? "층 미상" : floorLabel(k);
-      const sum = !list.length ? "상호 근거 없음" : now.length ? `${y}년 영업 근거: ${now.map(labelOf).join(", ")}` : `${y}년 영업 근거 없음`;
-      return `<div class="flr ${now.length ? "has" : ""}"><div class="fh"><b>${head}</b><span class="tag">${list.length}곳</span><span class="fs">${sum}</span></div>` +
+      const list = byFloor[k] || [], now = list.filter(b => act.includes(b)), reg = regBy[k] || [];
+      const head = k === "?" ? "층 미상" : k === "R" ? "옥탑" : floorLabel(k);
+      const regUse = [...new Set(reg.map(r => r.use))].join(", ");
+      const sum = (!list.length ? "상호 근거 없음" : now.length ? `${y}년 영업 근거: ${now.map(labelOf).join(", ")}` : `${y}년 영업 근거 없음`) + (regUse ? ` · 대장 용도: ${regUse}` : "");
+      return `<div class="flr ${now.length ? "has" : ""}"><div class="fh"><b>${head}</b><span class="tag">${list.length}곳</span><span class="fs">${sum}</span></div>` + regHtml(reg) +
         (list.length ? list.map(b => bizCard(b, act, k)).join("") : '<div class="hint">이 층에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>') + `</div>`;
     }).join("") : '<div class="hint">이 필지에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>';
     const det = document.getElementById("detail"); det.innerHTML = h;
