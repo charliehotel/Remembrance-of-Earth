@@ -500,11 +500,12 @@ def context_map(core_pnus, ghost_out=None):
 
 # ---- 주변 건물 중 사진으로 정밀 모델링한 것(랜드마크). 부모 회색 건물은 hide=1 로 숨기고, 부위(part)별 색·높이 조각을 details 로 낸다.
 #  조각은 부모와 같은 시간(s·a·b)을 따르고, 공사 중에는 높이가 올라간다(프런트: index.html dyn).
-CTX_DETAIL = {"31-4": "dokssuri"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
+CTX_DETAIL = {"31-4": "dokssuri", "31-26": "hyeongje"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
 
 
 def _context_details(blds, cparcels, to_m):
-    import landmark_dokssuri as LD
+    import landmark_dokssuri, landmark_hyeongje
+    MODELS = {"dokssuri": landmark_dokssuri, "hyeongje": landmark_hyeongje}
     feats = []
     for jib, name in CTX_DETAIL.items():
         pg = next((g for j, g in cparcels if j == jib), None)
@@ -517,7 +518,7 @@ def _context_details(blds, cparcels, to_m):
             continue
         par["hide"] = 1
         par["det"] = name
-        for r, b, t, c in LD.build(blds[best]["geometry"]["coordinates"][0]):
+        for r, b, t, c in MODELS[name].build(blds[best]["geometry"]["coordinates"][0]):
             pr = {"p": best, "base": b, "height": t, "color": c, "H": par["height"]}
             for k in ("s", "a", "b"):
                 if k in par:
