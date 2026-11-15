@@ -1055,11 +1055,11 @@ function init(S) {
   function frame(t) {
     const dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
     if (playing) {   // 소수 연도로 매끄럽게 흐른다(1×는 초당 1년). 연이 바뀌거나 건물이 준공될 때만 전체 갱신
-      let v = +slider.value + dt * SPEEDS[si];
-      if (v >= +slider.max) { if (loopChk.checked) v = +slider.min; else { v = +slider.max; setPlaying(false); } }
+      let v = +slider.value + dt * SPEEDS[si], ended = false;
+      if (v >= +slider.max) { if (loopChk.checked) v = +slider.min; else { v = +slider.max; setPlaying(false); ended = true; } }
       slider.value = v;
       const T = Tnow(), nb = isFinite(T) ? refreshDyn(T) : lastDone;
-      if (yearOf(T) !== lastY || nb !== lastDone) update(); else setYearLabel(T);
+      if (ended || yearOf(T) !== lastY || nb !== lastDone) update(); else setYearLabel(T);   // 재생이 끝나면 마지막 상태를 강제로 다시 그린다(크레인 등 공사 연출이 남지 않게)
     }
     litBtns.forEach(b => b.classList.toggle("on", b.dataset.codes.split(" ").some(c => pressed.has(c) || keys.has(c) || (flash.get(c) || 0) > t)));
     if (walking) {
