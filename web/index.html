@@ -501,10 +501,12 @@ function init(S) {
       act.sort((a, b) => (a.grade === "A" ? 0 : 1) - (b.grade === "A" ? 0 : 1) ||
         (b.start || b.sign_first || "").localeCompare(a.start || a.sign_first || ""));
       if (showAnchor) act.unshift({ name: an, grade: "A", floor: "", license_type: "", landmark: true });
-      const mine = blds.filter(f => f.properties.jibun === jibun).sort((a, b) => b.properties.height - a.properties.height)[0];
+      // 대표 장소(교회 등)는 숨김 처리된 랜드마크 본체(landmark_proxy)에 단다. 안 그러면 같은 필지의 다른 건물에 붙는다.
+      const mine = (showAnchor && buildingsAt(T).find(f => !f.properties.part && f.properties.jibun === jibun && /landmark_proxy/.test(f.properties.flags || "")))
+        || blds.filter(f => f.properties.jibun === jibun).sort((a, b) => b.properties.height - a.properties.height)[0];
       // 핵심 필지가 아니면 주변 건물(그때 보이는 것 중 가장 높은 것)에 단다
       const cm = mine ? null : (ctxByJ[jibun] || []).filter(f => f.properties.s == null || f.properties.s <= T).sort((a, b) => b.properties.height - a.properties.height)[0];
-      const ring = mine ? mine.geometry.coordinates[0] : cm ? cm.geometry.coordinates[0] : null, bh = mine ? mine.properties.height : cm ? cm.properties.height : 0;
+      const ring = mine ? mine.geometry.coordinates[0] : cm ? cm.geometry.coordinates[0] : null, bh = mine ? (mine.properties.lh || mine.properties.height) : cm ? cm.properties.height : 0;
       const at = ring ? ringMid(ring) : parcelMid[jibun];
       if (!at) return;
       const el = document.createElement("div"); el.className = "lbl " + act[0].grade;

@@ -655,13 +655,18 @@ def main():
         spans = sorted(({"jibun": k, "jimok": v[1], "pct": round(bgm.intersection(v[0]).area / bgm.area * 100)}
                         for k, v in pgeom.items() if bgm.intersects(v[0])), key=lambda x: -x["pct"])
         spans = [x for x in spans if x["pct"] >= 5]
+        lh = {}
+        if ms:  # 라벨 높이: 탑·첨탑 끝이 아니라 본당 지붕 위. 가장 넓은 부품 면적의 25% 이상인 부품 중 가장 높은 꼭대기
+            ar = [(Polygon(r2).area, t2) for r2, b2, t2, c2 in ms]
+            top = max(a for a, _ in ar)
+            lh = {"lh": round(max(t2 for a, t2 in ar if a >= top * 0.25), 1)}
         ck = {} if (ms or "landmark_proxy" in flags) else CORE_COLORS.get("bid:" + p["bid"], {})   # 손으로 모델링한 건물은 제외
         feats.append({"type": "Feature", "geometry": f["geometry"],
                       "properties": {**{k: ck[k] for k in ("wc", "rc") if k in ck},
                                      "bid": p["bid"], "jibun": p["jibun"], "start": yr, "height": h, "spans": spans,
                                      "floors_up": fl, "floors_down": int(p["floors_down"] or 0),
                                      "height_basis": basis, "flags": ";".join(flags), "start_note": note,
-                                     "base": 0, "color": "", "part": 0, "hide": 1 if ms else 0, **pp}})
+                                     "base": 0, "color": "", "part": 0, "hide": 1 if ms else 0, **lh, **pp}})
     buildings = {"type": "FeatureCollection", "features": feats}
     new_start = {}
     for f in feats:
