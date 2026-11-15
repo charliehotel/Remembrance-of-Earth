@@ -302,9 +302,12 @@ def massing(bid, ring):
         for x, y in list(P.exterior.coords)[:-1]:                               # 필로티 기둥
             c = ex.interpolate(ex.project(Point(x, y)))
             add(sbox(c.x - .6, c.y - .6, c.x + .6, c.y + .6), 0, H0, STONE)
-    elif bid in ("B024", "B124", "B111"):  # 북쪽 변 2-2·2-7·2-46: scripts/landmark_north.py (로드뷰 캡처 기반)
+    elif bid in ("B024", "B124", "B111", "B023"):  # 북쪽 변 2-2·2-7·2-46·2-14: scripts/landmark_north.py (로드뷰 캡처 기반)
         import landmark_north
         parts.extend(landmark_north.MODELS[bid](P))
+    elif bid == "B089":  # 80-16 창천교회 서쪽 뒷골목 끝: scripts/landmark_lane.py
+        import landmark_lane
+        parts.extend(landmark_lane.b089(P))
     elif bid in SOUTH_BLDS:  # 남쪽 변 47-12·46-12·46-2·2-27·2-19·2-21·2-22·2-23: scripts/landmark_south.py (로드뷰 캡처 기반)
         import landmark_south
         parts.extend(landmark_south.MODELS[bid](P))
@@ -509,14 +512,21 @@ def context_map(core_pnus, ghost_out=None):
 
 # ---- 주변 건물 중 사진으로 정밀 모델링한 것(랜드마크). 부모 회색 건물은 hide=1 로 숨기고, 부위(part)별 색·높이 조각을 details 로 낸다.
 #  조각은 부모와 같은 시간(s·a·b)을 따르고, 공사 중에는 높이가 올라간다(프런트: index.html dyn).
-CTX_DETAIL = {"31-4": "dokssuri", "31-26": "hyeongje", "31-92": "jtower"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
+CTX_DETAIL = {"31-4": "dokssuri", "31-26": "hyeongje", "31-92": "jtower",
+              "2-45": "lane_stone", "2-42": "lane_red42", "2-39": "lane_gran39", "2-38": "lane_dark38", "2-37": "lane_brick",
+              "2-77": "lane_hanok", "2-78": "lane_shop", "9-30": "lane_rijeong", "9-31": "lane_wood31", "31-2": "lane_pharm31"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
 # 31-92 는 지적도(cadastral_bbox.json)에 없어서 필지 겹침으로 건물을 못 고른다. J타워 나동(10층)은 대장 높이 44.8m 로 고른다.
 CTX_PICK_HEIGHT = {"31-92": 44.8}
 
 
 def _context_details(blds, cparcels, to_m):
-    import landmark_dokssuri, landmark_hyeongje, landmark_jtower
-    MODELS = {"dokssuri": landmark_dokssuri, "hyeongje": landmark_hyeongje, "jtower": landmark_jtower}
+    import landmark_dokssuri, landmark_hyeongje, landmark_jtower, landmark_lane
+    MODELS = {"dokssuri": landmark_dokssuri, "hyeongje": landmark_hyeongje, "jtower": landmark_jtower,
+              "lane_stone": landmark_lane.STONE_M, "lane_brick": landmark_lane.BRICK_M,
+              "lane_red42": landmark_lane.RED42_M, "lane_dark38": landmark_lane.DARK38_M, "lane_gran39": landmark_lane.GRAN39_M,
+              "lane_hanok": landmark_lane.HANOK_M, "lane_shop": landmark_lane.SHOP_M,
+              "lane_rijeong": landmark_lane.RIJEONG_M, "lane_wood31": landmark_lane.WOOD31_M,
+              "lane_pharm31": landmark_lane.PHARM31_M}
     feats = []
     for jib, name in CTX_DETAIL.items():
         pg = next((g for j, g in cparcels if j == jib), None)
@@ -535,7 +545,7 @@ def _context_details(blds, cparcels, to_m):
             continue
         par["hide"] = 1
         par["det"] = name
-        for r, b, t, c in MODELS[name].build(blds[best]["geometry"]["coordinates"][0]):
+        for r, b, t, c in (MODELS[name].build(blds[best]["geometry"]["coordinates"][0], par["height"]) if name.startswith("lane_") else MODELS[name].build(blds[best]["geometry"]["coordinates"][0])):
             pr = {"p": best, "base": b, "height": t, "color": c, "H": par["height"]}
             for k in ("s", "a", "b"):
                 if k in par:

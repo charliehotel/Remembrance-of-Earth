@@ -31,7 +31,8 @@ RED, BLUEG, TEAL = "#a8262b", "#5f86a8", "#5f96a8"
 class Bld:
     """공통 골격: 1층 + 상층 벽체 + 난간 + 옥상 + 나머지 면의 작은 창. 정면은 fr() 로 얹는다."""
 
-    def __init__(self, P, front, H, F1, NF, wall, base, rim=None, side_gl=GLS2):
+    def __init__(self, P, front, H, F1, NF, wall, base, rim=None, side_gl=GLS2, west0=False):
+        self.west0 = west0   # True 면 fr() 비율을 서쪽 끝=0 으로 잰다(골목 북쪽에서 남쪽 건물을 올려다보는 경우)
         self.parts = []
         self.P = P
         n = len(P.exterior.coords) - 1
@@ -63,7 +64,10 @@ class Bld:
 
     def fr(self, f0, f1, o0, o1, b, t, c):
         fe = self.fe
-        self.add(fe.rect(fe.L * (1 - f1), fe.L * (1 - f0), o0, o1), b, t, c)
+        if self.west0:
+            self.add(fe.rect(fe.L * f0, fe.L * f1, o0, o1), b, t, c)
+        else:
+            self.add(fe.rect(fe.L * (1 - f1), fe.L * (1 - f0), o0, o1), b, t, c)
 
     def bay(self, f0, f1, z):
         """흰 돌출창 상자: 받침 + 유리 + 윗덮개."""
