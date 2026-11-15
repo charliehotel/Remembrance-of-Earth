@@ -129,7 +129,7 @@
   </div>
 </div>
 <div id="bar">
-  <div class="row"><div id="year">2026</div><input id="slider" type="range" min="1992" max="2026.99" value="2026" step="any"></div>
+  <div class="row"><div id="year">2026<span style="font-size:.45em;opacity:.55;margin-left:4px">11월</span></div><input id="slider" type="range" min="1992" max="2026.9159" value="2026.84" step="any"></div>
   <div class="row2">
     <button id="play" title="재생/정지 (스페이스)">▶ 재생</button>
     <label id="loop" title="체크하면 끝에서 처음으로 돌아가 계속 재생"><input type="checkbox" id="loopChk"> 반복</label>
@@ -852,7 +852,7 @@ function init(S) {
   function setYear(v) { slider.value = v; update(); }
   function setPlaying(on) {
     playing = on; playBtn.textContent = on ? "■ 정지" : "▶ 재생"; playBtn.classList.toggle("on", on);
-    if (on && +slider.value >= +slider.max - 0.01) setYear(slider.min);
+    if (on && +slider.value >= +slider.max - 1 / 12) setYear(slider.min);   // 마지막 달(2026년 11월)에서 누르면 처음(1992년)부터 한 번 재생한다
     lastT = performance.now(); acc = 0;
   }
   playBtn.onclick = () => setPlaying(!playing);
