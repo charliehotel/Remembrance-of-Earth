@@ -276,11 +276,12 @@ function init(S) {
   const setYearLabel = T => { const y = yearOf(T), m = Math.min(12, Math.floor((T - y) * 12 + 1e-6) + 1);
     document.getElementById("year").innerHTML = `${y}<span style="font-size:.45em;opacity:.55;margin-left:4px">${m}월</span>`; };
 
+  const START_VIEW = { center: [126.9375, 37.55902], zoom: 18.85, pitch: 58, bearing: 76 };
   const map = new maplibregl.Map({
     container: "map", style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e9e6df" } }] },
     locale: { "NavigationControl.ZoomIn": "확대 ( = 또는 + )", "NavigationControl.ZoomOut": "축소 ( - )",
               "NavigationControl.ResetBearing": "북쪽을 위로 ( \\ )" },
-    center: [126.9395, 37.5589], zoom: 17.2, pitch: 55, bearing: -20, maxPitch: 85, maxZoom: 26
+    center: START_VIEW.center, zoom: START_VIEW.zoom, pitch: START_VIEW.pitch, bearing: START_VIEW.bearing, maxPitch: 85, maxZoom: 26
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }));
   map.keyboard.disable();   // 방향키는 직접 처리(날기: 화면 이동, 걷기: 이동)
@@ -349,11 +350,8 @@ function init(S) {
   }
 
   map.on("load", () => {
-    const xs = [], ys = [];
-    const walk = c => typeof c[0] === "number" ? (xs.push(c[0]), ys.push(c[1])) : c.forEach(walk);
-    S.parcels.features.forEach(f => walk(f.geometry.coordinates));
-    map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]],
-      { padding: { top: 60, bottom: 150, left: 340, right: 60 }, pitch: 55, bearing: -20, duration: 0 });
+    // 출발점: 연세로12길 입구 쪽에서 창천교회와 독수리다방(31-4) 사이 골목을 정면으로 바라보는 시점
+    map.jumpTo(START_VIEW);
     // 주변 맥락(창천교회 반경 300m): 아직 구현하지 않은 곳이라 흐리게만 그린다. 클릭·검색 대상 아님.
     if (S.context) {
       map.addSource("ctx-parcels", { type: "geojson", data: S.context.parcels });
