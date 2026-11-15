@@ -6,7 +6,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 key = urllib.parse.unquote([l.split("=", 1)[1].strip().strip('"') for l in open(ROOT/".env") if l.startswith("DATA_GO_KR_KEY")][0])
 svc, op, name = sys.argv[1:4]
-rows = list(csv.DictReader(open(ROOT/"data/parcels.csv", encoding="utf-8-sig")))
+# 선택 인자: 4번째=필지 CSV 경로(기본 data/parcels.csv), 5번째 "new"=in_core=False 필지만(150m 확장 단계용)
+csv_path = ROOT / (sys.argv[4] if len(sys.argv) > 4 else "data/parcels.csv")
+rows = list(csv.DictReader(open(csv_path, encoding="utf-8-sig")))
+if len(sys.argv) > 5 and sys.argv[5] == "new":
+    rows = [r for r in rows if r.get("in_core") == "False"]
 out = {}
 for r in rows:
     bun, _, ji = r["jibun"].partition("-")

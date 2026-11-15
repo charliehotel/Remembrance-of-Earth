@@ -314,6 +314,10 @@ import datetime
 HUB = ROOT / "data/raw/hub"
 _hub = lambda n: json.loads((HUB / f"{n}.json").read_text())
 BR, AP, SR, DEMOL = _hub("br_title"), _hub("ap_basis"), _hub("sr_title"), _hub("ap_demol")
+for _d, _n in ((BR, "br_title"), (AP, "ap_basis"), (SR, "sr_title"), (DEMOL, "ap_demol")):
+    _p = HUB / f"{_n}_r150.json"   # 150m 확장 필지(in_core=False)의 대장. 지번 키가 겹치지 않아 그대로 합친다.
+    if _p.exists():
+        _d.update(json.loads(_p.read_text()))
 MIN_BUILD = 0.5   # 착공~승인이 이보다 짧으면 승인 0.5년 전부터 올린다
 FALLBACK = 1.0    # 대장에 날짜가 없으면 승인 1년 전부터(가정)
 
@@ -409,7 +413,7 @@ CONTEXT_RADIUS_M = 300
 CONTEXT_BLD_RADIUS_M = 150  # 회색 주변 건물은 이 반경 안만
 
 
-def context_map(core_pnus):
+def context_map(core_pnus, ghost_out=None):
     import re
     from shapely.geometry import Point, mapping
     gc = json.load(open(ROOT / "data/raw/vworld/geocode_church.json"))["response"]["result"]["items"][0]["point"]
@@ -437,7 +441,13 @@ def context_map(core_pnus):
     # 300m 전체를 채우면 너무 복잡해 보여서 건물은 가까운 곳만 두고, 그 바깥은 필지만 흐리게 그린다.
     bld_circle = Point(0, 0).buffer(CONTEXT_BLD_RADIUS_M, 64)
     core = shapely_union([to_m(shape(f["geometry"]).buffer(0)) for f in src if f["properties"]["pnu"] in core_pnus])
-    blds, seen = [], set()
+    cparcels = []   # (지번, 미터 좌표 도형): 주변 건물의 소속 필지 판정용
+    for f in src:
+        if f["properties"]["pnu"] in core_pnus:
+            continue
+        mm = re.match(r"(\S+?)\s*(\D+)$", f["properties"]["jibun"])
+        cparcels.append((mm.group(1) if mm else f["properties"]["jibun"], to_m(shape(f["geometry"]).buffer(0))))
+    blds, seen, timed = [], set(), []
     cpath = ROOT / "data/context_colors.json"
     colors = json.loads(cpath.read_text()) if cpath.exists() else {}
     # LT_C_BLDGINFO_r150.json: 교회 반경 150m 박스로 따로 받은 파일(있으면 합친다). 두 파일에 겹치는 건물은 대표점으로 한 번만 쓴다.
@@ -460,12 +470,91 @@ def context_map(core_pnus):
         ck = colors.get(_ckey(to_m(shape(geo))))
         if ck:
             props.update({k: ck[k] for k in ("wc", "rc") if k in ck})
+        jb = next((j for j, pg in cparcels if pg.contains(rp)), None)
+        timed.append((len(blds), jb, g, yf(str(p.get("useapr_day") or "")), props, str(p.get("useapr_day") or "")))
         blds.append({"type": "Feature", "geometry": geo, "properties": props})
-    ring = json.loads(json.dumps(mapping(to_ll(circle.exterior))), parse_float=lambda s: round(float(s), 7))
+    _context_time(timed, ghost_out, to_ll)
+    ring = json.loads(json.dumps(mapping(to_ll(circle))), parse_float=lambda s: round(float(s), 7))   # Polygon(LinearRing은 GeoJSON 타입이 아니다). 선 레이어가 윤곽을 그린다
     return {"center": list(o), "radius_m": CONTEXT_RADIUS_M,
             "parcels": {"type": "FeatureCollection", "features": feats},
             "buildings": {"type": "FeatureCollection", "features": blds},
             "boundary": {"type": "Feature", "properties": {}, "geometry": ring}}
+
+
+# ---- 주변 건물의 시간. 1993년 이후 사용승인된 건물은 모두 "이전 건물 → 철거 → 공사(크레인) → 완공" 순서로 보인다.
+#  - 신축 전에 철거된 옛 건물 기록(말소일·철거일)이 있으면 그 건물을(대장 층수 높이) 철거일까지 고스트로 세운다.
+#  - 기록이 없으면(pu=1) 이전 건물을 모르는 것이므로 2층 정도의 추정 저층(est=1)을 공사 시작 때까지 둔다. 패널에 '추정'으로 밝힌다.
+#  - 사용승인이 1993 이전이면 처음부터 완공 모습으로 둔다(공사 일정이 1992 이전이라 화면 범위 밖).
+# 속성: s=완공(사용승인) 시각, a=착공 시각, b=완공 시각(=s), j=필지 지번
+EST_FLOORS = 2   # 이전 건물 기록이 없을 때 가정하는 층수
+EST_COL = "#c9c3b6"
+
+
+def _context_time(timed, ghost_out, to_ll):
+    from collections import defaultdict
+    from shapely.geometry import mapping
+    by = defaultdict(list)
+    for t in timed:
+        if t[1]:
+            t[4]["j"] = t[1]
+        if t[1] and t[3]:
+            by[t[1]].append(t)
+    for jb, items in by.items():
+        gone = []   # (철거 끝, 철거 시작, 옛 건물 승인, 구조, 면적, 지상층수)
+        for r in SR.get(jb) or []:
+            de = yf(r.get("shterDay"))
+            if de:
+                gone.append((de, None, yf(r.get("useAprDay")), r.get("strctCdNm", ""), float(r.get("totArea") or 0), int(r.get("grndFlrCnt") or 0)))
+        for r in DEMOL.get(jb) or []:
+            de = yf(r.get("demolEndDay")) or yf(r.get("demolStrtDay"))
+            if de:
+                gone.append((de, yf(r.get("demolStrtDay")), None, r.get("strctCdNm", ""), float(r.get("totArea") or 0), 0))
+        main = max(items, key=lambda t: t[2].area)
+        for t in items:
+            ya = t[3]
+            if ya < 1993:
+                continue   # 처음부터 완공 모습
+            ph = phase(jb, t[5])
+            a = ph[0] if ph else ya - FALLBACK
+            if a <= 1992.0:
+                continue
+            t[4].update({"s": ya, "a": a, "b": ya})
+            ev = [g for g in gone if g[0] <= ya]
+            if not ev:
+                t[4]["pu"] = 1
+            if t is not main or ghost_out is None:
+                continue
+            if ev:
+                de = min(max(g[0] for g in ev), a - 0.05)
+                top = max((g for g in ev if g[0] <= de + 0.06), key=lambda g: g[4], default=max(ev, key=lambda g: g[4]))
+                ds = min(top[1] or de - 0.12, de - 0.12)
+                kind = "tile" if "목" in (top[3] or "") else "slab"
+                flr = top[5] or 1
+                gs = top[2] if top[2] and top[2] >= 1992 else None
+                est = False
+            else:
+                de, ds = a, a - 0.3
+                kind, flr, gs, est = "slab", EST_FLOORS, None, True
+            col = EST_COL if est else GHOST_COL[kind][sum(map(ord, jb)) % 3]
+            fp = t[2].buffer(-0.3)
+            if fp.is_empty or fp.area < 6:
+                fp = t[2]
+            h = max(3.6, flr * 3.3)
+            layers = ([(fp, 0, 3.2, col), (fp.buffer(-1.0), 3.2, 4.2, "#6f4a38"), (fp.buffer(-2.2), 4.2, 5.0, "#6f4a38")]
+                      if kind == "tile" and not est else [(fp, 0, h, col), (fp.buffer(-0.5), h, h + 0.5, "#9d9486")])
+            for poly, b0, t0, c0 in layers:
+                if poly.is_empty:
+                    continue
+                for part in (poly.geoms if poly.geom_type == "MultiPolygon" else [poly]):
+                    if part.geom_type != "Polygon" or part.is_empty:
+                        continue
+                    geo = json.loads(json.dumps(mapping(to_ll(part))), parse_float=lambda x: round(float(x), 7))
+                    pr = {"jibun": jb, "kind": kind, "base": b0, "top": t0, "color": c0, "dstart": ds, "dend": de, "ctx": True}
+                    if est:
+                        pr["est"] = 1
+                    if gs:
+                        pr["gs"] = gs   # 옛 건물이 1992년 이후에 지어졌으면 그때부터 보인다
+                    ghost_out.append({"type": "Feature", "geometry": geo, "properties": pr})
 
 
 def _ckey(g):  # build_context_colors.key_of 와 같은 키
@@ -487,7 +576,8 @@ def shapely_transform(g, fn):
 def main():
     OUT.mkdir(exist_ok=True)
     parcels = json.load(open(ROOT / "data/parcels.geojson"))
-    context = context_map({f["properties"]["pnu"] for f in parcels["features"]})
+    ctx_ghosts = []
+    context = context_map({f["properties"]["pnu"] for f in parcels["features"]}, ctx_ghosts)
     for f in parcels["features"]:
         p = f["properties"]
         f["properties"] = {k: p.get(k) for k in ("jibun", "jimok", "side", "anchor", "area_m2", "surveyed_roadview", "sliver")}
@@ -540,9 +630,14 @@ def main():
         if pr["part"] == 0 and pr.get("a") is not None:
             new_start[pr["jibun"]] = max(pr["a"], new_start.get(pr["jibun"], 0))  # 2-46은 대장상 2003 건물이 현 건물(B025 1994는 도면 날짜 오류 의심)
     ghost_fc, ghost_info = ghosts({k: v[0] for k, v in pgeom.items()}, new_start)
+    ghost_fc["features"].extend(ctx_ghosts)
 
     biz = []
     for b in rc("data/timeline_businesses.csv"):
+        biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "floor", "start", "end", "end_basis",
+                                      "grade", "flags", "sign_first", "sign_last", "start_after", "end_before",
+                                      "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
+    for b in rc("data/timeline_businesses_r150.csv") if (ROOT / "data/timeline_businesses_r150.csv").exists() else []:
         biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "floor", "start", "end", "end_basis",
                                       "grade", "flags", "sign_first", "sign_last", "start_after", "end_before",
                                       "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
@@ -571,7 +666,9 @@ def main():
     (OUT / "scene.js").write_text("window.SCENE=" + txt + ";")  # file:// 에서도 열리도록 script 로 읽는다
     print("parcels", len(parcels["features"]), "buildings", len(feats), "excluded", excluded,
           "businesses", len(biz), "building_events", len(bev),
-          "context_parcels", len(context["parcels"]["features"]), "context_buildings", len(context["buildings"]["features"]))
+          "context_parcels", len(context["parcels"]["features"]), "context_buildings", len(context["buildings"]["features"]),
+          "ctx_timed", sum(1 for f in context["buildings"]["features"] if "s" in f["properties"]),
+          "ctx_pu", sum(1 for f in context["buildings"]["features"] if f["properties"].get("pu")), "ctx_ghost_feats", len(ctx_ghosts))
 
 
 if __name__ == "__main__":

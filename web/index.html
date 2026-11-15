@@ -163,6 +163,7 @@ function init(S) {
   const evByParcel = {};
   S.building_events.forEach(e => (evByParcel[e.jibun] ||= []).push(e));
   const yr = s => s ? parseInt(s.slice(0, 4)) : null;
+  const coreJ = new Set(S.parcels.features.map(f => f.properties.jibun));
 
   // 그 해에 영업 근거가 있는 업소. 등급 A: 인허가~폐업(없으면 열림), 등급 C: 첫~마지막 간판 관찰
   function activeBiz(jibun, y) {
@@ -195,6 +196,21 @@ function init(S) {
             cbox(c, 0, -0.9, 0.9, 0.9, mh, mh + 1.9, "#e8b020"), cbox(c, ang, hook - 0.08, hook + 0.08, 0.08, mh - 5, mh, "#333"),
             cbox(c, ang, hook - 0.9, hook + 0.9, 0.9, mh - 6.2, mh - 5, "#c0392b")];
   }
+  // 주변 회색 건물: 속성 s(사용승인 시각)가 있으면 그때부터 보인다. 가림 처리(ctxOcc)와 시간 조건을 한 곳에서 합쳐 필터를 건다.
+  let ctxOcc = [-1], ctxT = 9999, ctxN = -1;
+  function applyCtx() {
+    if (!map.getLayer("ctx-bld-x")) return false;
+    const tm = ["any", ["!", ["has", "s"]], ["<=", ["get", "s"], ctxT]], nin = ["!", ["in", ["get", "cid"], ["literal", ctxOcc]]];
+    map.setFilter("ctx-bld", ["all", tm, nin]);
+    map.setFilter("ctx-roof", ["all", ["has", "rc"], tm, nin]);
+    map.setFilter("ctx-bld-x", ["all", tm, ["in", ["get", "cid"], ["literal", ctxOcc]]]);
+    return true;
+  }
+  function updateCtx(T) {
+    if (!S.context) return;
+    let n = 0; for (const f of S.context.buildings.features) { const s = f.properties.s; if (s == null || s <= T) n++; }
+    if (n !== ctxN) { const t0 = ctxT; ctxT = T; if (applyCtx()) ctxN = n; else ctxT = t0; }
+  }
   const ghostColor = (g, q) => q > 0.35 ? "#8c867c" : g.color;
   let lastSig = "", lastDone = -1, curBld = [], occKey = "";
   function dyn(T) {
@@ -209,9 +225,16 @@ function init(S) {
       else { bld.push({ ...f, properties: { ...p, height: Math.min(p.height, hv) } }); if (p.hide !== 1) crane.push(...craneFeats(f, q, T)); }
       if (p.part && !crane.some(c => c._b === p.bid)) { const m = S.buildings.features.find(g => g.properties.bid === p.bid && !g.properties.part); if (m) { const cf = craneFeats(m, q, T); cf.forEach(x => x._b = p.bid); crane.push(...cf); } }
     }
+    const ctxProg = [];   // 공사 중인 주변 건물(a≤T<b): 높이가 올라가고 크레인이 선다
+    if (S.context) for (const f of S.context.buildings.features) {
+      const p = f.properties;
+      if (p.a == null || T < p.a || T >= p.b) continue;
+      const q = (T - p.a) / (p.b - p.a), g = { ...f, properties: { ...p, height: Math.max(p.height * ease(q), 0.3), bid: "C" + p.cid } };
+      ctxProg.push(g); crane.push(...craneFeats(g, q, T)); prog = true;
+    }
     for (const f of S.ghosts.features) {
       const g = f.properties;
-      if (T >= g.dend) continue;
+      if (T >= g.dend || (g.gs != null && T < g.gs)) continue;   // gs: 옛 건물이 지어지기 전에는 안 보인다
       if (T < g.dstart) { ghost.push(f); continue; }
       prog = true; const q = (T - g.dstart) / (g.dend - g.dstart), k = Math.max(1 - q, 0.06), sh = Math.sin(T * 300) * 0.25 * (1 - q);
       const sx = sh / KXm;
@@ -219,9 +242,10 @@ function init(S) {
                    properties: { ...g, base: g.base * k, top: Math.max(g.top * k, 0.3), color: ghostColor(g, q) } });
     }
     const sig = prog ? "p" + Math.round(T * 240) : "s" + bld.length + ":" + ghost.length;
-    return { bld, crane, ghost, sig, nb };
+    return { bld, crane, ghost, ctxProg, sig, nb };
   }
   function refreshDyn(T, force) {
+    updateCtx(T);
     const d = dyn(T);
     if (force || d.sig !== lastSig) {
       lastSig = d.sig;
@@ -229,6 +253,7 @@ function init(S) {
       map.getSource("buildings").setData({ type: "FeatureCollection", features: d.bld });
       map.getSource("cranes").setData({ type: "FeatureCollection", features: d.crane });
       map.getSource("ghosts").setData({ type: "FeatureCollection", features: d.ghost });
+      map.getSource("ctx-prog")?.setData({ type: "FeatureCollection", features: d.ctxProg });
     }
     return d.nb;
   }
@@ -316,7 +341,8 @@ function init(S) {
     // 주변 맥락(창천교회 반경 300m): 아직 구현하지 않은 곳이라 흐리게만 그린다. 클릭·검색 대상 아님.
     if (S.context) {
       map.addSource("ctx-parcels", { type: "geojson", data: S.context.parcels });
-      S.context.buildings.features.forEach((f, i) => f.properties.cid = i);
+      S.context.buildings.features.forEach((f, i) => { f.properties.cid = i; bldH["C" + i] = f.properties.height || 10; });
+      map.addSource("ctx-prog", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("ctx-bld", { type: "geojson", data: S.context.buildings });
       map.addSource("ctx-ring", { type: "geojson", data: S.context.boundary });
       map.addLayer({ id: "ctx-fill", type: "fill", source: "ctx-parcels", paint: {
@@ -328,6 +354,8 @@ function init(S) {
         "fill-extrusion-color": CWALL, "fill-extrusion-height": CTOP, "fill-extrusion-opacity": 0.82 } });
       map.addLayer({ id: "ctx-roof", type: "fill-extrusion", source: "ctx-bld", filter: ["has", "rc"], paint: {
         "fill-extrusion-color": ["get", "rc"], "fill-extrusion-base": CTOP, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.9 } });
+      map.addLayer({ id: "ctx-prog", type: "fill-extrusion", source: "ctx-prog", paint: {   // 공사 중인 주변 건물
+        "fill-extrusion-color": CWALL, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.9 } });
       map.addLayer({ id: "ctx-bld-x", type: "fill-extrusion", source: "ctx-bld", filter: ["in", ["get", "cid"], ["literal", [-1]]], paint: {   // 카메라를 가리는 주변 건물
         "fill-extrusion-color": CWALL, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.1 } });
       map.addLayer({ id: "ctx-ring", type: "line", source: "ctx-ring", paint: {
@@ -432,9 +460,13 @@ function init(S) {
     let n = full.replace(/\s*[\(（][^)）]*[\)）]?\s*/g, " ").trim();
     n = n.replace(/\s+\S*점$/, "").trim();
     return n || full; };
-  let parcelMid = null, labels = [];
+  let parcelMid = null, labels = [], ctxByJ = {};
   function buildLabels(y, T) {
-    if (!parcelMid) { parcelMid = {}; S.parcels.features.forEach(f => parcelMid[f.properties.jibun] = bbox(f.geometry)); }
+    if (!parcelMid) {
+      parcelMid = {}; S.parcels.features.forEach(f => parcelMid[f.properties.jibun] = bbox(f.geometry));
+      if (S.context) S.context.parcels.features.forEach(f => { if (!parcelMid[f.properties.jibun]) parcelMid[f.properties.jibun] = bbox(f.geometry); });
+      ctxByJ = {}; if (S.context) S.context.buildings.features.forEach(f => f.properties.j && (ctxByJ[f.properties.j] ||= []).push(f));
+    }
     labelsEl.textContent = ""; labels = [];
     const blds = buildingsAt(T).filter(f => !f.properties.part && f.properties.hide !== 1);
     Object.keys(bizByParcel).forEach(jibun => {
@@ -443,7 +475,10 @@ function init(S) {
       act.sort((a, b) => (a.grade === "A" ? 0 : 1) - (b.grade === "A" ? 0 : 1) ||
         (b.start || b.sign_first || "").localeCompare(a.start || a.sign_first || ""));
       const mine = blds.filter(f => f.properties.jibun === jibun).sort((a, b) => b.properties.height - a.properties.height)[0];
-      const at = mine ? ringMid(mine.geometry.coordinates[0]) : parcelMid[jibun];
+      // 핵심 필지가 아니면 주변 건물(그때 보이는 것 중 가장 높은 것)에 단다
+      const cm = mine ? null : (ctxByJ[jibun] || []).filter(f => f.properties.s == null || f.properties.s <= T).sort((a, b) => b.properties.height - a.properties.height)[0];
+      const ring = mine ? mine.geometry.coordinates[0] : cm ? cm.geometry.coordinates[0] : null, bh = mine ? mine.properties.height : cm ? cm.properties.height : 0;
+      const at = ring ? ringMid(ring) : parcelMid[jibun];
       if (!at) return;
       const el = document.createElement("div"); el.className = "lbl " + act[0].grade;
       el.textContent = labelName(act[0]);
@@ -452,9 +487,9 @@ function init(S) {
       labelsEl.appendChild(el);
       // 걷기 모드용 간판 자리: 도로를 향한 벽면 가운데, 층 정보가 있으면 그 층 높이
       const fl = act[0].floor, fn = /^\d+$/.test(fl) ? +fl : 1;
-      const signH = Math.min(fn > 1 ? (fn - 1) * 3.3 + 2.2 : 2.6, mine ? mine.properties.height - 0.3 : 3);
-      labels.push({ jibun, el, lngLat: at, h: mine ? mine.properties.height + 1 : 1, w: 0, hh: 0,
-        sign: mine ? facade(mine.geometry.coordinates[0]) : at, signH: Math.max(signH, 1.8) });
+      const signH = Math.min(fn > 1 ? (fn - 1) * 3.3 + 2.2 : 2.6, bh ? bh - 0.3 : 3);
+      labels.push({ jibun, el, lngLat: at, h: bh ? bh + 1 : 1, w: 0, hh: 0,
+        sign: ring ? facade(ring) : at, signH: Math.max(signH, 1.8) });
     });
     labels.forEach(l => { l.w = l.el.offsetWidth; l.hh = l.el.offsetHeight + 4; });
     placeLabels();
@@ -545,7 +580,7 @@ function init(S) {
     // '이 필지만 보기': 층을 고른 동안 다른 건물·주변 회색 건물을 숨겨 낮은 층도 보이게 한다
     const iso = isolate && selected && selFloor, base = ["!=", ["get", "hide"], 1];
     map.setFilter("bld", iso ? ["all", base, ["==", ["get", "jibun"], selected]] : base);
-    ["ctx-bld", "ctx-roof", "ctx-bld-x"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
+    ["ctx-bld", "ctx-roof", "ctx-bld-x", "ctx-prog"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
   }
   function pickFloor(k) {
     selFloor = selFloor === k ? null : k;
@@ -668,7 +703,7 @@ function init(S) {
       if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun,
         label: `창천동 ${p.jibun}${p.anchor ? " · " + p.anchor : ""}`,
         sub: p.jimok === "도" ? "도로" : `상호 ${(bizByParcel[p.jibun] || []).length}곳 기록` }); });
-    S.businesses.forEach(b => { if (b.name !== "상호" && b.name.toLowerCase().replace(/\s+/g, "").includes(n))
+    S.businesses.forEach(b => { if (b.name !== "상호" && coreJ.has(b.jibun) && b.name.toLowerCase().replace(/\s+/g, "").includes(n))
       bs.push({ rank: 2, type: "biz", biz: b, jibun: b.jibun, label: b.name,
         sub: `창천동 ${b.jibun} ${b.floor || ""} · ${b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`}` }); });
     ps.sort((a, b) => a.rank - b.rank || a.jibun.localeCompare(b.jibun, "en", { numeric: true }));
@@ -706,7 +741,7 @@ function init(S) {
   map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
     if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
-    const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "ghost", "parcel-fill"] })[0];
+    const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "ghost", "parcel-fill"] }).filter(x => !x.properties.ctx)[0];
     if (f) { focusBiz = null; show(f.properties.jibun); setSide(true); }
     else { clearSelection(); qInput.value = ""; resultsEl.hidden = true; }   // 빈 땅 클릭 → 선택 해제
   });
@@ -808,9 +843,7 @@ function init(S) {
     map.setFilter("bld", ["all", hide, ["!", ["in", ["get", "bid"], ["literal", B]]]]);
     map.setFilter("bld-x", ["all", hide, ["in", ["get", "bid"], ["literal", B]]]);
     if (map.getLayer("ctx-bld-x")) {
-      map.setFilter("ctx-bld", ["!", ["in", ["get", "cid"], ["literal", C]]]);
-      map.setFilter("ctx-roof", ["all", ["has", "rc"], ["!", ["in", ["get", "cid"], ["literal", C]]]]);
-      map.setFilter("ctx-bld-x", ["in", ["get", "cid"], ["literal", C]]);
+      ctxOcc = C; applyCtx();
     }
   }
   function setWalking(on) {
