@@ -438,6 +438,8 @@ def context_map(core_pnus):
     bld_circle = Point(0, 0).buffer(CONTEXT_BLD_RADIUS_M, 64)
     core = shapely_union([to_m(shape(f["geometry"]).buffer(0)) for f in src if f["properties"]["pnu"] in core_pnus])
     blds, seen = [], set()
+    cpath = ROOT / "data/context_colors.json"
+    colors = json.loads(cpath.read_text()) if cpath.exists() else {}
     # LT_C_BLDGINFO_r150.json: 교회 반경 150m 박스로 따로 받은 파일(있으면 합친다). 두 파일에 겹치는 건물은 대표점으로 한 번만 쓴다.
     srcs = [ROOT / "data/raw/vworld" / n for n in ("LT_C_BLDGINFO_bbox.json", "LT_C_BLDGINFO_r150.json")]
     bfeats = [f for s in srcs if s.exists() for f in json.load(open(s))["response"]["result"]["featureCollection"]["features"]]
@@ -453,12 +455,22 @@ def context_map(core_pnus):
         p = f["properties"]
         h = float(p.get("height") or 0) or (int(p.get("grnd_flr") or 0) * 3.3) or 3.0
         geo = json.loads(json.dumps(mapping(to_ll(g))), parse_float=lambda s: round(float(s), 7))
-        blds.append({"type": "Feature", "geometry": geo, "properties": {"height": round(h, 1)}})
+        props = {"height": round(h, 1)}
+        # 지붕색(wc=벽, rc=지붕): scripts/build_context_colors.py 가 위성사진·3D사진에서 만든다. 키는 반올림한 최종 도형 기준.
+        ck = colors.get(_ckey(to_m(shape(geo))))
+        if ck:
+            props.update({k: ck[k] for k in ("wc", "rc") if k in ck})
+        blds.append({"type": "Feature", "geometry": geo, "properties": props})
     ring = json.loads(json.dumps(mapping(to_ll(circle.exterior))), parse_float=lambda s: round(float(s), 7))
     return {"center": list(o), "radius_m": CONTEXT_RADIUS_M,
             "parcels": {"type": "FeatureCollection", "features": feats},
             "buildings": {"type": "FeatureCollection", "features": blds},
             "boundary": {"type": "Feature", "properties": {}, "geometry": ring}}
+
+
+def _ckey(g):  # build_context_colors.key_of 와 같은 키
+    rp = g.representative_point()
+    return f"{rp.x:.1f},{rp.y:.1f},{round(g.area)}"
 
 
 def shapely_union(gs):

@@ -1,0 +1,22 @@
+{
+ "params": [
+  21.8112,
+  -374.9,
+  330.9,
+  0.004668224,
+  0.87816,
+  -4.883199999999993e-05,
+  3288.4
+ ],
+ "photo_size": [
+  2224,
+  1640
+ ],
+ "note": "X,Y,Z(m),yaw,pitch,roll(rad),focal(px of original); principal point = image center",
+ "cost": {
+  "total": 45.8526272750783,
+  "photo": 36.67769044781305,
+  "church_px": 26.20852442075786,
+  "visible": 118
+ }
+}

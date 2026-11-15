@@ -322,10 +322,14 @@ function init(S) {
       map.addLayer({ id: "ctx-fill", type: "fill", source: "ctx-parcels", paint: {
         "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#dedcd6", "#efede8"], "fill-opacity": 0.85 } });
       map.addLayer({ id: "ctx-line", type: "line", source: "ctx-parcels", paint: { "line-color": "#c9c5bc", "line-width": 0.5 } });
+      // 주변 건물 색: wc=벽(3D 사진 팔레트), rc=지붕(위성사진 표본). 지붕이 있는 건물은 맨 위 0.4m를 지붕 레이어로 따로 칠한다.
+      const CWALL = ["coalesce", ["get", "wc"], "#d6d3cc"], CTOP = ["case", ["has", "rc"], ["max", 0.3, ["-", ["get", "height"], 0.4]], ["get", "height"]];
       map.addLayer({ id: "ctx-bld", type: "fill-extrusion", source: "ctx-bld", paint: {
-        "fill-extrusion-color": "#d6d3cc", "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.45 } });
+        "fill-extrusion-color": CWALL, "fill-extrusion-height": CTOP, "fill-extrusion-opacity": 0.82 } });
+      map.addLayer({ id: "ctx-roof", type: "fill-extrusion", source: "ctx-bld", filter: ["has", "rc"], paint: {
+        "fill-extrusion-color": ["get", "rc"], "fill-extrusion-base": CTOP, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.9 } });
       map.addLayer({ id: "ctx-bld-x", type: "fill-extrusion", source: "ctx-bld", filter: ["in", ["get", "cid"], ["literal", [-1]]], paint: {   // 카메라를 가리는 주변 건물
-        "fill-extrusion-color": "#d6d3cc", "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.1 } });
+        "fill-extrusion-color": CWALL, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.1 } });
       map.addLayer({ id: "ctx-ring", type: "line", source: "ctx-ring", paint: {
         "line-color": "#a49d8f", "line-width": 1.5, "line-dasharray": [3, 3] } });
     }
@@ -541,7 +545,7 @@ function init(S) {
     // '이 필지만 보기': 층을 고른 동안 다른 건물·주변 회색 건물을 숨겨 낮은 층도 보이게 한다
     const iso = isolate && selected && selFloor, base = ["!=", ["get", "hide"], 1];
     map.setFilter("bld", iso ? ["all", base, ["==", ["get", "jibun"], selected]] : base);
-    ["ctx-bld", "ctx-bld-x"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
+    ["ctx-bld", "ctx-roof", "ctx-bld-x"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
   }
   function pickFloor(k) {
     selFloor = selFloor === k ? null : k;
@@ -805,6 +809,7 @@ function init(S) {
     map.setFilter("bld-x", ["all", hide, ["in", ["get", "bid"], ["literal", B]]]);
     if (map.getLayer("ctx-bld-x")) {
       map.setFilter("ctx-bld", ["!", ["in", ["get", "cid"], ["literal", C]]]);
+      map.setFilter("ctx-roof", ["all", ["has", "rc"], ["!", ["in", ["get", "cid"], ["literal", C]]]]);
       map.setFilter("ctx-bld-x", ["in", ["get", "cid"], ["literal", C]]);
     }
   }
