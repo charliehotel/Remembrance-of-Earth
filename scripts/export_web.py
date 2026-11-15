@@ -299,6 +299,9 @@ def massing(bid, ring):
         for x, y in list(P.exterior.coords)[:-1]:                               # 필로티 기둥
             c = ex.interpolate(ex.project(Point(x, y)))
             add(sbox(c.x - .6, c.y - .6, c.x + .6, c.y + .6), 0, H0, STONE)
+    elif bid in ("B024", "B124", "B111"):  # 북쪽 변 2-2·2-7·2-46: scripts/landmark_north.py (로드뷰 캡처 기반)
+        import landmark_north
+        parts.extend(landmark_north.MODELS[bid](P))
     else:
         return None
     out = []
