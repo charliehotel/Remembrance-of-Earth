@@ -573,6 +573,10 @@ def shapely_transform(g, fn):
     return shapely.transform(g, lambda c: np.column_stack(fn(c[:, 0], c[:, 1])))
 
 
+_cc = ROOT / "data/context_colors.json"
+CORE_COLORS = json.loads(_cc.read_text()) if _cc.exists() else {}   # build_context_colors.py 가 만든 건물별 벽색(wc)·지붕색(rc)
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     parcels = json.load(open(ROOT / "data/parcels.geojson"))
@@ -618,8 +622,10 @@ def main():
         spans = sorted(({"jibun": k, "jimok": v[1], "pct": round(bgm.intersection(v[0]).area / bgm.area * 100)}
                         for k, v in pgeom.items() if bgm.intersects(v[0])), key=lambda x: -x["pct"])
         spans = [x for x in spans if x["pct"] >= 5]
+        ck = {} if (ms or "landmark_proxy" in flags) else CORE_COLORS.get("bid:" + p["bid"], {})   # 손으로 모델링한 건물은 제외
         feats.append({"type": "Feature", "geometry": f["geometry"],
-                      "properties": {"bid": p["bid"], "jibun": p["jibun"], "start": yr, "height": h, "spans": spans,
+                      "properties": {**{k: ck[k] for k in ("wc", "rc") if k in ck},
+                                     "bid": p["bid"], "jibun": p["jibun"], "start": yr, "height": h, "spans": spans,
                                      "floors_up": fl, "floors_down": int(p["floors_down"] or 0),
                                      "height_basis": basis, "flags": ";".join(flags), "start_note": note,
                                      "base": 0, "color": "", "part": 0, "hide": 1 if ms else 0, **pp}})

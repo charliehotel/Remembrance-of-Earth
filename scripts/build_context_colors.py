@@ -49,8 +49,9 @@ def load_cal():
     return mod
 
 
-def wall_samples():
-    """건물 인덱스 → (벽 색 RGB, 화소 수). 카메라 파일이 없으면 빈 dict."""
+def wall_samples(extra=None):
+    """건물 인덱스 → (벽 색 RGB, 화소 수). 카메라 파일이 없으면 빈 dict.
+    extra: 주변 건물 뒤에 덧붙일 건물 목록(핵심 골목). 인덱스는 주변 건물 수부터 이어진다."""
     import numpy as np
     camf = ROOT / "data/context_cam3d.json"
     if not camf.exists():
@@ -60,7 +61,7 @@ def wall_samples():
     photo = Image.open(cal.PHOTO).convert("RGB")
     W, H = photo.size
     arr = np.asarray(photo).astype(float)
-    blds = cal.load_buildings()
+    blds = cal.load_buildings() + list(extra or [])
     lab = cal.label_image(p, blds, W, H, walls=True)
     out = {}
     for i in range(len(blds)):
@@ -171,9 +172,41 @@ def main():
             ent["rc"] = hexc((r * 255, gg * 255, b * 255))
             ent["n"] = n
         out[key_of(g)] = ent
+
+    # ---- 핵심 골목 건물(손으로 모델링한 것 제외)에도 같은 방법으로 지붕색·벽색을 뽑는다. 키는 "bid:<건물번호>".
+    nctx = len(sc["context"]["buildings"]["features"])
+    core = []
+    for f in sc["buildings"]["features"]:
+        pr = f["properties"]
+        if pr.get("part") != 0 or pr.get("hide") == 1 or "landmark_proxy" in (pr.get("flags") or ""):
+            continue
+        ring = [to_m(*q) for q in f["geometry"]["coordinates"][0]]
+        g = Polygon(ring).buffer(0)
+        if not g.is_empty:
+            core.append((pr["bid"], ring, g, pr["height"]))
+    # 사진에서 가려지는 건물(주변 건물)도 같이 그려야 벽 표본이 맞다
+    cwalls = wall_samples([{"ring": np.array(r), "h": h, "rgb": None} for _, r, _, h in core])
+    nc = 0
+    for k, (bid, ring, g, height) in enumerate(core):
+        i = nctx + k
+        poly_px = Polygon([(OX + x * PX_PER_M, OY - y * PX_PER_M) for x, y in ring]).buffer(0)
+        rgb, n = roof_color(img, poly_px, W, H)
+        if i in cwalls:
+            wall, ws = hexc(cwalls[i][0]), 1
+        else:
+            wall, ws = classify_wall(i, height, rgb, ((i * 2654435761) % 1000) / 1000.0), 0
+        ent = {"wc": wall, "ws": ws}
+        if rgb is not None:
+            h_, s_, v_ = colorsys.rgb_to_hsv(*(c / 255 for c in rgb))
+            r, gg, b = colorsys.hsv_to_rgb(h_, min(1, s_ * 1.12), v_)
+            ent["rc"] = hexc((r * 255, gg * 255, b * 255))
+            ent["n"] = n
+        out["bid:" + bid] = ent
+        nc += 1
+    print("core buildings colored:", nc, "wall from photo:", sum(1 for k in range(len(core)) if nctx + k in cwalls))
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=0))
     have = sum(1 for v in out.values() if "rc" in v)
-    print("buildings", len(out), "with roof color", have, "->", OUT.relative_to(ROOT))
+    print("entries", len(out), "with roof color", have, "->", OUT.relative_to(ROOT))
 
 
 if __name__ == "__main__":

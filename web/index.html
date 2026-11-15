@@ -164,6 +164,8 @@ function init(S) {
   S.building_events.forEach(e => (evByParcel[e.jibun] ||= []).push(e));
   const yr = s => s ? parseInt(s.slice(0, 4)) : null;
   const coreJ = new Set(S.parcels.features.map(f => f.properties.jibun));
+  const anchorOf = {};   // 필지의 대표 장소 이름(창천감리교회 등): 인허가 업소가 없어도 라벨을 단다
+  S.parcels.features.forEach(f => f.properties.anchor && (anchorOf[f.properties.jibun] = f.properties.anchor));
 
   // 그 해에 영업 근거가 있는 업소. 등급 A: 인허가~폐업(없으면 열림), 등급 C: 첫~마지막 간판 관찰
   function activeBiz(jibun, y) {
@@ -373,11 +375,13 @@ function init(S) {
       paint: { "line-color": "#d33", "line-width": 4 } });
     map.addLayer({ id: "bld", type: "fill-extrusion", source: "buildings", filter: ["!=", ["get", "hide"], 1], paint: {
       "fill-extrusion-base": ["coalesce", ["get", "base"], 0],
-      "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
-      "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.92 } });
+      "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["has", "wc"], ["get", "wc"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
+      "fill-extrusion-height": ["case", ["all", ["has", "rc"], ["==", ["get", "part"], 0]], ["max", 0.3, ["-", ["get", "height"], 0.4]], ["get", "height"]], "fill-extrusion-opacity": 0.92 } });
+    map.addLayer({ id: "bld-roof", type: "fill-extrusion", source: "buildings", filter: ["all", ["has", "rc"], ["==", ["get", "part"], 0], ["!=", ["get", "hide"], 1]], paint: {   // 위성사진에서 뽑은 지붕색(맨 위 0.4m)
+      "fill-extrusion-color": ["get", "rc"], "fill-extrusion-base": ["max", 0.3, ["-", ["get", "height"], 0.4]], "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.95 } });
     map.addLayer({ id: "bld-x", type: "fill-extrusion", source: "buildings", filter: ["in", ["get", "bid"], ["literal", [""]]], paint: {   // 카메라를 가리는 건물(반투명)
       "fill-extrusion-base": ["coalesce", ["get", "base"], 0],
-      "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
+      "fill-extrusion-color": ["case", ["==", ["get", "part"], 1], ["get", "color"], ["has", "wc"], ["get", "wc"], ["in", "old_date", ["get", "flags"]], "#c9b9a6", ["in", "landmark_proxy", ["get", "flags"]], "#c98f6a", "#d9a066"],
       "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.2 } });
     map.addSource("cranes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     map.addSource("ghosts", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -469,11 +473,14 @@ function init(S) {
     }
     labelsEl.textContent = ""; labels = [];
     const blds = buildingsAt(T).filter(f => !f.properties.part && f.properties.hide !== 1);
-    Object.keys(bizByParcel).forEach(jibun => {
-      const act = activeBiz(jibun, y); if (!act.length) return;
+    new Set([...Object.keys(bizByParcel), ...Object.keys(anchorOf)]).forEach(jibun => {
+      const act = activeBiz(jibun, y), an = anchorOf[jibun];
+      const showAnchor = an && (/교회|성당|학교/.test(an) || !act.length);   // 교회 같은 장소는 업소가 있어도 대표 이름으로 둔다
+      if (!act.length && !showAnchor) return;
       // 대표 상호: 인허가 기록(A) 우선, 그다음 가장 최근에 시작한 곳
       act.sort((a, b) => (a.grade === "A" ? 0 : 1) - (b.grade === "A" ? 0 : 1) ||
         (b.start || b.sign_first || "").localeCompare(a.start || a.sign_first || ""));
+      if (showAnchor) act.unshift({ name: an, grade: "A", floor: "", license_type: "", landmark: true });
       const mine = blds.filter(f => f.properties.jibun === jibun).sort((a, b) => b.properties.height - a.properties.height)[0];
       // 핵심 필지가 아니면 주변 건물(그때 보이는 것 중 가장 높은 것)에 단다
       const cm = mine ? null : (ctxByJ[jibun] || []).filter(f => f.properties.s == null || f.properties.s <= T).sort((a, b) => b.properties.height - a.properties.height)[0];
@@ -580,6 +587,8 @@ function init(S) {
     // '이 필지만 보기': 층을 고른 동안 다른 건물·주변 회색 건물을 숨겨 낮은 층도 보이게 한다
     const iso = isolate && selected && selFloor, base = ["!=", ["get", "hide"], 1];
     map.setFilter("bld", iso ? ["all", base, ["==", ["get", "jibun"], selected]] : base);
+    const RF = ["all", ["has", "rc"], ["==", ["get", "part"], 0], base];
+    map.setFilter("bld-roof", iso ? [...RF, ["==", ["get", "jibun"], selected]] : RF);
     ["ctx-bld", "ctx-roof", "ctx-bld-x", "ctx-prog"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
   }
   function pickFloor(k) {
@@ -841,6 +850,7 @@ function init(S) {
     const key = bids.join() + "|" + cids.join(); if (key === occKey) return; occKey = key;
     const B = bids.length ? bids : [""], C = cids.length ? cids : [-1], hide = ["!=", ["get", "hide"], 1];
     map.setFilter("bld", ["all", hide, ["!", ["in", ["get", "bid"], ["literal", B]]]]);
+    map.setFilter("bld-roof", ["all", ["has", "rc"], ["==", ["get", "part"], 0], hide, ["!", ["in", ["get", "bid"], ["literal", B]]]]);
     map.setFilter("bld-x", ["all", hide, ["in", ["get", "bid"], ["literal", B]]]);
     if (map.getLayer("ctx-bld-x")) {
       ctxOcc = C; applyCtx();
