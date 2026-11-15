@@ -202,10 +202,14 @@ function init(S) {
   let ctxOcc = [-1], ctxT = 9999, ctxN = -1;
   function applyCtx() {
     if (!map.getLayer("ctx-bld-x")) return false;
-    const tm = ["any", ["!", ["has", "s"]], ["<=", ["get", "s"], ctxT]], nin = ["!", ["in", ["get", "cid"], ["literal", ctxOcc]]];
+    const tm = ["all", ["!=", ["get", "hide"], 1], ["any", ["!", ["has", "s"]], ["<=", ["get", "s"], ctxT]]], nin = ["!", ["in", ["get", "cid"], ["literal", ctxOcc]]];
     map.setFilter("ctx-bld", ["all", tm, nin]);
     map.setFilter("ctx-roof", ["all", ["has", "rc"], tm, nin]);
     map.setFilter("ctx-bld-x", ["all", tm, ["in", ["get", "cid"], ["literal", ctxOcc]]]);
+    if (map.getLayer("ctx-det")) {   // 사진으로 정밀 모델링한 주변 건물(독수리빌딩): 부모 건물이 가려지면 같이 반투명
+      map.setFilter("ctx-det", ["!", ["in", ["get", "p"], ["literal", ctxOcc]]]);
+      map.setFilter("ctx-det-x", ["in", ["get", "p"], ["literal", ctxOcc]]);
+    }
     return true;
   }
   function updateCtx(T) {
@@ -232,7 +236,16 @@ function init(S) {
       const p = f.properties;
       if (p.a == null || T < p.a || T >= p.b) continue;
       const q = (T - p.a) / (p.b - p.a), g = { ...f, properties: { ...p, height: Math.max(p.height * ease(q), 0.3), bid: "C" + p.cid } };
-      ctxProg.push(g); crane.push(...craneFeats(g, q, T)); prog = true;
+      if (p.hide !== 1) ctxProg.push(g);   // hide=1: 정밀 모델이 따로 올라간다(아래 ctxDet)
+      crane.push(...craneFeats(g, q, T)); prog = true;
+    }
+    const ctxDet = [];   // 정밀 모델 조각: 완공 후엔 전부, 공사 중엔 높이 비율만큼 아래층부터
+    if (S.context?.details) for (const f of S.context.details.features) {
+      const p = f.properties;
+      if (p.a != null && T < p.a) continue;
+      if (p.b == null || T >= p.b) { ctxDet.push(f); continue; }
+      const hv = p.H * ease((T - p.a) / (p.b - p.a));
+      if (p.base < hv) ctxDet.push({ ...f, properties: { ...p, height: Math.min(p.height, hv) } });
     }
     for (const f of S.ghosts.features) {
       const g = f.properties;
@@ -243,8 +256,8 @@ function init(S) {
       ghost.push({ type: "Feature", geometry: { type: "Polygon", coordinates: f.geometry.coordinates.map(r => r.map(([x, y]) => [x + sx, y])) },
                    properties: { ...g, base: g.base * k, top: Math.max(g.top * k, 0.3), color: ghostColor(g, q) } });
     }
-    const sig = prog ? "p" + Math.round(T * 240) : "s" + bld.length + ":" + ghost.length;
-    return { bld, crane, ghost, ctxProg, sig, nb };
+    const sig = prog ? "p" + Math.round(T * 240) : "s" + bld.length + ":" + ghost.length + ":" + ctxDet.length;
+    return { bld, crane, ghost, ctxProg, ctxDet, sig, nb };
   }
   function refreshDyn(T, force) {
     updateCtx(T);
@@ -256,6 +269,7 @@ function init(S) {
       map.getSource("cranes").setData({ type: "FeatureCollection", features: d.crane });
       map.getSource("ghosts").setData({ type: "FeatureCollection", features: d.ghost });
       map.getSource("ctx-prog")?.setData({ type: "FeatureCollection", features: d.ctxProg });
+      map.getSource("ctx-det")?.setData({ type: "FeatureCollection", features: d.ctxDet });
     }
     return d.nb;
   }
@@ -358,6 +372,10 @@ function init(S) {
         "fill-extrusion-color": ["get", "rc"], "fill-extrusion-base": CTOP, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.9 } });
       map.addLayer({ id: "ctx-prog", type: "fill-extrusion", source: "ctx-prog", paint: {   // 공사 중인 주변 건물
         "fill-extrusion-color": CWALL, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.9 } });
+      map.addSource("ctx-det", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      const DET = { "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "height"] };
+      map.addLayer({ id: "ctx-det", type: "fill-extrusion", source: "ctx-det", paint: { ...DET, "fill-extrusion-opacity": 1 } });   // 1 미만이면 MapLibre 가 뒷면까지 비쳐 보이게 그린다   // 독수리빌딩 정밀 모델
+      map.addLayer({ id: "ctx-det-x", type: "fill-extrusion", source: "ctx-det", filter: ["in", ["get", "p"], ["literal", [-1]]], paint: { ...DET, "fill-extrusion-opacity": 0.12 } });
       map.addLayer({ id: "ctx-bld-x", type: "fill-extrusion", source: "ctx-bld", filter: ["in", ["get", "cid"], ["literal", [-1]]], paint: {   // 카메라를 가리는 주변 건물
         "fill-extrusion-color": CWALL, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.1 } });
       map.addLayer({ id: "ctx-ring", type: "line", source: "ctx-ring", paint: {
@@ -391,6 +409,8 @@ function init(S) {
     map.addSource("floor-sel", { type: "geojson", data: { type: "FeatureCollection", features: [] } });   // 선택한 층 강조 슬래브
     map.addLayer({ id: "floor-sel", type: "fill-extrusion", source: "floor-sel", paint: {
       "fill-extrusion-color": "#e63946", "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 0.88 } });
+    // 지면 필지 레이어는 주변 건물 레이어보다 아래에 둔다. 건물 뒤에 있는 필지 면(업소 근거 연녹색 등)이 건물 위를 가로질러 잘라 먹는 것을 막는다.
+    if (map.getLayer("ctx-bld")) ["parcel-fill", "parcel-line", "parcel-sel-fill", "parcel-sel"].forEach(id => map.moveLayer(id, "ctx-bld"));
     const none = ["==", ["get", "jibun"], ""];
     map.addLayer({ id: "span-fill", type: "fill", source: "parcels", filter: none, paint: { "fill-color": "#f08a00", "fill-opacity": 0.2 } });
     map.addLayer({ id: "span-line", type: "line", source: "parcels", filter: none,
@@ -589,7 +609,7 @@ function init(S) {
     map.setFilter("bld", iso ? ["all", base, ["==", ["get", "jibun"], selected]] : base);
     const RF = ["all", ["has", "rc"], ["==", ["get", "part"], 0], base];
     map.setFilter("bld-roof", iso ? [...RF, ["==", ["get", "jibun"], selected]] : RF);
-    ["ctx-bld", "ctx-roof", "ctx-bld-x", "ctx-prog"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
+    ["ctx-bld", "ctx-roof", "ctx-bld-x", "ctx-prog", "ctx-det", "ctx-det-x"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", iso ? "none" : "visible"));
   }
   function pickFloor(k) {
     selFloor = selFloor === k ? null : k;

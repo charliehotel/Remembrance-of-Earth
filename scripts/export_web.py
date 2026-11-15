@@ -10,7 +10,10 @@
 """
 import csv
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # python -I 에서도 같은 폴더의 랜드마크 모듈을 읽는다
 
 ROOT = Path(__file__).resolve().parent.parent
 # 대장·필지와 맞지 않아 제외: B025는 브이월드에만 있고(승인 1994-02-05, 대지 247.03㎡) 건축HUB 대장에 없으며,
@@ -474,11 +477,41 @@ def context_map(core_pnus, ghost_out=None):
         timed.append((len(blds), jb, g, yf(str(p.get("useapr_day") or "")), props, str(p.get("useapr_day") or "")))
         blds.append({"type": "Feature", "geometry": geo, "properties": props})
     _context_time(timed, ghost_out, to_ll)
+    details = _context_details(blds, cparcels, to_m)
     ring = json.loads(json.dumps(mapping(to_ll(circle))), parse_float=lambda s: round(float(s), 7))   # Polygon(LinearRing은 GeoJSON 타입이 아니다). 선 레이어가 윤곽을 그린다
     return {"center": list(o), "radius_m": CONTEXT_RADIUS_M,
             "parcels": {"type": "FeatureCollection", "features": feats},
             "buildings": {"type": "FeatureCollection", "features": blds},
+            "details": details,
             "boundary": {"type": "Feature", "properties": {}, "geometry": ring}}
+
+
+# ---- 주변 건물 중 사진으로 정밀 모델링한 것(랜드마크). 부모 회색 건물은 hide=1 로 숨기고, 부위(part)별 색·높이 조각을 details 로 낸다.
+#  조각은 부모와 같은 시간(s·a·b)을 따르고, 공사 중에는 높이가 올라간다(프런트: index.html dyn).
+CTX_DETAIL = {"31-4": "dokssuri"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
+
+
+def _context_details(blds, cparcels, to_m):
+    import landmark_dokssuri as LD
+    feats = []
+    for jib, name in CTX_DETAIL.items():
+        pg = next((g for j, g in cparcels if j == jib), None)
+        if pg is None:
+            continue
+        ov = [to_m(shape(b["geometry"])).intersection(pg).area for b in blds]
+        best = max(range(len(blds)), key=ov.__getitem__)
+        par = blds[best]["properties"]
+        if ov[best] < 20:
+            continue
+        par["hide"] = 1
+        par["det"] = name
+        for r, b, t, c in LD.build(blds[best]["geometry"]["coordinates"][0]):
+            pr = {"p": best, "base": b, "height": t, "color": c, "H": par["height"]}
+            for k in ("s", "a", "b"):
+                if k in par:
+                    pr[k] = par[k]
+            feats.append({"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [r]}, "properties": pr})
+    return {"type": "FeatureCollection", "features": feats}
 
 
 # ---- 주변 건물의 시간. 1993년 이후 사용승인된 건물은 모두 "이전 건물 → 철거 → 공사(크레인) → 완공" 순서로 보인다.
