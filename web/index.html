@@ -342,15 +342,18 @@ function init(S) {
   map.on("load", () => {
     // 출발점: 연세로12길 입구 쪽에서 창천교회와 독수리다방(31-4) 사이 골목을 정면으로 바라보는 시점
     map.jumpTo(START_VIEW);
-    // 주변 맥락(창천교회 반경 300m): 아직 구현하지 않은 곳이라 흐리게만 그린다. 클릭·검색 대상 아님.
+    // 주변 맥락(창천교회 반경 300m). 도로(지목 도)는 전부 회색, 반경 150m(r150) 필지는 업소 근거 색, 그 밖은 조사 전이라 흐리게.
     if (S.context) {
-      map.addSource("ctx-parcels", { type: "geojson", data: S.context.parcels });
+      map.addSource("ctx-parcels", { type: "geojson", data: S.context.parcels, promoteId: "jibun" });
       S.context.buildings.features.forEach((f, i) => { f.properties.cid = i; bldH["C" + i] = f.properties.height || 10; });
       map.addSource("ctx-prog", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
       map.addSource("ctx-bld", { type: "geojson", data: S.context.buildings });
       map.addSource("ctx-ring", { type: "geojson", data: S.context.boundary });
+      // 반경 150m 안(r150)은 핵심 필지와 같은 규칙: 그 해 업소 근거가 있으면 녹색, 없으면 흰색. 150m 밖은 조사 전이라 베이지.
       map.addLayer({ id: "ctx-fill", type: "fill", source: "ctx-parcels", paint: {
-        "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#dedcd6", "#efede8"], "fill-opacity": 0.85 } });
+        "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#d4d4d4",
+          ["==", ["get", "r150"], 1], ["case", ["==", ["feature-state", "evidence"], true], "#cfd8c4", "#f4f1ea"],
+          "#efede8"], "fill-opacity": ["case", ["==", ["get", "jimok"], "도"], 1, ["==", ["get", "r150"], 1], 1, 0.85] } });
       map.addLayer({ id: "ctx-line", type: "line", source: "ctx-parcels", paint: { "line-color": "#c9c5bc", "line-width": 0.5 } });
       const noneJ = ["==", ["get", "jibun"], ""];   // 선택한 주변 필지 강조(핵심 필지의 parcel-sel 과 같은 모양)
       map.addLayer({ id: "ctx-sel-fill", type: "fill", source: "ctx-parcels", filter: noneJ, paint: { "fill-color": "#d33", "fill-opacity": 0.18 } });
@@ -461,6 +464,8 @@ function init(S) {
     setYearLabel(T); lastY = y;
     lastDone = refreshDyn(T, true);
     S.parcels.features.forEach(f => map.setFeatureState({ source: "parcels", id: f.id }, { evidence: activeBiz(f.properties.jibun, y).length > 0 }));
+    if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties;
+      if (p.r150 && p.jimok !== "도") map.setFeatureState({ source: "ctx-parcels", id: p.jibun }, { evidence: activeBiz(p.jibun, y).length > 0 }); });
     if (selected) show(selected);
     buildLabels(y, T);
   }
