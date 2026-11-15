@@ -416,6 +416,15 @@ CONTEXT_RADIUS_M = 300
 CONTEXT_BLD_RADIUS_M = 150  # 회색 주변 건물은 이 반경 안만
 
 
+def _r150_new():
+    """data/parcels_r150.csv 의 신규 필지(반경 150m 안, 핵심 골목 밖) 지번. 이 필지만 건물·상호를 조사했다."""
+    p = ROOT / "data/parcels_r150.csv"
+    return {r["jibun"] for r in csv.DictReader(p.open(encoding="utf-8-sig")) if r["in_core"] == "False"} if p.exists() else set()
+
+
+R150_NEW = _r150_new()
+
+
 def context_map(core_pnus, ghost_out=None):
     import re
     from shapely.geometry import Point, mapping
@@ -438,8 +447,9 @@ def context_map(core_pnus, ghost_out=None):
             continue
         m = re.match(r"(\S+?)\s*(\D+)$", p["jibun"])
         geo = json.loads(json.dumps(mapping(to_ll(g))), parse_float=lambda s: round(float(s), 7))
+        jb_ = m.group(1) if m else p["jibun"]
         feats.append({"type": "Feature", "geometry": geo,
-                      "properties": {"jibun": m.group(1) if m else p["jibun"], "jimok": m.group(2).strip() if m else ""}})
+                      "properties": {"jibun": jb_, "jimok": m.group(2).strip() if m else "", **({"r150": 1} if jb_ in R150_NEW else {})}})
     # 주변 건물: 이미 받아 둔 GIS건물통합정보(연세로12길 주변 띠만 있음) 중 구현 필지 밖, 반경 150m 안에 있는 것. 회색 매스로만 쓴다.
     # 300m 전체를 채우면 너무 복잡해 보여서 건물은 가까운 곳만 두고, 그 바깥은 필지만 흐리게 그린다.
     bld_circle = Point(0, 0).buffer(CONTEXT_BLD_RADIUS_M, 64)
@@ -469,6 +479,8 @@ def context_map(core_pnus, ghost_out=None):
         h = float(p.get("height") or 0) or (int(p.get("grnd_flr") or 0) * 3.3) or 3.0
         geo = json.loads(json.dumps(mapping(to_ll(g))), parse_float=lambda s: round(float(s), 7))
         props = {"height": round(h, 1)}
+        if iso(str(p.get("useapr_day") or "")):
+            props["ua"] = iso(str(p.get("useapr_day")))   # V-World 건물정보의 사용승인일(주변 필지 패널용)
         # 지붕색(wc=벽, rc=지붕): scripts/build_context_colors.py 가 위성사진·3D사진에서 만든다. 키는 반올림한 최종 도형 기준.
         ck = colors.get(_ckey(to_m(shape(geo))))
         if ck:
@@ -687,6 +699,14 @@ def main():
                                       "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
     bev = [{k: b[k] for k in ("jibun", "status", "start", "end", "end_basis", "structure", "use", "floors_up", "grade")}
            for b in rc("data/timeline_buildings.csv") if b["status"] != "현존"]
+    # 150m 확장 필지: 말소·철거 이력은 building_events 에, 현존 건물은 ctx_live 에 둔다(주변 필지 패널용)
+    ctx_live = {}
+    if (ROOT / "data/timeline_buildings_r150.csv").exists():
+        for b in rc("data/timeline_buildings_r150.csv"):
+            if b["status"] != "현존":
+                bev.append({k: b[k] for k in ("jibun", "status", "start", "end", "end_basis", "structure", "use", "floors_up", "grade")})
+            else:
+                ctx_live.setdefault(b["jibun"], []).append({k: b[k] for k in ("kind", "start", "floors_up", "floors_down", "height_m", "structure", "use", "total_area_m2")})
     # 건축물대장 층별개요(현존 건물): 층마다 용도·면적. 대장 작성 시점(crtnDay) 기준의 현재 상태이므로 과거 용도로 쓰지 않는다.
     floors = {}
     flr_raw = json.loads((ROOT / "data/raw/hub/br_flr.json").read_text(encoding="utf-8"))
@@ -704,7 +724,7 @@ def main():
                 "struct": x["strctCdNm"].strip(), "use": x["mainPurpsCdNm"].strip(), "etc": (x["etcPurps"] or "").strip(),
                 "area": x["area"], "area_excl": x["areaExctYn"] == "1", "crtn": x["crtnDay"]})
     scene = {"floors": floors, "parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
-             "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "year_min": 1992, "year_max": 2026}
+             "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "ctx_live": ctx_live, "year_min": 1992, "year_max": 2026}
     txt = json.dumps(scene, ensure_ascii=False)
     (OUT / "scene.json").write_text(txt)
     (OUT / "scene.js").write_text("window.SCENE=" + txt + ";")  # file:// 에서도 열리도록 script 로 읽는다

@@ -364,6 +364,9 @@ function init(S) {
       map.addLayer({ id: "ctx-fill", type: "fill", source: "ctx-parcels", paint: {
         "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#dedcd6", "#efede8"], "fill-opacity": 0.85 } });
       map.addLayer({ id: "ctx-line", type: "line", source: "ctx-parcels", paint: { "line-color": "#c9c5bc", "line-width": 0.5 } });
+      const noneJ = ["==", ["get", "jibun"], ""];   // 선택한 주변 필지 강조(핵심 필지의 parcel-sel 과 같은 모양)
+      map.addLayer({ id: "ctx-sel-fill", type: "fill", source: "ctx-parcels", filter: noneJ, paint: { "fill-color": "#d33", "fill-opacity": 0.18 } });
+      map.addLayer({ id: "ctx-sel", type: "line", source: "ctx-parcels", filter: noneJ, paint: { "line-color": "#d33", "line-width": 4 } });
       // 주변 건물 색: wc=벽(3D 사진 팔레트), rc=지붕(위성사진 표본). 지붕이 있는 건물은 맨 위 0.4m를 지붕 레이어로 따로 칠한다.
       const CWALL = ["coalesce", ["get", "wc"], "#d6d3cc"], CTOP = ["case", ["has", "rc"], ["max", 0.3, ["-", ["get", "height"], 0.4]], ["get", "height"]];
       map.addLayer({ id: "ctx-bld", type: "fill-extrusion", source: "ctx-bld", paint: {
@@ -583,7 +586,13 @@ function init(S) {
 
   const GRADE = { A: "인허가 기록", C: "간판 기록" };
   const EMPTY_HTML = '<div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div>';
+  function setCtxSel(j) {
+    if (!map.getLayer("ctx-sel")) return;
+    const f = ["==", ["get", "jibun"], j || ""];
+    map.setFilter("ctx-sel", f); map.setFilter("ctx-sel-fill", f);
+  }
   function clearSelection() {
+    setCtxSel("");
     selected = null; focusBiz = null; selFloor = null; floorJ = null; lastFloors = null;
     const none = ["==", ["get", "jibun"], ""];
     ["parcel-sel", "parcel-sel-fill", "span-fill", "span-line"].forEach(id => map.setFilter(id, none));
@@ -632,6 +641,8 @@ function init(S) {
     const ib = el.querySelector("button[data-iso]"); if (ib) ib.onclick = () => { isolate = !isolate; applyFloor(); renderStack(); };
   }
   function show(jibun) {
+    if (!coreJ.has(jibun)) return showCtx(jibun);   // 핵심 골목 밖(주변) 필지
+    setCtxSel("");
     if (jibun !== floorJ) { selFloor = null; floorJ = jibun; }
     selected = jibun;
     map.setFilter("parcel-sel", ["==", ["get", "jibun"], jibun]);
@@ -709,6 +720,51 @@ function init(S) {
     det.querySelectorAll(".fh[data-fk]").forEach(el => el.onclick = () => pickFloor(el.dataset.fk));
     applyFloor(); renderStack();
   }
+  // ---------- 주변(핵심 골목 밖) 필지 패널: 반경 150m 안은 건물 이력·상호를, 그 밖은 조사 전임을 알린다 ----------
+  const ctxP = {};
+  if (S.context) S.context.parcels.features.forEach(f => ctxP[f.properties.jibun] = f.properties);
+  const fyOf = s => { const [Y, M, D] = (s || "").split("-").map(Number); return Y ? Y + ((M || 6) - 1) / 12 + ((D || 15) - 1) / 365 : null; };
+  const ymOf = t => `${yearOf(t)}년 ${Math.min(12, Math.floor((t - yearOf(t)) * 12 + 1e-6) + 1)}월`;
+  function showCtx(jibun) {
+    if (jibun !== floorJ) { floorJ = jibun; }
+    selected = jibun; selFloor = null; lastFloors = null;
+    const none = ["==", ["get", "jibun"], ""];
+    ["parcel-sel", "parcel-sel-fill", "span-fill", "span-line"].forEach(id => map.setFilter(id, none));
+    setCtxSel(jibun);
+    const T = Tnow(), y = yearOf(T), p = ctxP[jibun] || {};
+    const act = activeBiz(jibun, y);
+    let h = `<h2>창천동 ${jibun} <span class="tag">${y}년</span></h2><div class="m">지목 ${p.jimok || "?"}${p.jimok === "도" ? " (도로)" : ""}</div>`;
+    if (focusBiz && focusBiz.jibun === jibun) h += `<div class="focuscard"><div class="n">${bizName(focusBiz)}</div>
+      <div class="m">${focusBiz.license_type || "업종 미상"}${focusBiz.category ? " · " + focusBiz.category : ""} · 창천동 ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
+    if (!p.r150) {
+      h += p.jimok === "도" ? "" : `<div class="note2">창천교회 반경 150m 밖의 필지입니다. <b>건물 이력과 상호는 아직 조사하지 않았습니다.</b> 지도의 건물 윤곽은 현재 모습만 있습니다.</div>`;
+      document.getElementById("detail").innerHTML = h; applyFloor(); renderStack(); return;
+    }
+    const bs = (ctxByJ[jibun] || []).map(f => f.properties);
+    const gh = S.ghosts.features.map(f => f.properties).find(g => g.ctx && g.jibun === jibun);
+    const ghNow = gh && T < gh.dend && (gh.gs == null || T >= gh.gs);
+    if (ghNow) h += gh.est
+      ? `<div class="note2">이 필지의 <b>이전 건물 기록(말소·철거)이 없어, 2층 정도의 저층 건물을 추정해 세운 것</b>입니다. 실제 모습은 확인하지 못했습니다.</div>`
+      : `<div class="note2">${T < gh.dstart ? "화면의 옛 건물은" : "철거 중인 옛 건물은"} <b>대장 기록(${gh.kind === "tile" ? "목구조" : "벽돌·블록·콘크리트 등"})을 바탕으로 모양을 가정해 세운 것</b>입니다. ${ymOf(gh.dend)} 철거로 보며, 그 전의 모습은 항공사진으로 확인하지 못했습니다.</div>`;
+    h += bs.filter(b => b.a != null && T >= b.a && T < b.b).map(b => `<div class="b A"><div class="n">공사 중 ${b.height}m<span class="tag">${ymOf(b.a)} 착공 → ${ymOf(b.b)} 사용승인</span></div>
+      <div class="m">착공일이 대장에 없으면 사용승인 1년 전부터로 가정합니다.</div></div>`).join("");
+    const live = ((S.ctx_live || {})[jibun] || []).slice().sort((a, b) => (a.start || "").localeCompare(b.start || ""));
+    const built = live.filter(r => !r.start || fyOf(r.start) <= T);
+    h += "<b>건물</b>" + (built.length ? built.map(r => `<div class="b A"><div class="n">${r.floors_up ? r.floors_up + "층 · " : ""}${r.use || "용도 미상"}<span class="tag">${r.start ? r.start + " 사용승인" : "사용승인일 없음"}</span></div>
+      <div class="m">${r.structure || "구조 미상"} · 연면적 ${r.total_area_m2}㎡${r.kind && r.kind !== "주건축물" ? " · " + r.kind : ""}</div></div>`).join("")
+      : `<div class="hint">${live.length || bs.some(b => b.a != null && T < b.b) ? "이 해에는 아직 현재 건물이 없습니다(공사 전·중)." : "이 해의 건물 자료 없음 (대장에 이 필지의 건물 기록이 없음)"}</div>`);
+    // 대장에 이 지번의 건물이 없는데 지도에는 건물이 있으면(대장이 다른 지번·합필로 올라 있는 경우) 지도 쪽 정보를 보여 준다
+    if (!live.length) h += bs.filter(b => !b.ua || fyOf(b.ua) <= T).map(b => `<div class="b A"><div class="n">${b.height}m<span class="tag">${b.ua ? b.ua + " 사용승인" : "사용승인일 없음"}</span></div>
+      <div class="m">지도의 건물 윤곽(V-World 건물정보) 기준입니다. 건축물대장에는 이 지번으로 기록된 건물이 없어 용도·면적은 모릅니다.</div></div>`).join("");
+    if (built.some(r => r.start && fyOf(r.start) < 1993)) h += `<div class="m">1993년 이전에 지어진 건물은 처음부터 지금 모습으로 보여 줍니다. 그 이전 모습은 자료가 없습니다.</div>`;
+    const evs = (evByParcel[jibun] || []).filter(e => e.end && fyOf(e.end) <= T);
+    if (evs.length) h += evs.map(e => `<div class="m">· ${e.end} ${e.end_basis}${e.structure ? " (" + e.structure + ")" : ""}</div>`).join("");
+    const all = (bizByParcel[jibun] || []).slice().sort((x, z) => (x.start || x.sign_first || "").localeCompare(z.start || z.sign_first || ""));
+    h += `<br><b>영업 이력</b><span class="tag">${all.length}곳</span>`;
+    h += all.length ? `<div class="m">${act.length ? `${y}년 영업 근거: ${act.map(labelOf).join(", ")}` : `${y}년 영업 근거 없음`}</div>` + all.map(b => bizCard(b, act, null)).join("")
+      : '<div class="hint">이 필지에서 확인된 상호 근거 없음 (영업이 없었다는 뜻이 아님)</div>';
+    document.getElementById("detail").innerHTML = h; applyFloor(); renderStack();
+  }
   const side = document.getElementById("side"), sideToggle = document.getElementById("sideToggle");
   function setSide(open) {
     side.classList.toggle("collapsed", !open);
@@ -723,7 +779,8 @@ function init(S) {
   function goParcel(jibun) {
     show(jibun); setSide(true);
     if (walking) return;
-    const f = S.parcels.features.find(f => f.properties.jibun === jibun);
+    const f = S.parcels.features.find(f => f.properties.jibun === jibun) || S.context.parcels.features.find(f => f.properties.jibun === jibun);
+    if (!f) return;
     map.easeTo({ center: bbox(f.geometry), zoom: 19, offset: [150, -40], duration: 900 });
   }
   function runSearch(q) {
@@ -734,7 +791,11 @@ function init(S) {
       if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun,
         label: `창천동 ${p.jibun}${p.anchor ? " · " + p.anchor : ""}`,
         sub: p.jimok === "도" ? "도로" : `상호 ${(bizByParcel[p.jibun] || []).length}곳 기록` }); });
-    S.businesses.forEach(b => { if (b.name !== "상호" && coreJ.has(b.jibun) && b.name.toLowerCase().replace(/\s+/g, "").includes(n))
+    if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties; if (p.jimok === "도") return;   // 주변 필지(도로 제외)
+      const rank = p.jibun === n ? 0 : /\d/.test(n) && p.jibun.startsWith(n) ? 1 : -1;
+      if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun, label: `창천동 ${p.jibun}`,
+        sub: p.r150 ? `상호 ${(bizByParcel[p.jibun] || []).length}곳 기록` : "반경 150m 밖 · 아직 조사 전" }); });
+    S.businesses.forEach(b => { if (b.name !== "상호" && b.name.toLowerCase().replace(/\s+/g, "").includes(n))
       bs.push({ rank: 2, type: "biz", biz: b, jibun: b.jibun, label: b.name,
         sub: `창천동 ${b.jibun} ${b.floor || ""} · ${b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`}` }); });
     ps.sort((a, b) => a.rank - b.rank || a.jibun.localeCompare(b.jibun, "en", { numeric: true }));
@@ -772,8 +833,10 @@ function init(S) {
   map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
     if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
-    const f = map.queryRenderedFeatures(e.point, { layers: ["bld", "ghost", "parcel-fill"] }).filter(x => !x.properties.ctx)[0];
-    if (f) { focusBiz = null; show(f.properties.jibun); setSide(true); }
+    const L = ["bld", "ghost", "parcel-fill", "ctx-bld", "ctx-prog", "ctx-fill"].filter(id => map.getLayer(id));
+    const f = map.queryRenderedFeatures(e.point, { layers: L }).find(x => !(x.layer.id === "ctx-fill" && x.properties.jimok === "도"));
+    const jb = f && (f.layer.id === "ctx-bld" || f.layer.id === "ctx-prog" ? f.properties.j : f.properties.jibun);
+    if (jb) { focusBiz = null; show(jb); setSide(true); }
     else { clearSelection(); qInput.value = ""; resultsEl.hidden = true; }   // 빈 땅 클릭 → 선택 해제
   });
 
