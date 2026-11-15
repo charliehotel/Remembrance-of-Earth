@@ -500,19 +500,27 @@ def context_map(core_pnus, ghost_out=None):
 
 # ---- 주변 건물 중 사진으로 정밀 모델링한 것(랜드마크). 부모 회색 건물은 hide=1 로 숨기고, 부위(part)별 색·높이 조각을 details 로 낸다.
 #  조각은 부모와 같은 시간(s·a·b)을 따르고, 공사 중에는 높이가 올라간다(프런트: index.html dyn).
-CTX_DETAIL = {"31-4": "dokssuri", "31-26": "hyeongje"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
+CTX_DETAIL = {"31-4": "dokssuri", "31-26": "hyeongje", "31-92": "jtower"}   # 지번 → 모델. 독수리빌딩(1998-09 사용승인 8층): 외곽선이 31-4·31-9 등에 걸쳐 있어 31-4 와 가장 많이 겹치는 건물을 쓴다
+# 31-92 는 지적도(cadastral_bbox.json)에 없어서 필지 겹침으로 건물을 못 고른다. J타워 나동(10층)은 대장 높이 44.8m 로 고른다.
+CTX_PICK_HEIGHT = {"31-92": 44.8}
 
 
 def _context_details(blds, cparcels, to_m):
-    import landmark_dokssuri, landmark_hyeongje
-    MODELS = {"dokssuri": landmark_dokssuri, "hyeongje": landmark_hyeongje}
+    import landmark_dokssuri, landmark_hyeongje, landmark_jtower
+    MODELS = {"dokssuri": landmark_dokssuri, "hyeongje": landmark_hyeongje, "jtower": landmark_jtower}
     feats = []
     for jib, name in CTX_DETAIL.items():
         pg = next((g for j, g in cparcels if j == jib), None)
-        if pg is None:
+        if jib in CTX_PICK_HEIGHT:
+            hs = [i for i, b in enumerate(blds) if abs(b["properties"]["height"] - CTX_PICK_HEIGHT[jib]) < 0.05]
+            if len(hs) != 1:
+                continue
+            best, ov = hs[0], {hs[0]: 999}
+        elif pg is None:
             continue
-        ov = [to_m(shape(b["geometry"])).intersection(pg).area for b in blds]
-        best = max(range(len(blds)), key=ov.__getitem__)
+        else:
+            ov = [to_m(shape(b["geometry"])).intersection(pg).area for b in blds]
+            best = max(range(len(blds)), key=ov.__getitem__)
         par = blds[best]["properties"]
         if ov[best] < 20:
             continue
