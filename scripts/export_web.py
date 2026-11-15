@@ -473,6 +473,10 @@ def context_map(core_pnus, ghost_out=None):
             continue
         mm = re.match(r"(\S+?)\s*(\D+)$", f["properties"]["jibun"])
         cparcels.append((mm.group(1) if mm else f["properties"]["jibun"], to_m(shape(f["geometry"]).buffer(0))))
+    # 철도용지(지목 철) 위의 작은 구조물(V-World 건물정보의 3m 상자)은 둑·보행터널 입구를 가리므로 뺀다(scripts/build_rail.py 가 둑을 따로 그린다).
+    rail_land = shapely_union([to_m(shape(f["geometry"]).buffer(0)) for f in src
+                               if (re.match(r"(\S+?)\s*(\D+)$", f["properties"]["jibun"]) or [None, None, ""])[2].strip() == "철"])
+    n_rail = 0
     blds, seen, timed = [], set(), []
     cpath = ROOT / "data/context_colors.json"
     colors = json.loads(cpath.read_text()) if cpath.exists() else {}
@@ -488,6 +492,9 @@ def context_map(core_pnus, ghost_out=None):
         if key in seen or core.contains(rp) or not bld_circle.contains(rp):
             continue
         seen.add(key)
+        if rail_land.contains(rp):
+            n_rail += 1
+            continue
         p = f["properties"]
         h = float(p.get("height") or 0) or (int(p.get("grnd_flr") or 0) * 3.3) or 3.0
         geo = json.loads(json.dumps(mapping(to_ll(g))), parse_float=lambda s: round(float(s), 7))
@@ -790,6 +797,7 @@ def main():
                 "area": x["area"], "area_excl": x["areaExctYn"] == "1", "crtn": x["crtnDay"]})
     scene = {"floors": floors, "parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
              "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "ctx_live": ctx_live,
+             "rail": json.loads((ROOT / "data/rail.geojson").read_text()) if (ROOT / "data/rail.geojson").exists() else None,
              "walk": walk_area(parcels, buildings, context), "year_min": 1992, "year_max": 2026}
     txt = json.dumps(scene, ensure_ascii=False)
     (OUT / "scene.json").write_text(txt)

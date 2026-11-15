@@ -370,6 +370,12 @@ function init(S) {
       const DET = { "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"], "fill-extrusion-height": ["get", "height"] };
       map.addLayer({ id: "ctx-det", type: "fill-extrusion", source: "ctx-det", paint: { ...DET, "fill-extrusion-opacity": 1 } });   // 1 미만이면 MapLibre 가 뒷면까지 비쳐 보이게 그린다   // 독수리빌딩 정밀 모델
       map.addLayer({ id: "ctx-det-x", type: "fill-extrusion", source: "ctx-det", filter: ["in", ["get", "p"], ["literal", [-1]]], paint: { ...DET, "fill-extrusion-opacity": 0.12 } });
+      // 경의중앙선 철도 둑(창천교회 북쪽): 비탈·선로대·연세로 굴다리·신촌 토끼굴. 높이는 추정값. scripts/build_rail.py
+      if (S.rail) {
+        map.addSource("rail", { type: "geojson", data: S.rail });
+        map.addLayer({ id: "rail", type: "fill-extrusion", source: "rail", paint: {
+          "fill-extrusion-color": ["get", "c"], "fill-extrusion-base": ["get", "b"], "fill-extrusion-height": ["get", "h"], "fill-extrusion-opacity": 1 } });
+      }
       map.addLayer({ id: "ctx-bld-x", type: "fill-extrusion", source: "ctx-bld", filter: ["in", ["get", "cid"], ["literal", [-1]]], paint: {   // 카메라를 가리는 주변 건물
         "fill-extrusion-color": CWALL, "fill-extrusion-height": ["get", "height"], "fill-extrusion-opacity": 0.1 } });
       map.addLayer({ id: "ctx-ring", type: "line", source: "ctx-ring", paint: {
