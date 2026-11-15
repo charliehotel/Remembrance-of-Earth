@@ -42,6 +42,9 @@ def _geo(g, o):
     return out
 
 
+SOUTH_BLDS = ("B091", "B104", "B026", "B027", "B028", "B029", "B084", "B021", "B079")
+
+
 def massing(bid, ring):
     """[(polygon coords, base, top, color)] 또는 None. 사진 관찰 기반 근사 형상(높이 근거는 대장 최고높이)."""
     from shapely.geometry import Point, LineString
@@ -302,6 +305,9 @@ def massing(bid, ring):
     elif bid in ("B024", "B124", "B111"):  # 북쪽 변 2-2·2-7·2-46: scripts/landmark_north.py (로드뷰 캡처 기반)
         import landmark_north
         parts.extend(landmark_north.MODELS[bid](P))
+    elif bid in SOUTH_BLDS:  # 남쪽 변 47-12·46-12·46-2·2-27·2-19·2-21·2-22·2-23: scripts/landmark_south.py (로드뷰 캡처 기반)
+        import landmark_south
+        parts.extend(landmark_south.MODELS[bid](P))
     else:
         return None
     out = []
