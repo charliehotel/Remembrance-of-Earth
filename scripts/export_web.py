@@ -6,6 +6,7 @@
   * 사용승인 연도가 1990 이전인 건물(B005 1970, B108 1938, B095 1973)은 옛 대장 흔적일 수 있어 flag=old_date
 - businesses: 필지별 업소 구간(timeline_businesses.csv). 시간 엔진이 연도로 걸러 쓴다.
 - building_events: 필지별 말소·철거 이력(폴리곤 없음, 팝업 설명용)
+- walk: 걷기 모드로 갈 수 있는 길 폴리곤(도로 필지 ∩ 반경 150m ∩ 건물 25m 이내, 건물 자리 제외). 지도의 파란 길과 걷기 규칙이 같이 쓴다.
 사용: .venv/bin/python -I scripts/export_web.py
 """
 import csv
@@ -650,6 +651,42 @@ _cc = ROOT / "data/context_colors.json"
 CORE_COLORS = json.loads(_cc.read_text()) if _cc.exists() else {}   # build_context_colors.py 가 만든 건물별 벽색(wc)·지붕색(rc)
 
 
+WALK_RADIUS_M = 150      # 걷기 모드로 갈 수 있는 반경(창천교회 기준)
+WALK_NEAR_BLD_M = 25     # 그려진 건물에서 이 거리 안의 도로만 걷게 한다(건물이 없는 철길 북쪽 띠·반경 가장자리 빈 구간 제외)
+WALK_MIN_BLD_M2, WALK_CLUSTER_M, WALK_CLUSTER_MIN = 15, 40, 3   # 기준 건물: 15㎡ 이상이고 40m 안에 다른 건물이 3채 이상
+WALK_MIN_PIECE_M2 = 60   # 이보다 작은 길 조각(조각난 부스러기)은 버린다
+
+
+def walk_area(parcels, buildings, context):
+    """걷기 모드 영역: 지목이 '도'인 필지 ∩ 교회 반경 150m ∩ (그려진 건물에서 25m 이내).
+    건물(핵심+주변 회색)은 연도와 상관없이 한 번이라도 그려지는 것 전부 기준으로 삼는다. 건물 자리는 영역에서 뺀다.
+    반환: GeoJSON FeatureCollection(경위도, 구멍 포함 Polygon)"""
+    from shapely.geometry import Point, mapping
+    from shapely.ops import unary_union
+    o = context["center"]
+    to_m = lambda g: shapely_transform(g, lambda x, y: ((x - o[0]) * KX, (y - o[1]) * KY))
+    to_ll = lambda g: shapely_transform(g, lambda x, y: (o[0] + x / KX, o[1] + y / KY))
+    roads = [to_m(shape(f["geometry"]).buffer(0)) for fc in (parcels, context["parcels"]) for f in fc["features"]
+             if f["properties"]["jimok"] == "도"]
+    bg = [to_m(shape(f["geometry"]).buffer(0)) for fc in (buildings, context["buildings"]) for f in fc["features"]]
+    blds = unary_union(bg)
+    # 길의 기준이 되는 건물은 '모여 있는' 건물만: 작은 부속물(15㎡ 미만)과, 40m 안에 다른 건물이 3채 미만인 외딴 건물(철길 북쪽 등)은 뺀다
+    import numpy as np
+    big = [g for g in bg if g.area >= WALK_MIN_BLD_M2]
+    cen = np.array([[g.centroid.x, g.centroid.y] for g in big])
+    nb = (np.hypot(cen[:, None, 0] - cen[None, :, 0], cen[:, None, 1] - cen[None, :, 1]) < WALK_CLUSTER_M).sum(axis=1) - 1
+    anchors = unary_union([g for g, k in zip(big, nb) if k >= WALK_CLUSTER_MIN])
+    area = unary_union(roads).intersection(Point(0, 0).buffer(WALK_RADIUS_M, 128)).intersection(anchors.buffer(WALK_NEAR_BLD_M, 16))
+    area = area.difference(blds)
+    feats = []
+    for g in (area.geoms if hasattr(area, "geoms") else [area]):
+        if g.geom_type != "Polygon" or g.area < WALK_MIN_PIECE_M2:
+            continue
+        geo = json.loads(json.dumps(mapping(to_ll(g.simplify(0.15)))), parse_float=lambda v: round(float(v), 7))
+        feats.append({"type": "Feature", "properties": {}, "geometry": geo})
+    return {"type": "FeatureCollection", "features": feats}
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     parcels = json.load(open(ROOT / "data/parcels.geojson"))
@@ -752,7 +789,8 @@ def main():
                 "struct": x["strctCdNm"].strip(), "use": x["mainPurpsCdNm"].strip(), "etc": (x["etcPurps"] or "").strip(),
                 "area": x["area"], "area_excl": x["areaExctYn"] == "1", "crtn": x["crtnDay"]})
     scene = {"floors": floors, "parcels": parcels, "buildings": buildings, "businesses": biz, "building_events": bev,
-             "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "ctx_live": ctx_live, "year_min": 1992, "year_max": 2026}
+             "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "ctx_live": ctx_live,
+             "walk": walk_area(parcels, buildings, context), "year_min": 1992, "year_max": 2026}
     txt = json.dumps(scene, ensure_ascii=False)
     (OUT / "scene.json").write_text(txt)
     (OUT / "scene.js").write_text("window.SCENE=" + txt + ";")  # file:// 에서도 열리도록 script 로 읽는다

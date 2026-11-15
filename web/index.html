@@ -381,6 +381,12 @@ function init(S) {
     map.addLayer({ id: "parcel-fill", type: "fill", source: "parcels", paint: {
       "fill-color": ["case", ["==", ["get", "jimok"], "도"], "#d4d4d4", ["==", ["feature-state", "evidence"], true], "#cfd8c4", "#f4f1ea"] } });
     map.addLayer({ id: "parcel-line", type: "line", source: "parcels", paint: { "line-color": "#999", "line-width": 0.8 } });
+    // 걷기 모드 시작 전, 캐릭터를 내려놓을 수 있는 길(교회 반경 150m 안의 도로)을 로드뷰의 파란 길처럼 보여 준다. 데이터는 걷기 세계(walkRings)에서 채운다.
+    map.addSource("walk-roads", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addLayer({ id: "walk-road-fill", type: "fill", source: "walk-roads", layout: { visibility: "none" },
+      paint: { "fill-color": "#2b8cff", "fill-opacity": 0.45 } });
+    map.addLayer({ id: "walk-road-line", type: "line", source: "walk-roads", layout: { visibility: "none" },
+      paint: { "line-color": "#0b5fd8", "line-width": 2.5, "line-opacity": 0.9 } });
     map.addLayer({ id: "parcel-sel-fill", type: "fill", source: "parcels", filter: ["==", ["get", "jibun"], ""],
       paint: { "fill-color": "#d33", "fill-opacity": 0.18 } });
     map.addLayer({ id: "parcel-sel", type: "line", source: "parcels", filter: ["==", ["get", "jibun"], ""],
@@ -825,6 +831,7 @@ function init(S) {
 
   map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
+    if (placing) { tryDrop(e.point); return; }   // 캐릭터를 들고 있을 때의 클릭은 '내려놓기'
     if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
     const L = ["bld", "ghost", "parcel-fill", "ctx-bld", "ctx-prog", "ctx-fill"].filter(id => map.getLayer(id));
     const f = map.queryRenderedFeatures(e.point, { layers: L }).find(x => !(x.layer.id === "ctx-fill" && x.properties.jimok === "도"));
@@ -854,13 +861,20 @@ function init(S) {
   const WP_MAX = 125, clampW = p => Math.max(0, Math.min(WP_MAX, p));   // 걷기: 85° 넘는 값은 '올려다보기'(투영 중심 이동)
   const inRing = (x, y, r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++)
     if ((r[i][1] > y) !== (r[j][1] > y) && x < (r[j][0] - r[i][0]) * (y - r[i][1]) / (r[j][1] - r[i][1]) + r[i][0]) c = !c; return c; };
-  const blocked = (x, y) => buildingsAt(+slider.value).some(f => inRing(x, y, f.geometry.coordinates[0]));
-  // 행인(npc.js)이 걸을 수 있는 곳: 도로 필지 안이면서 건물이 없는 곳
-  { const rings = []; S.parcels.features.filter(f => f.properties.jimok === "도").forEach(f =>
-      (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).forEach(poly => rings.push(poly[0])));
-    const xs = rings.flat().map(p => p[0]), ys = rings.flat().map(p => p[1]);
-    window.NpcWorld = { KX, KY, buildings: () => curBld, bbox: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)],
-      free: (x, y) => rings.some(r => inRing(x, y, r)) && !curBld.some(f => inRing(x, y, f.geometry.coordinates[0])) }; }
+  // ---- 걷기 세계: 건물이 모여 있는 교회 반경 150m 안의 도로 위, 건물 밖 ----
+  const bbOf = r => { let a = 1e9, b = 1e9, c = -1e9, d = -1e9; for (const p of r) { if (p[0] < a) a = p[0]; if (p[0] > c) c = p[0]; if (p[1] < b) b = p[1]; if (p[1] > d) d = p[1]; } return [a, b, c, d]; };
+  const inRingB = (x, y, r, b) => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3] && inRing(x, y, r);   // 바깥 상자부터 걸러 빠르게
+  const bbCache = new WeakMap(), fbb = f => { let b = bbCache.get(f); if (!b) bbCache.set(f, b = bbOf(f.geometry.coordinates[0])); return b; };
+  const ctxVisible = f => f.properties.hide !== 1 && (f.properties.s == null || f.properties.s <= ctxT);   // 지금 연도에 서 있는 주변 건물
+  const ctxBlocked = (x, y) => S.context.buildings.features.some(f => ctxVisible(f) && inRingB(x, y, f.geometry.coordinates[0], fbb(f)));
+  const blocked = (x, y) => buildingsAt(+slider.value).some(f => inRing(x, y, f.geometry.coordinates[0])) || ctxBlocked(x, y);
+  // 걷기 영역은 scripts/export_web.py 가 미리 계산해 S.walk 로 준다: 도로 필지 ∩ 반경 150m ∩ (건물이 모인 곳 25m 이내), 건물 자리 제외. 구멍이 있을 수 있다.
+  const walkRings = [];   // { r: 바깥 링, holes: 구멍 링들, b: 바깥 상자 }
+  S.walk.features.forEach(f => walkRings.push({ r: f.geometry.coordinates[0], holes: f.geometry.coordinates.slice(1), b: bbOf(f.geometry.coordinates[0]) }));
+  const walkFC = S.walk;
+  // 행인(npc.js)과 내 캐릭터를 내려놓는 자리가 쓰는 규칙: 걷기 세계의 길 위이면서 건물(핵심+주변) 밖
+  window.NpcWorld = { KX, KY, player: () => pos, buildings: () => curBld.concat(S.context.buildings.features.filter(ctxVisible)),
+    free: (x, y) => walkRings.some(w => inRingB(x, y, w.r, w.b) && !w.holes.some(h => inRing(x, y, h))) && !curBld.some(f => inRingB(x, y, f.geometry.coordinates[0], fbb(f))) && !ctxBlocked(x, y) };
   function startPos() {
     const roads = S.parcels.features.filter(f => f.properties.jimok === "도");
     const c = map.getCenter(); let best = null, bd = 1e9;
@@ -944,7 +958,52 @@ function init(S) {
     hint.innerHTML = !on ? "W/A/S/D·방향키 이동 · [ ] 회전 · R/F 위아래 · Shift 빠르게"
       : "W/A/S/D·방향키 이동 · Shift 달리기 · 마우스 드래그 둘러보기 · [ ] 회전 · R/F 위아래 · +/- 거리 · \\ 초기화";
   }
-  modeBtn.onclick = () => setWalking(!walking);
+  // ---------- 걷기 모드 시작: 캐릭터를 커서에 매달고, 파란 길 위에 클릭해서 내려놓는다 ----------
+  let placing = false, hoverRaf = 0, hoverPt = null, hintHold = 0, hintPrev = "";
+  const PLACE_HINT = "캐릭터를 파란 길 위에 클릭해서 내려놓으세요 · 지도는 드래그·휠로 움직일 수 있어요 · Esc 취소";
+  const overBuilding = q => { const L = ["bld", "ctx-bld"].filter(id => map.getLayer(id)); return map.queryRenderedFeatures([q.x, q.y], { layers: L }).length > 0; };
+  // 화면 점 pt 근처에서 내려놓을 수 있는 자리(도로 필지 안, 건물 밖, 건물 지붕 아래가 아닌 곳). 없으면 null. 좁은 길을 위해 반경 20px 까지 봐 준다.
+  function dropSpot(pt) {
+    const tries = [[0, 0]]; [10, 20].forEach(r => { for (let k = 0; k < 8; k++) tries.push([r * Math.cos(k * Math.PI / 4), r * Math.sin(k * Math.PI / 4)]); });
+    for (const [dx, dy] of tries) {
+      const q = { x: pt.x + dx, y: pt.y + dy }, ll = map.unproject([q.x, q.y]);
+      if (isFinite(ll.lng) && window.NpcWorld.free(ll.lng, ll.lat) && !overBuilding(q)) return [ll.lng, ll.lat];
+    }
+    return null;
+  }
+  const canvasPt = e => { const r = map.getCanvas().getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  function setPlacing(on, mx, my) {
+    if (on === placing) return; placing = on;
+    modeBtn.textContent = on ? "✖ 취소" : "🚶 걷기 모드"; modeBtn.classList.toggle("on", on);
+    if (on) map.getSource("walk-roads").setData(walkFC);
+    ["walk-road-fill", "walk-road-line"].forEach(id => map.setLayoutProperty(id, "visibility", on ? "visible" : "none"));
+    clearTimeout(hintHold);
+    if (on) { qInput.blur(); hintPrev = hint.innerHTML; hint.textContent = PLACE_HINT; window.Avatar?.held().show(mx, my); window.Avatar?.held().setValid(true); }
+    else { hint.innerHTML = hintPrev; map.getCanvas().style.cursor = ""; }
+  }
+  function tryDrop(pt) {
+    const spot = dropSpot(pt);
+    if (!spot) { hint.textContent = "여기는 걸을 수 없는 곳이에요. 파란 길 위에 놓아 주세요."; clearTimeout(hintHold);
+      hintHold = setTimeout(() => { if (placing) hint.textContent = PLACE_HINT; }, 2200); window.Avatar?.held().setValid(false); return; }
+    window.Avatar?.held().hide(true);
+    setPlacing(false);
+    pos = spot; heading = map.getBearing(); face = heading;   // 보고 있던 방향 그대로 서서 걷기 시작
+    setWalking(true);
+  }
+  window.addEventListener("mousemove", e => {
+    if (!placing) return;
+    const h = window.Avatar?.held(); h?.move(e.clientX, e.clientY);
+    hoverPt = e; if (hoverRaf) return;
+    hoverRaf = requestAnimationFrame(() => { hoverRaf = 0; if (!placing || !hoverPt) return;   // 놓을 수 있는 곳 위에서만 또렷하게
+      const ok = hoverPt.target === map.getCanvas() && !!dropSpot(canvasPt(hoverPt));
+      h?.setValid(ok); map.getCanvas().style.cursor = ok ? "pointer" : ""; });
+  });
+  window.addEventListener("keydown", e => { if (placing && e.key === "Escape") { window.Avatar?.held().hide(false); setPlacing(false); } }, true);
+  modeBtn.onclick = e => {
+    if (walking) setWalking(false);
+    else if (placing) { window.Avatar?.held().hide(false); setPlacing(false); }
+    else setPlacing(true, e.clientX, e.clientY);
+  };
   window.addEventListener("avatar-ready", () => { window.Avatar.setVisible(walking); if (walking) drawMe(); });
   // 한글 입력 상태에서도 같은 키로 인식: code가 비거나 엉뚱할 때 key(자모)·keyCode로 되살린다
   const JAMO = { "ㅈ": "KeyW", "ㅁ": "KeyA", "ㄴ": "KeyS", "ㅇ": "KeyD", "ㅂ": "KeyQ", "ㄷ": "KeyE", "ㄱ": "KeyR", "ㄹ": "KeyF",

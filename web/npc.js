@@ -29,20 +29,23 @@ const rng = (() => { let a = 20260101; return () => { a = (a + 0x6D2B79F5) | 0; 
 const rand = (a, b) => a + rng() * (b - a);
 const pick = arr => arr[Math.floor(rng() * arr.length)];
 const npcs = [], groups = []; let started = false, clockT = 0;
+// 행인은 내 캐릭터 주변에만 있다: 소환은 NEAR_MIN~NEAR_MAX m 안, LEAVE_R m 넘게 멀어지면 다시 내 주변으로 옮겨 온다(멀리 있는 행인은 어차피 안 보이므로)
+const NEAR_MIN = 30, NEAR_MAX = 70, LEAVE_R = 100;
 
 const bearing = (n, p, W) => Math.atan2((p[0] - n.pos[0]) * W.KX, (p[1] - n.pos[1]) * W.KY) * 180 / Math.PI;
 const dist = (n, p, W) => Math.hypot((p[0] - n.pos[0]) * W.KX, (p[1] - n.pos[1]) * W.KY);
 const turnTo = (n, deg, dt, rate = 8) => { const d = ((deg - n.heading + 540) % 360) - 180; n.heading = (n.heading + d * Math.min(1, dt * rate) + 360) % 360; return Math.abs(d); };
 
-function pickSpot(W, near, dmin = 0, dmax = 0) {   // 도로 위 빈 점. near가 있으면 그 주변 dmin~dmax m
+function pickSpot(W, near, dmin = 0, dmax = 0) {   // 걸을 수 있는 빈 점. near가 있으면 그 주변 dmin~dmax m, 없으면 내 캐릭터 주변
+  if (!near) { near = W.player(); dmin = 15; dmax = NEAR_MAX; }
+  if (!near) return null;
   for (let i = 0; i < 400; i++) {
-    let p;
-    if (near) { const a = rand(0, Math.PI * 2), d = rand(dmin, dmax); p = [near[0] + Math.sin(a) * d / W.KX, near[1] + Math.cos(a) * d / W.KY]; }
-    else p = [rand(W.bbox[0], W.bbox[2]), rand(W.bbox[1], W.bbox[3])];
+    const a = rand(0, Math.PI * 2), d = rand(dmin, dmax), p = [near[0] + Math.sin(a) * d / W.KX, near[1] + Math.cos(a) * d / W.KY];
     if (W.free(p[0], p[1])) return p;
   }
   return null;
 }
+const aroundMe = W => pickSpot(W, W.player(), NEAR_MIN, NEAR_MAX) || pickSpot(W, W.player(), 10, NEAR_MAX + 25);
 
 function setAnim(n, name, once = false) {
   const next = n.actions[name]; if (!next) return;
@@ -113,9 +116,23 @@ function moveToward(n, t, speed, dt, W) {   // -> "arrived" | "blocked" | "movin
   return "blocked";
 }
 
+function relocate(n, W) {   // 내 캐릭터에서 너무 멀어진 행인을 주변의 다른 곳으로 옮긴다
+  const p = aroundMe(W); if (!p) return;
+  n.pos = p; n.heading = rand(0, 360);
+  if (n.role === "watcher") startWatch(n, W); else startStand(n, rand(0, 3));
+}
+function regroup(g, W) {   // 이야기 모임을 통째로 내 주변으로 옮긴다
+  for (let i = 0; i < 6; i++) {
+    const a = aroundMe(W); if (!a) return;
+    if (newSite(g, W, a)) { g.members.forEach(m => { m.pos = pickSpot(W, g.center, 7, 14) || g.center; }); g.timer = rand(25, 50); return; }
+  }
+}
+
 function update(dt, W) {
   clockT += dt;
+  const me = W.player(); if (!me) return;
   for (const n of npcs) {
+    if (n.role !== "talker" && dist(n, me, W) > LEAVE_R) relocate(n, W);
     switch (n.mode) {
       case "stand": n.timer -= dt; if (n.timer <= 0) think(n, W); break;
       case "watch": {   // 건물 쪽을 보며 천천히 좌우로 둘러본다
@@ -140,6 +157,7 @@ function update(dt, W) {
     n.mixer.update(dt);
   }
   for (const g of groups) {   // 모두 모였으면 이야기하다가, 시간이 지나면 같이 옮겨 간다
+    if (g.center && dist({ pos: g.center }, me, W) > LEAVE_R) { regroup(g, W); continue; }
     if (g.members.every(m => m.mode === "talk")) { g.timer -= dt; if (g.timer <= 0) { g.timer = rand(25, 50); newSite(g, W, g.center); } }
   }
 }
@@ -168,7 +186,7 @@ async function start() {
     else startStand(n, rand(0, 4));
   }
   for (const g of Object.values(gmap)) {   // 모임 장소를 정하고, 멤버는 근처에서 시작해 걸어와 모인다
-    const site = pickSpot(W); if (!site) { g.members.forEach(m => { m.pos = pickSpot(W) || [W.bbox[0], W.bbox[1]]; m.mode = "stand"; m.timer = 5; }); continue; }
+    const site = pickSpot(W); if (!site) { g.members.forEach(m => { m.pos = pickSpot(W) || W.player(); m.mode = "stand"; m.timer = 5; }); continue; }
     g.members.forEach(m => { m.pos = pickSpot(W, site, 7, 14) || site; });
     if (!newSite(g, W, null)) { g.members.forEach(m => startStand(m)); continue; }
     g.members.forEach(m => { m.pos = pickSpot(W, g.center, 7, 14) || g.center; });   // 확정된 모임 장소 근처에서 출발
@@ -177,6 +195,6 @@ async function start() {
 }
 
 window.Avatar.addUpdater(dt => {
-  if (!started) { if (window.Avatar.local(0, 0)) start(); return; }   // 기준점이 생긴 뒤(걷기 모드 첫 진입)에 소환
+  if (!started) { if (window.Avatar.local(0, 0) && window.NpcWorld?.player()) start(); return; }   // 기준점이 생기고 내 캐릭터가 놓인 뒤(걷기 모드 첫 진입)에 내 주변으로 소환
   update(dt, window.NpcWorld);
 });
