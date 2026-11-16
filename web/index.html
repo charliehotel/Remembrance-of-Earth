@@ -18,7 +18,9 @@
   #band1 { flex: none; padding: 10px 14px 12px; border-radius: 10px 10px 0 0; }
   #sideHead { display: flex; align-items: center; gap: 8px; }
   .band { overflow: auto; padding: 12px 14px; border-top: 1px solid #0002; }
-  #agent { flex: 0 1 auto; min-height: 150px; }     /* 내용만큼 길어지고, 화면 높이를 넘으면 두 구역이 나눠 줄어들며 각자 스크롤 */
+  #agent { flex: 0 1 auto; }
+  #agent:has(.aga) { min-height: 150px; }   /* 대화가 생긴 뒤에만 최소 높이를 보장(처음엔 빈 공간 없이 딱 맞게) */
+  #agLog:empty { margin: 0; }     /* 내용만큼 길어지고, 화면 높이를 넘으면 두 구역이 나눠 줄어들며 각자 스크롤 */
   #sideBody { flex: 0 1 auto; min-height: 120px; border-radius: 0 0 10px 10px; }
   #sideHead .brand { flex: 1; line-height: 1.25; }
   #sideHead .ko { font-size: 17px; font-weight: 700; }
