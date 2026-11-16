@@ -31,6 +31,30 @@
   #results .none { color: #777; cursor: default; }
   .sec { margin-top: 12px; padding-top: 10px; border-top: 1px solid #0001; }
   #q { margin-bottom: 8px; }
+  #agent textarea { width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 54px; }
+  #agent button { margin-top: 6px; width: 100%; padding: 7px; border: 0; border-radius: 6px; background: #2d6a3e; color: #fff; font-size: 13px; cursor: pointer; }
+  #agent button:disabled { background: #999; cursor: default; }
+  .agTrace { margin: 8px 0 0; padding: 0; list-style: none; font-size: 12px; color: #555; }
+  .agTrace li { padding: 2px 0; } .agTrace li.cur::before { content: "⏳ "; } .agTrace li:not(.cur)::before { content: "✓ "; color: #2d6a3e; }
+  .agc { border: 1px solid #0002; border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 12.5px; cursor: pointer; }
+  .agc:hover { background: #0000000a; } .agc b { font-size: 13.5px; }
+  .agc .vd { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 11px; color: #fff; margin-left: 4px; }
+  .vd.확인 { background: #2d6a3e; } .vd.추정 { background: #b8860b; } .vd.미확인 { background: #888; }
+  .agc .why { color: #444; margin-top: 3px; } .agc .src a { color: #1a5fb4; margin-right: 6px; font-size: 11.5px; }
+  #agLog { margin-top: 6px; } .agu { background: #e8eef0; border-radius: 10px 10px 2px 10px; padding: 6px 10px; margin: 8px 0 4px 26px; font-size: 12.5px; }
+  .aga { margin: 4px 0 10px; } .aga .ans { font-size: 12.5px; line-height: 1.5; margin: 4px 0; }
+  .aga .web { font-size: 11.5px; padding: 3px 8px; border-radius: 9px; display: inline-block; margin: 2px 0; background: #e6f0fa; color: #1a5fb4; }
+  .aga .web.off { background: #eee; color: #666; } .aga .scope { font-size: 11px; color: #777; margin: 2px 0; }
+  .aga h3 { font-size: 12.5px; margin: 10px 0 0; } .aga h3 small { font-weight: 400; color: #777; }
+  .aga .agc.wide { background: #fafafa; border-color: #0001; } .aga .none { font-size: 12px; color: #888; margin-top: 4px; }
+  .aga ul.fu { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: #444; } .aga details { font-size: 11.5px; color: #777; margin-top: 4px; }
+  #agChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  #agChips button, #agNew { width: auto !important; margin: 0 !important; padding: 3px 9px !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 12px !important; font-size: 11.5px !important; }
+  #agNew { color: #777 !important; border-color: #bbb !important; }
+  .aga .sug { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #fff7e0; border: 1px solid #e6c766; font-size: 12.5px; }
+  .aga .sug button { width: auto !important; margin: 6px 6px 0 0 !important; padding: 3px 10px !important; font-size: 12px !important; }
+  .aga .sug button.no { background: #fff !important; color: #777 !important; border: 1px solid #bbb !important; }
+  .aglead { border-style: dashed; } .agnote { font-size: 11.5px; color: #777; margin-top: 6px; }
   #results { margin: -4px 0 8px; }
   .b.off { opacity: .45; }
   .b.off .n { font-weight: 400; }
@@ -120,6 +144,13 @@
   </div>
   <div id="sideBody">
     <p class="intro">골목은 바뀌어도 땅은 기억합니다. 대지가 기억하는 골목과 건물, 상점의 모습을 시간 슬라이더로 보여 줍니다.</p>
+    <div class="sec" id="agent">
+      <h2>🔎 기억 속 장소 찾기 <span style="font-size:11px;color:#777">AI 에이전트</span> <button id="agNew" title="대화를 지우고 새로 시작" hidden>새로 시작</button></h2>
+      <div id="agLog"></div>
+      <textarea id="agText" placeholder="기억나는 단서를 적어 보세요. 예: 2010년 무렵 1층에 있던 호프집, 이름에 '카페'가 들어갔던 것 같아요"></textarea>
+      <button id="agGo">찾아보기</button>
+      <div id="agChips" hidden></div>
+    </div>
     <div class="sec">
       <h2>연세로12길 창천교회 인근(데모)</h2>
       <input id="q" type="search" placeholder="지번 또는 상호 검색 (예: 2-7, 아웃백)" autocomplete="off">
@@ -834,6 +865,81 @@ function init(S) {
     else if (e.key === "Escape") { resultsEl.hidden = true; qInput.blur(); }
   });
   resultsEl.addEventListener("mousedown", e => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(hits[+li.dataset.i]); } });
+
+  // ---------- 기억 속 장소 찾기 (AI 에이전트: Liner Model + Liner Search, server/agent.py) ----------
+  // 대화 상태(agState)는 서버에 저장하지 않고 화면이 들고 다니며 질문마다 보낸다.
+  const agText = document.getElementById("agText"), agGo = document.getElementById("agGo"), agLog = document.getElementById("agLog"), agChips = document.getElementById("agChips"), agNew = document.getElementById("agNew");
+  const esc = t => String(t == null ? "" : t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const safeUrl = u => /^https?:\/\//.test(u) ? esc(u) : "#";
+  const AG_CHIPS = [["범위 넓히기", "기억이 틀렸을 수 있으니 시기와 위치 범위를 더 넓혀서 찾아줘"], ["범위 좁히기", "범위를 좁혀서 더 정확히 찾아줘"], ["웹에서도 찾기", "웹에서도 찾아서 비교해줘"], ["교회 쪽으로", "창천감리교회 근처로 위치를 바꿔서 다시 찾아줘"]];
+  let agState = null, agBusy = false;
+  agChips.innerHTML = AG_CHIPS.map((c, i) => `<button data-i="${i}">${c[0]}</button>`).join("");
+  agChips.onclick = e => { const b = e.target.closest("button[data-i]"); if (b) agAsk(AG_CHIPS[+b.dataset.i][1]); };
+  agNew.onclick = () => { agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억나는 단서를 적어 보세요. 예: 2010년 무렵 1층에 있던 호프집, 이름에 '카페'가 들어갔던 것 같아요"; };
+  agText.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); agAsk(agText.value); } });
+  agGo.onclick = () => agAsk(agText.value);
+  function agPick(c) {   // 후보 카드를 누르면 그 상점의 시기·필지로 이동
+    const b = S.businesses.find(x => x.jibun === c.jibun && x.name === c.name && (x.start || "") === (c.start || ""));
+    if (b) {
+      focusBiz = b; const y0 = yr(b.start) || yr(b.sign_first) || +slider.min, y1 = yr(b.end) || yr(b.sign_last) || +slider.max;
+      const cy = agState && agState.clue && agState.clue.year_from > 1992 ? agState.clue.year_from : null;   // 사용자가 말한 시기가 그 상점의 영업 기간 안이면 그 해로 이동
+      setYear(Math.min(Math.max(cy && cy >= y0 && cy <= y1 ? cy : y0, +slider.min), +slider.max));
+    } else focusBiz = null;
+    goParcel(c.jibun);
+  }
+  async function agAsk(text) {
+    text = (text || "").trim(); if (!text || agBusy) return;
+    agBusy = true; agGo.disabled = true; agText.value = "";
+    const u = document.createElement("div"); u.className = "agu"; u.textContent = text; agLog.appendChild(u);
+    const box = document.createElement("div"); box.className = "aga"; agLog.appendChild(box);
+    const steps = document.createElement("ul"); steps.className = "agTrace"; box.appendChild(steps);
+    const step = (msg, cur) => { steps.querySelectorAll("li.cur").forEach(l => l.classList.remove("cur")); const li = document.createElement("li"); li.textContent = msg; if (cur) li.className = "cur"; steps.appendChild(li); box.scrollIntoView({ block: "nearest" }); };
+    let cands = [], ev = [], final = null;
+    try {
+      const r = await fetch("/api/find", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, state: agState }) });
+      if (!r.ok || !r.body) throw new Error("에이전트 서버에 연결할 수 없습니다 (python3 server/app.py 로 실행)");
+      const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+      for (;;) {
+        const { value, done } = await rd.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i; while ((i = buf.indexOf("\n")) >= 0) { const line = buf.slice(0, i); buf = buf.slice(i + 1); if (line.trim()) onEvent(JSON.parse(line)); }
+      }
+    } catch (e) { step("⚠ " + e.message); }
+    steps.querySelectorAll("li.cur").forEach(l => l.classList.remove("cur"));
+    if (final) { agState = final.state; render(final); agChips.hidden = false; agNew.hidden = false; agText.placeholder = "이어서 질문하거나 기억을 바로잡아 주세요 (예: 1층이 아니었던 것 같아)"; }
+    agBusy = false; agGo.disabled = false;
+    function onEvent(e) {
+      if (e.step === "error") { step("⚠ " + e.msg); return; }
+      if (e.step === "clue_done") { const c = e.clue; step(`단서 해석: ${c.year_from === c.year_to ? c.year_from + "년" : c.year_from + "~" + c.year_to + "년"}${c.categories.length ? " · " + c.categories.join(", ") : ""}${c.name_hints.length ? " · 상호 조각 " + c.name_hints.join(", ") : ""}${c.floor ? " · " + c.floor : ""}${c.anchor ? " · 위치 " + c.anchor : ""}`); return; }
+      if (e.step === "cands") { cands = e.cands; step(e.msg); return; }
+      if (e.step === "web_done") { ev = e.evidence; step(e.msg); return; }
+      if (e.step === "done") { final = e; return; }
+      step(e.msg, e.step !== "web_skip");
+    }
+    function render(m) {
+      const res = m.result, sc = m.scope, byE = Object.fromEntries(ev.map(x => [x.id, x])), jById = Object.fromEntries(res.judgements.map(j => [j.id, j]));
+      const src = ids => ids.filter(i => byE[i]).map(i => `<a href="${safeUrl(byE[i].url)}" target="_blank" rel="noopener" title="${esc(byE[i].title)} — ${esc(byE[i].desc)}">${esc(byE[i].hostname || byE[i].title.slice(0, 18))}</a>`).join("");
+      const yrs = a => a[0] === a[1] ? a[0] + "년" : a[0] + "~" + a[1] + "년";
+      const card = (c, j) => `<div class="agc ${c.tier}" data-i="${cands.indexOf(c)}"><b>${esc(c.name)}</b><span class="vd ${j.verdict}">${j.verdict} ${Math.round(j.confidence * 100)}%</span>
+        <div class="sub">창천동 ${esc(c.jibun)} · ${esc(c.category || "")} · ${esc(c.start)}~${esc(c.end || "")}${c.tier === "wide" && c.dist_m != null && sc.radius_wide ? " · " + c.dist_m + "m" : ""}</div><div class="why">${esc(j.reason)}</div><div class="src">${src(j.evidence_ids)}</div></div>`;
+      const list = tier => cands.filter(c => c.tier === tier && jById[c.id]).sort((a, b) => jById[b.id].confidence - jById[a.id].confidence);
+      const ex = list("exact"), wd = list("wide");
+      let h = `<div class="ans">${esc(res.answer)}</div>`;
+      h += m.web.used ? `<div class="web">🌐 웹 검색 사용 · Liner Search ${m.web.n}건 — ${esc(m.web.reason)}</div>` : `<div class="web off">웹 검색 안 함 — ${esc(m.web.reason)}</div>`;
+      h += `<div class="scope">정확 검색: ${yrs(sc.years)}${sc.radius_exact ? " · 반경 " + sc.radius_exact + "m" : ""} / 확장 검색: ${yrs(sc.wide_years)}${sc.radius_wide ? " · " + esc(sc.anchor || "연세로12길") + " 반경 " + sc.radius_wide + "m" : " · 위치는 연세로12길 전체"}</div>`;
+      h += `<h3>정확히 맞는 결과 <small>(${ex.length})</small></h3>` + (ex.length ? ex.map(c => card(c, jById[c.id])).join("") : `<div class="none">질문 조건과 정확히 맞는 기록이 없어요.</div>`);
+      if (wd.length) h += `<h3>범위를 넓혀 찾은 결과 <small>(${wd.length}) · 시기·위치가 조금 다를 수 있어요</small></h3>` + wd.map(c => card(c, jById[c.id])).join("");
+      if (res.leads.length) h += `<h3>웹에서 새로 발견한 후보 <small>· 미검증, 지도에 반영되지 않음</small></h3>` + res.leads.map(l => `<div class="agc aglead" style="cursor:default"><b>${esc(l.name)}</b><span class="vd 미확인">AI 후보</span><div class="why">${esc(l.why)}</div><div class="src">${src(l.evidence_ids)}</div></div>`).join("");
+      if (m.suggestion) h += `<div class="sug">💡 ${esc(m.suggestion.text)}<br><button class="yes">네, 찾아봐줘</button><button class="no">아니요</button></div>`;
+      if (res.follow_ups.length) h += `<h3>에이전트의 질문</h3><ul class="fu">${res.follow_ups.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
+      h += `<div class="agnote">모델 ${esc(m.model)}${m.cost_usd ? " · 이번 질문 비용 약 $" + m.cost_usd : ""}. AI 판정은 근거를 직접 확인하세요.</div>`;
+      const old = box.querySelector(".agTrace"); const det = document.createElement("details"); det.innerHTML = `<summary>처리 과정</summary>`; old.style.margin = "4px 0 0"; det.appendChild(old);
+      box.innerHTML = h; box.appendChild(det);
+      const sg = box.querySelector(".sug"); if (sg) { sg.querySelector(".yes").onclick = () => { sg.remove(); agAsk("네, 그렇게 해줘"); }; sg.querySelector(".no").onclick = () => { agState && (agState.pending = null); sg.remove(); }; }
+      box.querySelectorAll(".agc[data-i]").forEach(el => el.onclick = e => { if (e.target.tagName !== "A") agPick(cands[+el.dataset.i]); });
+      box.scrollIntoView({ block: "nearest" });
+    }
+  }
 
   map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
