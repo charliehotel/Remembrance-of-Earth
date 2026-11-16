@@ -16,8 +16,15 @@ EXPAND_YEARS, EXPAND_RADIUS_M, MAX_LEVEL = 2, 50, 3     # 확장 단계(level)�
 
 # ---------- 데이터 ----------
 def load_db():
+    """연세로12길 구간(timeline_businesses.csv)과 반경 150m 확장 구간(timeline_businesses_r150.csv)을 함께 읽는다.
+    parcels 에는 확장 구간 필지도 들어 있다(core=False). 기본 위치(center)는 연세로12길 구간 필지만으로 계산한다."""
     rows = list(csv.DictReader(open(DATA / "timeline_businesses.csv", encoding="utf-8-sig")))
-    parcels = {r["jibun"]: r for r in csv.DictReader(open(DATA / "parcels.csv", encoding="utf-8-sig"))}
+    parcels = {r["jibun"]: dict(r, core=True) for r in csv.DictReader(open(DATA / "parcels.csv", encoding="utf-8-sig"))}
+    ring = DATA / "timeline_businesses_r150.csv"
+    if ring.exists():
+        rows += list(csv.DictReader(open(ring, encoding="utf-8-sig")))
+        for r in csv.DictReader(open(DATA / "parcels_r150.csv", encoding="utf-8-sig")):
+            parcels.setdefault(r["jibun"], dict(r, anchor="", core=False))
     for i, r in enumerate(rows):
         r["id"] = f"D{i}"
         p = parcels.get(r["jibun"])
@@ -35,7 +42,8 @@ def _dist_m(a, b):
 
 def resolve_anchor(text, parcels):
     """위치 표현 → (좌표, 설명). 지번이나 랜드마크 이름이면 그 필지, 아니면 연세로12길 중심."""
-    center = (sum(float(p["lon"]) for p in parcels.values()) / len(parcels), sum(float(p["lat"]) for p in parcels.values()) / len(parcels))
+    core = [p for p in parcels.values() if p.get("core")] or list(parcels.values())
+    center = (sum(float(p["lon"]) for p in core) / len(core), sum(float(p["lat"]) for p in core) / len(core))
     t = (text or "").replace(" ", "")
     if t:
         for j, p in parcels.items():
@@ -130,7 +138,8 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False):
                 if not clue["categories"] and not clue["name_hints"]: continue     # 조건이 없으면 확장해도 의미가 없다
                 if terms and not cat_ok and hint_pts < 2: continue     # 업종도 상호도 안 맞으면 제외
             wide.append(row)
-    exact.sort(key=lambda x: -x["score"]); wide.sort(key=lambda x: -x["score"])
+    dkey = lambda x: (-x["score"], x["dist_m"] if x["dist_m"] is not None else 1e9)   # 점수가 같으면 기준 위치에 가까운 순
+    exact.sort(key=dkey); wide.sort(key=dkey)
     scope = {"years": [y0, y1 - 1], "wide_years": [y0 - margin, y1 - 1 + margin], "radius_exact": r_exact, "radius_wide": r_wide,
              "anchor": anchor_name if (anchored or clue["radius_m"]) else None, "level": level, "nearby": nearby, "rejected": len(rejected)}
     return [dict(x, tier="exact") for x in exact[:5]], [dict(x, tier="wide") for x in wide[:5]], scope
