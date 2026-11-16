@@ -7,34 +7,47 @@ BASE = "https://platform.liner.com/api/v1"
 MODEL = os.environ.get("LINER_MODEL", "anthropic/claude-haiku-5.5")   # 게이트웨이로 haiku 지정
 FALLBACK_MODEL = "liner-claude-router"                                   # 지정 모델이 거부되면 라우터(비용 우선)
 
-def _key():
-    k = os.environ.get("LINER_API_KEY")
-    if k: return k
+def _keys():
+    """사용할 키 목록(기본 → fallback). 환경 변수가 .env 보다 우선한다."""
+    vals = {"LINER_API_KEY": os.environ.get("LINER_API_KEY"),
+            "LINER_API_KEY_fallback": os.environ.get("LINER_API_KEY_fallback")}
     env = Path(__file__).resolve().parent.parent / ".env"
     if env.exists():
         for line in env.read_text(encoding="utf-8").splitlines():
-            if line.startswith("LINER_API_KEY="):
-                return line.split("=", 1)[1].strip().strip('"\'')
-    raise RuntimeError("LINER_API_KEY 없음: .env 에 LINER_API_KEY=... 를 넣어 주세요")
+            for name in vals:
+                if not vals[name] and line.startswith(name + "="):
+                    vals[name] = line.split("=", 1)[1].strip().strip('"\'')
+    keys = [v for v in vals.values() if v]
+    if not keys:
+        raise RuntimeError("LINER_API_KEY 없음: .env 에 LINER_API_KEY=... 를 넣어 주세요")
+    return list(dict.fromkeys(keys))
+
+_active = 0   # 현재 쓰는 키 번호. 기본 키가 인증·잔액 오류를 내면 fallback으로 넘어가 이후에도 유지한다.
+AUTH_FAIL = (401, 402, 403)
 
 def _post(path, body, timeout=60, retries=2):
+    global _active
     data = json.dumps(body).encode()
     last = None
-    for i in range(retries + 1):
+    i = 0
+    while i <= retries:
+        keys = _keys()
         req = urllib.request.Request(BASE + path, data=data, method="POST",
-            headers={"x-api-key": _key(), "Content-Type": "application/json"})
+            headers={"x-api-key": keys[min(_active, len(keys) - 1)], "Content-Type": "application/json"})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return json.loads(r.read())
         except urllib.error.HTTPError as e:
             msg = e.read().decode("utf-8", "ignore")[:300]
             last = RuntimeError(f"Liner {path} HTTP {e.code}: {msg}")
+            if e.code in AUTH_FAIL and _active < len(keys) - 1:
+                _active += 1; continue          # 다음 키로 즉시 재시도(재시도 횟수는 쓰지 않음)
             if e.code in (429, 502, 503, 504, 524) and i < retries:
-                time.sleep(2 * (i + 1)); continue
+                time.sleep(2 * (i + 1)); i += 1; continue
             raise last
         except (urllib.error.URLError, TimeoutError) as e:
             last = RuntimeError(f"Liner {path} 연결 실패: {e}")
-            if i < retries: time.sleep(2); continue
+            if i < retries: time.sleep(2); i += 1; continue
             raise last
     raise last
 
