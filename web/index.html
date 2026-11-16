@@ -60,6 +60,7 @@
   #agNew { color: #777 !important; border-color: #bbb !important; }
   .aga .sug { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #fff7e0; border: 1px solid #e6c766; font-size: 12.5px; }
   .aga .sug button { width: auto !important; margin: 6px 6px 0 0 !important; padding: 3px 10px !important; font-size: 12px !important; }
+  .aga .sug.split { background: #eef7f0; border-color: #9cc7a8; }
   .aga .sug button.no { background: #fff !important; color: #777 !important; border: 1px solid #bbb !important; }
   .aglead { border-style: dashed; } .agnote { font-size: 11.5px; color: #777; margin-top: 6px; }
   #results { margin: -4px 0 8px; }
@@ -937,17 +938,19 @@ function init(S) {
       const list = tier => cands.filter(c => c.tier === tier && jById[c.id]).sort((a, b) => jById[b.id].confidence - jById[a.id].confidence);
       const ex = list("exact"), wd = list("wide");
       let h = `<div class="ans">${esc(res.answer)}</div>`;
-      h += m.web.used ? `<div class="web">🌐 웹 검색 사용 · Liner Search ${m.web.n}건 — ${esc(m.web.reason)}</div>` : `<div class="web off">웹 검색 안 함 — ${esc(m.web.reason)}</div>`;
+      h += m.web.used ? `<div class="web">🌐 웹 검색 사용 · ${esc(m.web.label || 'Liner Search')} ${m.web.n}건 — ${esc(m.web.reason)}</div>` : `<div class="web off">웹 검색 안 함 — ${esc(m.web.reason)}</div>`;
       h += `<div class="scope">정확 검색: ${yrs(sc.years)}${sc.radius_exact ? " · 반경 " + sc.radius_exact + "m" : ""} / 확장 검색: ${yrs(sc.wide_years)}${sc.radius_wide ? " · " + esc(sc.anchor || "연세로12길") + " 반경 " + sc.radius_wide + "m" : " · 위치는 연세로12길 전체"}</div>`;
-      h += `<h3>정확히 맞는 결과 <small>(${ex.length})</small></h3>` + (ex.length ? ex.map(c => card(c, jById[c.id])).join("") : `<div class="none">질문 조건과 정확히 맞는 기록이 없어요.</div>`);
+      h += `<h3>정확히 맞는 결과 <small>(${m.exact_total > ex.length ? `같은 조건 ${m.exact_total}곳 중 상위 ${ex.length}곳` : ex.length})</small></h3>` + (ex.length ? ex.map(c => card(c, jById[c.id])).join("") : `<div class="none">질문 조건과 정확히 맞는 기록이 없어요.</div>`);
       if (wd.length) h += `<h3>범위를 넓혀 찾은 결과 <small>(${wd.length}) · 시기·위치가 조금 다를 수 있어요</small></h3>` + wd.map(c => card(c, jById[c.id])).join("");
       if (res.leads.length) h += `<h3>웹에서 새로 발견한 후보 <small>· 미검증, 지도에 반영되지 않음</small></h3>` + res.leads.map(l => `<div class="agc aglead" style="cursor:default"><b>${esc(l.name)}</b><span class="vd 미확인">AI 후보</span><div class="why">${esc(l.why)}</div><div class="src">${src(l.evidence_ids)}</div></div>`).join("");
+      if (m.split) h += `<div class="sug split">🔎 ${esc(m.split.text)}<br>${m.split.options.map((o, i) => `<button data-r="${i}">${esc(o.label)} (${o.count}곳)</button>`).join("")}</div>`;
       if (m.suggestion) h += `<div class="sug">💡 ${esc(m.suggestion.text)}<br><button class="yes">네, 찾아봐줘</button><button class="no">아니요</button></div>`;
       if (res.follow_ups.length) h += `<h3>에이전트의 질문</h3><ul class="fu">${res.follow_ups.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
       h += `<div class="agnote">모델 ${esc(m.model)}${m.cost_usd ? " · 이번 질문 비용 약 $" + m.cost_usd : ""}. AI 판정은 근거를 직접 확인하세요.</div>`;
       const old = box.querySelector(".agTrace"); const det = document.createElement("details"); det.innerHTML = `<summary>처리 과정</summary>`; old.style.margin = "4px 0 0"; det.appendChild(old);
       box.innerHTML = h; box.appendChild(det);
-      const sg = box.querySelector(".sug"); if (sg) { sg.querySelector(".yes").onclick = () => { sg.remove(); agAsk("네, 그렇게 해줘"); }; sg.querySelector(".no").onclick = () => { agState && (agState.pending = null); sg.remove(); }; }
+      const sp = box.querySelector(".sug.split"); if (sp) sp.onclick = e => { const b = e.target.closest("button[data-r]"); if (b) { sp.remove(); agAsk(m.split.options[+b.dataset.r].reply); } };
+      const sg = box.querySelector(".sug:not(.split)"); if (sg) { sg.querySelector(".yes").onclick = () => { sg.remove(); agAsk("네, 그렇게 해줘"); }; sg.querySelector(".no").onclick = () => { agState && (agState.pending = null); sg.remove(); }; }
       box.querySelectorAll(".agc[data-i]").forEach(el => el.onclick = e => { if (e.target.tagName !== "A") agPick(cands[+el.dataset.i]); });
       box.scrollIntoView({ block: "nearest" });
     }

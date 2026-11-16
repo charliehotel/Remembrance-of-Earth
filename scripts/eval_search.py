@@ -41,6 +41,30 @@ def near_anchor(r, lo=0, hi=50):
     best = min(((agent._dist_m((float(p["lon"]), float(p["lat"])), (r["lon"], r["lat"])), p["anchor"]) for _, p in ANCHORS), default=None)
     return best[1] if best and lo < best[0] <= hi else None
 
+def option_has(opt, r):
+    """에이전트가 낸 선택지에 정답 업소가 속하는지(사용자가 사실대로 답한다고 가정)."""
+    if opt["kind"] == "floor": return r["floor"] == opt["value"]
+    if opt["kind"] == "anchor" and r["lon"]:
+        return agent._dist_to(agent.resolve_anchor(opt["anchor"], parcels)[0], (r["lon"], r["lat"])) <= opt["radius_m"]
+    return False
+
+Q = {"asked": 0, "answerable": 0, "total": 0}; S7_TARGETS = set()
+def asked(r):
+    """S1 단서로 검색 → 에이전트가 가르는 질문을 하면, 정답이 속한 선택지로 사용자가 답한 단서를 만든다."""
+    if not terms_of(r): return None
+    Q["total"] += 1
+    c0 = clue(r, mid(r)); ex, _, _ = agent.search_tiers(db, parcels, c0, 0, limit=10 ** 6)
+    q = agent.split_question(ex, parcels, c0)
+    if not q: return None
+    Q["asked"] += 1
+    opt = next((o for o in q["options"] if option_has(o, r)), None)
+    if not opt: return None
+    Q["answerable"] += 1; S7_TARGETS.add(key(r))
+    c1 = dict(c0)
+    if opt["kind"] == "floor": c1["floor"] = opt["value"] + "층"
+    else: c1["anchor"], c1["radius_m"] = opt["anchor"], opt["radius_m"]
+    return (c1, 0)
+
 def shifts(r, k, level):
     """기억한 시기가 실제 영업 기간에서 k년 벗어난 경우를 이른 쪽·늦은 쪽 둘 다 만든다."""
     if not terms_of(r): return None
@@ -57,6 +81,7 @@ SCEN = [
     ("S3 +상호 앞 두 글자", "S1에 상호 앞 두 글자까지 기억",            lambda r: (clue(r, mid(r), name=True), 0) if terms_of(r) else None),
     ("S4 +랜드마크 근처(50m 이내)", "S1에 '창천감리교회 근처' 같은 위치까지 기억(실제 거리 50m 이내)", lambda r: (clue(r, mid(r), anchor=near_anchor(r)), 0) if terms_of(r) and near_anchor(r) else None),
     ("S4b 랜드마크에서 50~100m", "위치를 '근처'라고만 기억했지만 실제로는 50~100m. '범위 넓히기' 1회 후(반경 100m)", lambda r: (clue(r, mid(r), anchor=near_anchor(r, 50, 100)), 1) if terms_of(r) and near_anchor(r, 50, 100) else None),
+    ("S7 가르는 질문에 답함", "S1 단서로 검색 → 에이전트가 되물은 질문(층 또는 위치)에 사용자가 사실대로 한 번 답한 뒤", asked),
     ("S5a 시기 1년 착오(±1)", "기억한 시기가 실제 영업 기간에서 1년 벗어남(이른 쪽·늦은 쪽 둘 다). 기본 범위(±2년)에서 확장 구간으로 나옴", lambda r: shifts(r, 1, 0)),
     ("S5b 시기 2년 착오(±2)", "2년 벗어남. 기본 범위의 한계", lambda r: shifts(r, 2, 0)),
     ("S6a 시기 3년 착오(±3)", "3년 벗어남. 기본 범위로는 불가, '범위 넓히기' 1회 후(±4년)", lambda r: shifts(r, 3, 1)),
@@ -101,6 +126,13 @@ for name, desc, build in SCEN:
         rks = [rk for _, rk, _ in v if rk]
         print(f"| {g} | {n} | {pct(ex_n, n)} | {pct(top5, n)} | {pct(found, n)} | {n - found} | {statistics.median(rks) if rks else '-'} | {statistics.median(x for _, _, x in v):.0f} |")
     print()
+    if name.startswith("S7"):
+        same = [r for r in targets if key(r) in S7_TARGETS]
+        rs = [run(r, clue(r, mid(r)), 0) for r in same]
+        top5 = sum(1 for tr, rk, _ in rs if rk and rk <= TOP)
+        print(f"- 질문이 만들어진 경우 {Q['asked']}건/{Q['total']}건, 그중 정답이 선택지에 속한 경우 {Q['answerable']}건")
+        print(f"- 같은 {len(same)}건의 질문 전(S1): 상위5 안 {pct(top5, len(rs))} · 순위 중앙값 {statistics.median(rk for _, rk, _ in rs if rk):.0f} · 정확 구간 후보 수 중앙값 {statistics.median(n for _, _, n in rs):.0f}")
+        print()
     for r, tier, rank, nex in miss[:args.misses]:
         print(f"   · 놓침/하위: {r['jibun']} {r['name']} ({r['start'][:7]}~{r['end'][:7]}, {r['category'] or r.get('category_ai')}) → {tier}, 순위 {rank}, 정확 후보 {nex}건")
     if args.misses and miss: print()

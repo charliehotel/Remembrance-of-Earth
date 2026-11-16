@@ -7,7 +7,8 @@
   4. 웹 검색(Liner Search): 정확 결과가 약하거나 사용자가 원하면 웹에서도 찾는다. 사용했는지 항상 표시한다.
   5. 판정(Liner Model): 근거를 대조해 확인 / 추정 / 미확인으로 구분한다. 근거 없는 내용은 만들지 않는다.
 상태(state)는 서버에 저장하지 않고 화면이 들고 다니며, 질문마다 다시 보낸다."""
-import csv, math, re
+import csv, json, math, re
+from collections import Counter
 from pathlib import Path
 import liner
 
@@ -15,6 +16,7 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 EXPAND_YEARS, EXPAND_RADIUS_M, MAX_LEVEL = 2, 50, 3     # 확장 단계(level)마다 ±2년·반경 50m씩 넓어진다
 
 # ---------- 데이터 ----------
+EXTRA_ANCHORS = {"31-4": "독수리다방"}      # 독수리빌딩(독수리다방, 2013~). 사용자가 위치 기준으로 자주 떠올릴 만한 곳
 def load_db():
     """연세로12길 구간(timeline_businesses.csv)과 반경 150m 확장 구간(timeline_businesses_r150.csv)을 함께 읽는다.
     parcels 에는 확장 구간 필지도 들어 있다(core=False). 기본 위치(center)는 연세로12길 구간 필지만으로 계산한다."""
@@ -25,6 +27,8 @@ def load_db():
         rows += list(csv.DictReader(open(ring, encoding="utf-8-sig")))
         for r in csv.DictReader(open(DATA / "parcels_r150.csv", encoding="utf-8-sig")):
             parcels.setdefault(r["jibun"], dict(r, anchor="", core=False))
+    for j, name in EXTRA_ANCHORS.items():                                       # 반경 150m 구간 필지에 랜드마크 이름을 붙인다
+        if j in parcels and not parcels[j].get("anchor"): parcels[j]["anchor"] = name
     for i, r in enumerate(rows):
         r["id"] = f"D{i}"
         p = parcels.get(r["jibun"])
@@ -35,13 +39,35 @@ def _ym(s, default):
     m = re.match(r"(\d{4})(?:-(\d{2}))?", s or "")
     return int(m.group(1)) + (int(m.group(2) or 6) - 1) / 12 if m else default
 
+_STREETS = None
+def load_streets():
+    """위치 기준으로 쓰는 길(꺾인 선). data/streets.json"""
+    global _STREETS
+    if _STREETS is None:
+        f = DATA / "streets.json"
+        _STREETS = json.loads(f.read_text(encoding="utf-8"))["streets"] if f.exists() else []
+    return _STREETS
+
+def _seg_dist(a, b, p):
+    kx, ky = 111320 * math.cos(math.radians((a[1] + p[1]) / 2)), 110574
+    ax, ay, bx, by, px, py = a[0] * kx, a[1] * ky, b[0] * kx, b[1] * ky, p[0] * kx, p[1] * ky
+    L2 = (bx - ax) ** 2 + (by - ay) ** 2
+    t = 0 if L2 == 0 else max(0, min(1, ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / L2))
+    return math.hypot(px - (ax + t * (bx - ax)), py - (ay + t * (by - ay)))
+
+def _dist_to(anchor, pt):
+    """기준이 점이면 점까지, 길(점 목록)이면 선까지의 거리(m)."""
+    if anchor and isinstance(anchor[0], (list, tuple)):
+        return min(_seg_dist(anchor[i], anchor[i + 1], pt) for i in range(len(anchor) - 1))
+    return _dist_m(anchor, pt)
+
 def _dist_m(a, b):
     (lo1, la1), (lo2, la2) = a, b
     dx = (lo2 - lo1) * 111320 * math.cos(math.radians((la1 + la2) / 2)); dy = (la2 - la1) * 110574
     return math.hypot(dx, dy)
 
 def resolve_anchor(text, parcels):
-    """위치 표현 → (좌표, 설명). 지번이나 랜드마크 이름이면 그 필지, 아니면 연세로12길 중심."""
+    """위치 표현 → (좌표 또는 길의 점 목록, 설명, 지정 여부). 지번·랜드마크면 그 필지, 연세로·명물길이면 그 길, 아니면 연세로12길 중심."""
     core = [p for p in parcels.values() if p.get("core")] or list(parcels.values())
     center = (sum(float(p["lon"]) for p in core) / len(core), sum(float(p["lat"]) for p in core) / len(core))
     t = (text or "").replace(" ", "")
@@ -51,6 +77,8 @@ def resolve_anchor(text, parcels):
                 return (float(p["lon"]), float(p["lat"])), (p["anchor"] or f"창천동 {j}"), True
         for tok in re.findall(r"\d+-\d+", t):
             if tok in parcels: return (float(parcels[tok]["lon"]), float(parcels[tok]["lat"])), f"창천동 {tok}", True
+        for st in load_streets():                                                     # 길 이름(연세로·명물길): 선 기준
+            if any(re.search(pt, t) for pt in st["patterns"]): return st["points"], st["name"], True
     return center, "연세로12길", False
 
 # ---------- 1. 단서 해석 ----------
@@ -68,7 +96,7 @@ def parse_clue(text, prev, pending=None):
     sys = ("사용자가 기억 속 가게를 설명하거나, 이전 결과에 대해 후속 요청을 한다. 현재 해석(prev)이 주어지면 새 메시지를 반영해 갱신한다: "
            "사용자가 바꾼 항목만 바꾸고 나머지는 유지한다. 완전히 다른 가게를 찾는 새 질문이면 reset=true로 하고 이전 값을 버린다. "
            "accept_suggestion(직전에 에이전트가 한 제안(pending)을 사용자가 받아들이면 true: '응', '네', '그렇게 해줘' 등. 제안이 없거나 다른 요청이면 false), reject_top(사용자가 직전 답변의 1순위 후보가 아니라고 하면 true: '거기가 아닌 것 같아', '그 가게는 아니야' 등), 필드: year_from/year_to(말한 시기, 한 해만 말했으면 둘 다 같은 해, 모르면 1992와 2026), categories(업종 키워드를 짧은 단어 단위로 2~5개(두 글자 이상): 예 '인도 카레집'이면 인도, 카레, 커리. 한식, 호프, 카페, 미용 등. 구절 통째로 넣지 않는다), "
-           "name_hints(기억한 상호의 일부 글자), floor(층, 예 '1층', 모르면 빈 문자열), anchor(위치 표현: 지번이나 '창천감리교회'·'아웃백' 같은 랜드마크, 없으면 빈 문자열), "
+           "name_hints(기억한 상호의 일부 글자), floor(층, 예 '1층', 모르면 빈 문자열), anchor(위치 표현: 지번이나 '창천감리교회'·'아웃백'·'독수리다방' 같은 랜드마크, '연세로'·'명물길(명물거리)' 같은 길 이름. 연세로12길은 길 이름이 아니라 기본 구역이므로 비워 둔다. 없으면 빈 문자열), "
            "radius_m(반경을 말했을 때만 m, 아니면 0), widen(이번 메시지에서 한 요청만 반영하고 prev의 값은 따르지 않는다. '범위 넓혀줘'·'더 멀리'면 wider, '좁혀줘'·'정확히'면 narrower, 아니면 none), "
            "web(이번 메시지만 기준: 웹에서도 찾아 달라 하면 force, 웹은 쓰지 말라면 skip, 아니면 auto), summary(해석 한 문장). 말하지 않은 값을 추측하지 않는다.")
     user = f"현재 해석(prev): {prev if prev else '없음'}\n직전 제안(pending): {pending['text'] if pending else '없음'}\n새 메시지: {text}"
@@ -102,6 +130,12 @@ def _hint_score(h, r):
     if h.lower() in _text(r).replace(" ", "").lower(): return 4, True
     return 0.5 * sum(ch in r["name"] for ch in set(h)) / len(set(h)), False
 
+def floor_key(f):
+    """층 표기를 데이터 값과 맞춘다: '지하 1층'·'지하1'·'B1' → 'B1', '1층' → '1'."""
+    f = (f or "").replace(" ", "").replace("층", "")
+    m = re.fullmatch(r"(?:지하|B)(\d*)", f, re.I)
+    return "B" + (m.group(1) or "1") if m else f
+
 def row_key(r): return f"{r['jibun']}|{r['name']}|{r['start']}"
 
 def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
@@ -115,7 +149,7 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
     for r in db:
         if row_key(r) in rejected: continue                                        # 사용자가 '아니다'라고 한 후보는 제외
         s, e = _ym(r["start"], 1992), _ym(r["end"], 2026.9)
-        d = _dist_m(anchor_pt, (r["lon"], r["lat"])) if r["lon"] else None
+        d = _dist_to(anchor_pt, (r["lon"], r["lat"])) if r["lon"] else None
         in_exact_years = not (e < y0 or s > y1)
         in_wide_years = not (e < y0 - margin or s > y1 + margin)
         if not in_wide_years: continue
@@ -124,7 +158,7 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
         hint_pts, hint_all = 0, True
         for h in clue["name_hints"]:
             pts, full = _hint_score(h, r); hint_pts += pts; hint_all &= full
-        fl = clue["floor"].replace("층", "") if clue["floor"] else ""
+        fl = floor_key(clue["floor"])
         floor_known = bool(r["floor"] or "층" in r["observed_as"])
         floor_ok = (not fl) or (floor_known and (r["floor"] == fl or f"{fl}층" in r["observed_as"]))
         sc = 1.0 + hint_pts + (2 if cat_ok and terms else 0) + (1 if fl and floor_ok else 0) + (0.5 if r["grade"] == "A" else 0)
@@ -143,6 +177,49 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
     scope = {"years": [y0, y1 - 1], "wide_years": [y0 - margin, y1 - 1 + margin], "radius_exact": r_exact, "radius_wide": r_wide,
              "anchor": anchor_name if (anchored or clue["radius_m"]) else None, "level": level, "nearby": nearby, "rejected": len(rejected)}
     return [dict(x, tier="exact") for x in exact[:limit]], [dict(x, tier="wide") for x in wide[:limit]], scope
+
+# ---------- 3-1. 후보를 가르는 질문(코드) ----------
+SPLIT_RADIUS_M, STREET_SPLIT_RADIUS_M, SHOWN = 80, 50, 5
+
+def split_question(exact_all, parcels, clue):
+    """정확 후보가 화면에 다 보이지 않을 만큼 많으면, 후보를 가장 잘 나눌 단서(층·위치)를 골라 되묻는다.
+    사용자가 답했을 때 남을 후보 수의 기댓값이 가장 작은 질문을 고른다. 답할 수 없는 후보(층 미상 등)는 줄어들지 않는 것으로 계산한다."""
+    n = len(exact_all)
+    if n <= SHOWN: return None
+    options_by_kind = {}
+    if not clue["floor"]:
+        counts = Counter(x["floor"] for x in exact_all if x["floor"])
+        # 층을 답하면 층 미상 기록은 걸러지므로, 층이 기록된 후보가 대부분일 때만 묻는다
+        if len(counts) >= 2 and sum(counts.values()) >= 0.6 * n:
+            nm = lambda f: ("지하 " + f[1:] if f.startswith("B") else f) + "층"
+            options_by_kind["floor"] = ([{"label": nm(f), "count": c, "reply": f"{nm(f)}에 있었어", "kind": "floor", "value": f}
+                                         for f, c in counts.most_common(3)], sum(counts.values()))
+    if not clue["anchor"] and not clue["radius_m"]:
+        opts, covered = [], set()
+        for j, pr in parcels.items():
+            if not pr.get("anchor"): continue
+            pt = (float(pr["lon"]), float(pr["lat"]))
+            idx = [i for i, x in enumerate(exact_all) if x["lon"] is not None and _dist_m(pt, (x["lon"], x["lat"])) <= SPLIT_RADIUS_M]
+            if idx:
+                covered.update(idx)
+                opts.append({"label": f"{pr['anchor']} 쪽", "count": len(idx), "kind": "anchor", "anchor": pr["anchor"], "radius_m": SPLIT_RADIUS_M,
+                             "reply": f"{pr['anchor']} 쪽(반경 {SPLIT_RADIUS_M}m 안)에 있었어"})
+        for st in load_streets():
+            idx = [i for i, x in enumerate(exact_all) if x["lon"] is not None and _dist_to(st["points"], (x["lon"], x["lat"])) <= STREET_SPLIT_RADIUS_M]
+            if idx:
+                covered.update(idx)
+                opts.append({"label": f"{st['name']} 쪽", "count": len(idx), "kind": "anchor", "anchor": st["name"], "radius_m": STREET_SPLIT_RADIUS_M,
+                             "reply": f"{st['name']} 쪽(반경 {STREET_SPLIT_RADIUS_M}m 안)에 있었어"})
+        if opts: options_by_kind["anchor"] = (opts, len(covered))
+    best = None
+    for kind, (opts, covered) in options_by_kind.items():
+        tot = sum(o["count"] for o in opts)
+        exp = (covered / n) * (sum(o["count"] ** 2 for o in opts) / tot) + (1 - covered / n) * n     # 답한 뒤 남는 후보 수의 기댓값
+        if exp < 0.8 * n and (best is None or exp < best[0]): best = (exp, kind, opts)
+    if not best: return None
+    _, kind, opts = best
+    ask = "몇 층이었는지 기억나세요?" if kind == "floor" else "어느 쪽에 있었는지 기억나세요?"
+    return {"kind": kind, "options": opts, "text": f"같은 조건의 가게가 {n}곳이라 {SHOWN}곳만 보여드려요. {ask}"}
 
 # ---------- 4. 웹 검색 ----------
 def gather_web(clue, exact, wide, n_each=4, max_queries=5):
@@ -247,7 +324,8 @@ def run(text, state=None):
     """단계마다 dict를 yield 한다. 마지막 'done' 이벤트의 state를 화면이 보관했다가 다음 질문에 다시 보낸다."""
     state = state or {}
     total = 0.0
-    yield {"step": "clue", "msg": "질문에서 정확한 정보를 추리는 중 (Liner Model)"}
+    MDL, SCH = ("Liner Model", "Liner Search") if liner.provider() == "liner" else ("테스트용 프록시 모델", "테스트용 프록시 검색")
+    yield {"step": "clue", "msg": f"질문에서 정확한 정보를 추리는 중 ({MDL})"}
     pending = state.get("pending")
     clue, m, c = parse_clue(text, state.get("clue"), pending); total += c or 0
     rejected = set() if clue["reset"] else set(state.get("rejected", []))
@@ -264,26 +342,29 @@ def run(text, state=None):
     level = max(0, min(MAX_LEVEL, level + {"wider": 1, "narrower": -1, "none": 0}[clue["widen"]]))
     yield {"step": "clue_done", "clue": clue, "model": m, "level": level}
     db, parcels = load_db()
-    exact, wide, scope = search_tiers(db, parcels, clue, level, rejected, nearby)
+    exact_all, wide_all, scope = search_tiers(db, parcels, clue, level, rejected, nearby, limit=10 ** 6)
+    exact, wide = exact_all[:SHOWN], wide_all[:SHOWN]
+    split = split_question(exact_all, parcels, clue)
     yield {"step": "cands", "msg": f"정확 검색 {len(exact)}건 · 확장 검색 {len(wide)}건", "scope": scope,
            "cands": [{k: x[k] for k in SLIM} for x in exact + wide]}
     use_web, why = web_decision(clue, exact)
     ev, queries = [], []
     if use_web:
-        yield {"step": "web", "msg": f"웹 검색 사용 — {why} (Liner Search)"}
+        yield {"step": "web", "msg": f"웹 검색 사용 — {why} ({SCH})"}
         ev, queries = gather_web(clue, exact, wide)
         yield {"step": "web_done", "msg": f"웹 근거 {len(ev)}건 수집", "evidence": ev}
     else:
         yield {"step": "web_skip", "msg": f"웹 검색 생략 — {why}"}
     cands = exact + wide
-    yield {"step": "judge", "msg": "근거를 대조해 판정하는 중 (Liner Model)"}
+    yield {"step": "judge", "msg": f"근거를 대조해 판정하는 중 ({MDL})"}
     res, m2, c2 = judge(text, clue, cands, ev, use_web, rejected); total += c2 or 0
     sug = make_suggestion(res, cands, clue, scope, ref)
     byid = {c["id"]: c for c in cands}
     ranked = sorted((j for j in res["judgements"] if j["id"] in byid), key=lambda j: -j["confidence"])
     top = byid[ranked[0]["id"]] if ranked else None
     yield {"step": "done", "result": res, "model": m2, "cost_usd": round(total, 6), "scope": scope, "suggestion": sug,
-           "web": {"used": use_web, "reason": why, "queries": queries, "n": len(ev)},
+           "exact_total": len(exact_all), "split": split,
+           "web": {"used": use_web, "reason": why, "queries": queries, "n": len(ev), "label": SCH},
            "state": {"clue": dict(clue, widen="none", web="auto", reset=False, accept_suggestion=False), "level": level,
                      "pending": sug, "rejected": sorted(rejected), "nearby": nearby,
                      "last_top": {"key": row_key(top), "jibun": top["jibun"], "name": top["name"]} if top else None}}
