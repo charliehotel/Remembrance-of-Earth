@@ -14,14 +14,19 @@
   #year { font-size: 28px; font-weight: 700; min-width: 70px; }
   #slider { flex: 1; }
   #side { position: absolute; top: 12px; left: 12px; width: 300px; max-height: calc(100% - 140px); display: flex; flex-direction: column;
-          background: rgba(255,255,255,.94); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-size: 13px; }
-  #sideHead { display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 14px; border-bottom: 1px solid #0001; }
+          background: rgba(255,255,255,.94); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-size: 13px;   transition: transform .25s ease; }
+  #band1 { flex: none; padding: 10px 14px 12px; border-radius: 10px 10px 0 0; }
+  #sideHead { display: flex; align-items: center; gap: 8px; }
+  .band { overflow: auto; padding: 12px 14px; border-top: 1px solid #0002; }
+  #agent { flex: 0 0 auto; max-height: 40vh; }      /* 길어지면 이 구역 안에서 스크롤 */
+  #sideBody { flex: 1 1 auto; min-height: 120px; border-radius: 0 0 10px 10px; }  /* 남는 높이는 연대기 구역이 쓴다 */
   #sideHead .brand { flex: 1; line-height: 1.25; }
   #sideHead .ko { font-size: 17px; font-weight: 700; }
   #sideHead .en { font-size: 11px; color: #777; letter-spacing: .02em; }
-  #sideToggle { border: 1px solid #bbb; background: #fff; border-radius: 6px; width: 28px; height: 28px; font-size: 12px; cursor: pointer; padding: 0; }
-  #sideBody { overflow: auto; padding: 12px 14px; }
-  .intro { font-size: 12.5px; color: #444; line-height: 1.6; margin: 0 0 10px; }
+  #sideToggle { position: absolute; top: 50%; right: -22px; transform: translateY(-50%); width: 22px; height: 64px; padding: 0; border: 0; border-radius: 0 10px 10px 0;
+                background: rgba(255,255,255,.94); box-shadow: 3px 2px 8px rgba(0,0,0,.22); font-size: 11px; color: #555; cursor: pointer; }
+  #sideToggle:hover { background: #fff; color: #000; }
+  .intro { font-size: 12.5px; color: #444; line-height: 1.6; margin: 8px 0 0; }
   #q { width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 13px; }
   #results { margin: 4px 0 0; padding: 0; list-style: none; border: 1px solid #ddd; border-radius: 6px; max-height: 210px; overflow: auto; background: #fff; }
   #results li { padding: 6px 9px; cursor: pointer; font-size: 12.5px; border-bottom: 1px solid #eee; }
@@ -29,8 +34,7 @@
   #results li:hover, #results li.sel { background: #eef3ff; }
   #results .sub { color: #777; font-size: 11px; }
   #results .none { color: #777; cursor: default; }
-  .sec { margin-top: 12px; padding-top: 10px; border-top: 1px solid #0001; }
-  #q { margin-bottom: 8px; }
+  #q { margin-bottom: 8px; font-family: inherit; resize: none; min-height: 54px; }
   #agent textarea { width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 54px; }
   #agent button { margin-top: 6px; width: 100%; padding: 7px; border: 0; border-radius: 6px; background: #2d6a3e; color: #fff; font-size: 13px; cursor: pointer; }
   #agent button:disabled { background: #999; cursor: default; }
@@ -48,6 +52,7 @@
   .aga h3 { font-size: 12.5px; margin: 10px 0 0; } .aga h3 small { font-weight: 400; color: #777; }
   .aga .agc.wide { background: #fafafa; border-color: #0001; } .aga .none { font-size: 12px; color: #888; margin-top: 4px; }
   .aga ul.fu { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: #444; } .aga details { font-size: 11.5px; color: #777; margin-top: 4px; }
+  #agChips[hidden] { display: none; }
   #agChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
   #agChips button, #agNew { width: auto !important; margin: 0 !important; padding: 3px 9px !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 12px !important; font-size: 11.5px !important; }
   #agNew { color: #777 !important; border-color: #bbb !important; }
@@ -68,9 +73,8 @@
   .focuscard { margin: 8px 0; padding: 8px 10px; border: 2px solid #d33; border-radius: 8px; background: #fff7f5; }
   .focuscard .n { font-size: 15px; font-weight: 700; }
   .focuscard .m { color: #555; font-size: 12px; margin-top: 3px; line-height: 1.5; }
-  #side.collapsed { width: auto; }
-  #side.collapsed #sideHead { border-bottom: 0; padding: 6px; }
-  #side.collapsed .brand, #side.collapsed #sideBody { display: none; }
+  #side.collapsed { transform: translateX(calc(-100% - 12px)); }   /* 화면 왼쪽 밖으로 밀고, 오른쪽 가장자리 탭만 남긴다 */
+  #side.collapsed #band1, #side.collapsed .band { visibility: hidden; transition: visibility 0s .25s; }
   #side h2 { margin: 0 0 6px; font-size: 15px; }
   #side .hint { color: #777; }
   .b { margin: 6px 0; padding-left: 8px; border-left: 3px solid #bbb; }
@@ -138,26 +142,26 @@
 <div id="labels"></div>
 <div id="fstack" hidden></div>
 <div id="side">
-  <div id="sideHead">
-    <div class="brand"><div class="ko">대지의 기억</div><div class="en">Remembrance of Earth</div></div>
-    <button id="sideToggle" title="사이드바 접기">◀</button>
-  </div>
-  <div id="sideBody">
+  <div id="band1">
+    <div id="sideHead">
+      <div class="brand"><div class="ko">대지의 기억</div><div class="en">Remembrance of Earth</div></div>
+    </div>
     <p class="intro">골목은 바뀌어도 땅은 기억합니다. 대지가 기억하는 골목과 건물, 상점의 모습을 시간 슬라이더로 보여 줍니다.</p>
-    <div class="sec" id="agent">
+  </div>
+  <div id="agent" class="band">
       <h2>🔎 기억 속 장소 찾기 <span style="font-size:11px;color:#777">AI 에이전트</span> <button id="agNew" title="대화를 지우고 새로 시작" hidden>새로 시작</button></h2>
       <div id="agLog"></div>
-      <textarea id="agText" placeholder="기억나는 단서를 적어 보세요. 예: 2010년 무렵 1층에 있던 호프집, 이름에 '카페'가 들어갔던 것 같아요"></textarea>
+      <textarea id="agText" placeholder="기억나는 단서를 적어 보세요. 예: 2010년 무렵 독수리다방 골목에 있던 인도 카레집"></textarea>
       <button id="agGo">찾아보기</button>
       <div id="agChips" hidden></div>
-    </div>
-    <div class="sec">
-      <h2>연세로12길 창천교회 인근(데모)</h2>
-      <input id="q" type="search" placeholder="지번 또는 상호 검색 (예: 2-7, 아웃백)" autocomplete="off">
+  </div>
+  <div id="sideBody" class="band">
+      <h2>🔎 자리의 연대기</h2>
+      <textarea id="q" rows="2" placeholder="지번이나 상호를 검색해 보세요. 입점해 있던 상점 정보를 연대별로 보여줍니다. (예: 2-7, 아웃백)" autocomplete="off" spellcheck="false"></textarea>
       <ul id="results" hidden></ul>
       <div id="detail"><div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div></div>
-    </div>
   </div>
+  <button id="sideToggle" title="사이드바 접기">◀</button>
 </div>
 <div id="bar">
   <div class="row"><div id="year">2026<span style="font-size:.45em;opacity:.55;margin-left:4px">11월</span></div><input id="slider" type="range" min="1992" max="2026.9159" value="2026.84" step="any"></div>
@@ -861,7 +865,7 @@ function init(S) {
   qInput.addEventListener("focus", () => { if (qInput.value.trim()) { hits = runSearch(qInput.value); renderResults(); } });
   qInput.addEventListener("keydown", e => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (hits.length) { hi = (hi + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % hits.length; renderResults(); } }
-    else if (e.key === "Enter") { if (hits[hi]) choose(hits[hi]); }
+    else if (e.key === "Enter") { e.preventDefault(); if (hits[hi]) choose(hits[hi]); }
     else if (e.key === "Escape") { resultsEl.hidden = true; qInput.blur(); }
   });
   resultsEl.addEventListener("mousedown", e => { const li = e.target.closest("li[data-i]"); if (li) { e.preventDefault(); choose(hits[+li.dataset.i]); } });
@@ -875,7 +879,7 @@ function init(S) {
   let agState = null, agBusy = false;
   agChips.innerHTML = AG_CHIPS.map((c, i) => `<button data-i="${i}">${c[0]}</button>`).join("");
   agChips.onclick = e => { const b = e.target.closest("button[data-i]"); if (b) agAsk(AG_CHIPS[+b.dataset.i][1]); };
-  agNew.onclick = () => { agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억나는 단서를 적어 보세요. 예: 2010년 무렵 1층에 있던 호프집, 이름에 '카페'가 들어갔던 것 같아요"; };
+  agNew.onclick = () => { agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억나는 단서를 적어 보세요. 예: 2010년 무렵 독수리다방 골목에 있던 인도 카레집"; };
   agText.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); agAsk(agText.value); } });
   agGo.onclick = () => agAsk(agText.value);
   function agPick(c) {   // 후보 카드를 누르면 그 상점의 시기·필지로 이동
