@@ -44,7 +44,7 @@ def main():
             flags = "stale_open" if (not end and start and start < "2000" and r["영업상태명"].startswith("영업")) else ""
             rows.append({
                 "jibun": j, "name": r["사업장명"], "license_type": kind,
-                "category": r.get("업태구분명") or r.get("위생업종명") or kind,
+                "category": r.get("업태구분명") or kind,
                 "floor": parse_floor(r["지번주소"] or r["도로명주소"]),
                 "start": start, "start_basis": "인허가일",
                 "end": end, "end_basis": "폐업일" if end else r["영업상태명"],

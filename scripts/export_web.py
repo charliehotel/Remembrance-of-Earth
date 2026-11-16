@@ -762,11 +762,11 @@ def main():
 
     biz = []
     for b in rc("data/timeline_businesses.csv"):
-        biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "floor", "start", "end", "end_basis",
+        biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "category_ai", "category_ai_basis", "category_ai_conf", "floor", "start", "end", "end_basis",
                                       "grade", "flags", "sign_first", "sign_last", "start_after", "end_before",
                                       "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
     for b in rc("data/timeline_businesses_r150.csv") if (ROOT / "data/timeline_businesses_r150.csv").exists() else []:
-        biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "floor", "start", "end", "end_basis",
+        biz.append({k: b[k] for k in ("jibun", "name", "license_type", "category", "category_ai", "category_ai_basis", "category_ai_conf", "floor", "start", "end", "end_basis",
                                       "grade", "flags", "sign_first", "sign_last", "start_after", "end_before",
                                       "web_state", "web_first", "web_last", "start_basis", "source", "sign_units", "observed_as", "sign_count")})
     bev = [{k: b[k] for k in ("jibun", "status", "start", "end", "end_basis", "structure", "use", "floors_up", "grade")}

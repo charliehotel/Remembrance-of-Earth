@@ -22,7 +22,11 @@ from shapely.geometry import Point, shape
 ROOT = Path(__file__).resolve().parent.parent
 # 업종별 창천동 추출본. 일반음식점 외 파일을 받으면 extract_changcheon_restaurants.py 로
 # data/interim/<이름>_changcheon.csv 를 만든 뒤 아래 목록에 이름을 추가한다.
-SOURCES = {"일반음식점": "restaurants", "휴게음식점": "rest_cafe", "노래연습장업": "karaoke", "미용업": "beauty"}
+SOURCES = {"일반음식점": "restaurants", "휴게음식점": "rest_cafe", "노래연습장업": "karaoke", "미용업": "beauty",
+           "관광숙박업": "tourist_hotel", "당구장업": "billiards", "목욕장업": "bath", "병원": "hospital",
+           "복합유통게임제공업": "game_complex", "세탁업": "laundry", "숙박업": "lodging", "안경업": "optical",
+           "약국": "pharmacy", "이용업": "barber", "인터넷컴퓨터게임시설제공업": "pc_room",
+           "일반게임제공업": "game_general", "체력단련장업": "gym"}
 SRCS = [(k, ROOT / f"data/interim/{v}_changcheon.csv") for k, v in SOURCES.items()
         if (ROOT / f"data/interim/{v}_changcheon.csv").exists()]
 PARCELS = ROOT / "data/parcels.geojson"
@@ -87,10 +91,10 @@ def main():
                 "coord_conflict": bool(jp and coord_parcel and coord_parcel["jibun"] != jp["jibun"]),
                 "name": r["사업장명"],
                 "license_type": r["_kind"],
-                "category": r.get("업태구분명") or r.get("위생업종명") or r["_kind"],
+                "category": r.get("업태구분명") or r["_kind"],
                 "status": r["영업상태명"],
                 "licensed": date10(r["인허가일자"]),
-                "closed": date10(r["폐업일자"]),
+                "closed": date10(r.get("폐업일자")),
                 "floor": parse_floor(r["지번주소"] or r["도로명주소"]),
                 "area_m2": r.get("소재지면적", ""),
                 "jibun_addr": r["지번주소"],

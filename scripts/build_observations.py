@@ -7,7 +7,7 @@ status: observed(상호 있음) / vacant(공실) / unknown(미확인·판독불�
 import csv, re
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
-rows = list(csv.reader(open(ROOT/"Remembrance_of_Earth_yeonsero12gil_all12.csv", encoding="utf-8-sig")))
+rows = list(csv.reader(open(ROOT/"docs/Remembrance_of_Earth_yeonsero12gil_all12.csv", encoding="utf-8-sig")))
 h1, h2, data = rows[0], rows[1], rows[2:]
 parcel, cols = "", []
 for i in range(2, len(h1)):

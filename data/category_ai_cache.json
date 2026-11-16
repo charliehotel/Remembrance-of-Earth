@@ -1,0 +1,6522 @@
+{
+"SOOP(숲)|일반음식점|분식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"카페카페|일반음식점|호프/통닭": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"프롬하츠커피 신촌점|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"우촌|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"피자.벤|휴게음식점|패스트푸드": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"풍년김밥|일반음식점|정종/대포집/소주방": {
+"category_ai": "김밥집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"오브젝트(object)|일반음식점|분식": {
+"category_ai": "편집숍",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"오브젝트Ⅱ유러피안(objectⅡeuropean)|일반음식점|분식": {
+"category_ai": "팝업스토어",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"풍년|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"무진기행|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"파도|일반음식점|한식": {
+"category_ai": "요리주점",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"동락반점|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"채플린|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"연대껍대기분점|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"면가요시|일반음식점|한식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"멘야요시||": {
+"category_ai": "라멘집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"지구야||": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"돈부리(신촌점)|일반음식점|한식": {
+"category_ai": "덮밥집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"우마이야||": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"leann||": {
+"category_ai": "꽃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"공복|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"매드독|일반음식점|경양식": {
+"category_ai": "스튜디오",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"파티퀸|일반음식점|경양식": {
+"category_ai": "파티룸",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"태백산|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"이모네집|일반음식점|정종/대포집/소주방": {
+"category_ai": "식당",
+"conf": "낮음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"화이트 노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"만휴|일반음식점|정종/대포집/소주방": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"이모네집|일반음식점|한식": {
+"category_ai": "식당",
+"conf": "낮음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"카트만두 레스토랑5|일반음식점|정종/대포집/소주방": {
+"category_ai": "네팔음식점",
+"conf": "낮음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"선창가|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"thefrypan||": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"돈까스참잘하는집||": {
+"category_ai": "돈까스집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"코지||": {
+"category_ai": "고시원",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"큰집밥상||": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"화화 마라탕|일반음식점|기타": {
+"category_ai": "마라탕집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"naan||": {
+"category_ai": "인도음식점",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"카트만두레스토랑|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "인도음식점",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"moim||": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"pasta||": {
+"category_ai": "파스타집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"커리퐁치킨||": {
+"category_ai": "태국음식점",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"청년국수||": {
+"category_ai": "국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"(주)예티투(YETI2)|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "인도음식점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"realfanmusicstudio||": {
+"category_ai": "음악스튜디오",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꽃다움||": {
+"category_ai": "꽃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"나이쇼선술집 생육회관|일반음식점|한식": {
+"category_ai": "술집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"공복식당||": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"육회란||": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"작고 귀엽고 소중해|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"jjmusicstudio||": {
+"category_ai": "음악스튜디오",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"완두콩세개|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"투고샐러드 신촌점|일반음식점|기타": {
+"category_ai": "샐러드집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"동락|일반음식점|경양식": {
+"category_ai": "쉐어하우스",
+"conf": "높음",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"람보조개뚜껑열렸네|일반음식점|분식": {
+"category_ai": "조개구이집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"디어|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"제제|일반음식점|호프/통닭": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"부대찌개||": {
+"category_ai": "부대찌개집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"dressaddress||": {
+"category_ai": "옷가게",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"투인원 다이너|일반음식점|경양식": {
+"category_ai": "파스타집",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"최고맛칼국수|일반음식점|한식": {
+"category_ai": "칼국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"연세로1996||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"오프더레코드||": {
+"category_ai": "펍",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"엘살루드 신촌|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "멕시칸 샐러드집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"매장리모델링중||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"붕붕마라탕||": {
+"category_ai": "마라탕집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"사주공간|일반음식점|한식": {
+"category_ai": "사주카페",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"칸티나|일반음식점|경양식": {
+"category_ai": "지중해식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"파파야|일반음식점|경양식": {
+"category_ai": "태국음식점",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"오빠|일반음식점|한식": {
+"category_ai": "떡볶이집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"마을식품||": {
+"category_ai": "식품점",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"오뎅bar||": {
+"category_ai": "오뎅바",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"오뎅슈bar||": {
+"category_ai": "오뎅바",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"자르젠 헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"엣지헤어||": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"gs25||": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"대한민국미용장김정원헤어플렉스||": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"바카식당||": {
+"category_ai": "식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"자헤어||": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"튀기니까 청춘이다|일반음식점|한식": {
+"category_ai": "튀김집",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"cafehookahlounge||": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"hansum||": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"지하||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"행복은간장밥 신촌점|일반음식점|한식": {
+"category_ai": "덮밥집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"에이유(Au) 신촌점|일반음식점|한식": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"spinandgrind||": {
+"category_ai": "스케이트보드샵",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"정가|일반음식점|일식": {
+"category_ai": "양대창집",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": true
+},
+"카스쿠르트(신촌점)|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"메가포크|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "파스타집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"사해|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"사해객잔|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"짚신매운갈비찜|일반음식점|일식": {
+"category_ai": "갈비찜집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"해물찜||": {
+"category_ai": "해물찜집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"형제수산||": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"형제해물탕||": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"아구찜||": {
+"category_ai": "아구찜집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"파주박바비큐||": {
+"category_ai": "바비큐집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"매운닭갈비찜||": {
+"category_ai": "갈비찜집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"저가||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"정가|일반음식점|한식": {
+"category_ai": "양대창집",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": true
+},
+"해성회수산||": {
+"category_ai": "횟집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"티피비(TPB)|일반음식점|경양식": {
+"category_ai": "피자집",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"ironplan||": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"외벽붉은글씨||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"zerowaxing||": {
+"category_ai": "왁싱샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"아담앤이브왁싱|미용업|피부미용업": {
+"category_ai": "왁싱샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"ipho||": {
+"category_ai": "휴대폰수리점",
+"conf": "높음",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"trb||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"gabean||": {
+"category_ai": "디저트카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"joy||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"공간네일 신촌점|미용업|네일아트업": {
+"category_ai": "네일샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"뷰티더제이|미용업|메이크업업": {
+"category_ai": "미용실",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"함흥냉면||": {
+"category_ai": "냉면집",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"스페이스|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"논지당|일반음식점|기타": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"무악촌갈비|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"(유)아웃백 스테이크하우스코리아 신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"베가커피|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"앤카|일반음식점|경양식": {
+"category_ai": "중고차매매",
+"conf": "낮음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"스카이블루|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"낡은구두|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"투손|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"펌프|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"4U노래방|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"돈.돈삼겹살|일반음식점|분식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"돈앤쑈|일반음식점|기타": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"씨이오|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"씨이오|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"별일이네김밥과스파게티|일반음식점|기타": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"호박이 넝쿨째|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"눈에띄네미용실|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"만화나라||": {
+"category_ai": "만화방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"믿는고기세상||": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"중식당||": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"뉴타운|일반음식점|한식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"불난집포장마차||": {
+"category_ai": "포장마차",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"싸바싸바||": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"월화수|일반음식점|통닭(치킨)": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"누룽지볏짚통삼겹살||": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"신촌서서갈비||": {
+"category_ai": "갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"b1방탈출||": {
+"category_ai": "방탈출카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"국대떡볶이 신촌점|일반음식점|한식": {
+"category_ai": "떡볶이집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신우유기|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"옐로우스푼 신촌연세점|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"카페다이렉트||": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"비스타뷰티헤어(Vista Beauty Hair)|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"라거룸|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"라오상하이|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"언더독 커피|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"lovebeerdrinksingsong||": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"나의집|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"사카|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"씽킹인사이드더박스일|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"체스터후라이드치킨|일반음식점|패스트푸드": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"바다마을친구들|일반음식점|정종/대포집/소주방": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"멋쨍이야|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"델리(신촌점)|일반음식점|정종/대포집/소주방": {
+"category_ai": "인도식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"연어상회|일반음식점|한식": {
+"category_ai": "횟집",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"siyagi||": {
+"category_ai": "이자카야",
+"conf": "보통",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"만화공화국||": {
+"category_ai": "만화카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"어부가||": {
+"category_ai": "동태요리집",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"굽네치킨||": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"만화cafe||": {
+"category_ai": "만화카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"leannflower현수막||": {
+"category_ai": "인도식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"양촌리순대족발||": {
+"category_ai": "족발·보쌈집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"leannflowers||": {
+"category_ai": "꽃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"베네핏필라테스||": {
+"category_ai": "필라테스",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"마라탕전문점 샹츠마라 신촌점|일반음식점|한식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"하노이포||": {
+"category_ai": "베트남음식점",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"지에스25 신촌창천점(서대문지역자활센터)|휴게음식점|편의점": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"solv필라테스바레||": {
+"category_ai": "필라테스",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이동갈비|일반음식점|한식": {
+"category_ai": "갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"다운업|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"등촌샤브칼국수|일반음식점|한식": {
+"category_ai": "샤브샤브집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"오케이피자|일반음식점|경양식": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"우리이동갈비|일반음식점|한식": {
+"category_ai": "갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"치키바이투|일반음식점|까페": {
+"category_ai": "치킨집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"비어비워신촌2호점|일반음식점|경양식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"트래블라운지|일반음식점|경양식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"피데스|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"카페프루티(cafe fruity)|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"술카페||": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"어울림|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"사주카페||": {
+"category_ai": "사주카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"LA식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"엘에이포장마차|일반음식점|정종/대포집/소주방": {
+"category_ai": "포장마차",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"백채김치찌개 신촌점|일반음식점|정종/대포집/소주방": {
+"category_ai": "김치찌개집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"소도적||": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"대작||": {
+"category_ai": "초밥집",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"신촌맥주축제|일반음식점|기타": {
+"category_ai": "맥주축제",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"인자네|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"엘피스|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"엘피스2|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"거품|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"거품2|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"그레이|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"이디야커피 연세대점|일반음식점|정종/대포집/소주방": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"횡단보도|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"비(B)|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"보이지않는 차이|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"밥 잘해주는 예쁜엄마|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"슬로우캘리 신촌점|일반음식점|기타": {
+"category_ai": "포케집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"제시인뉴욕헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"루머스|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"전하|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"유럽|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"커피앤|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"황소양곱창|일반음식점|정종/대포집/소주방": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"돈사모|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"마노|일반음식점|까페": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"돈사모|일반음식점|기타": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"던킨도너츠 신촌명물점|일반음식점|기타": {
+"category_ai": "도넛가게",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"올그릭투미|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"케밥 스테이션(KEBAB STATION)|일반음식점|경양식": {
+"category_ai": "케밥집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"하이델베르그|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"춘천막국수집|일반음식점|한식": {
+"category_ai": "막국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"대한독립|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"웨이브|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"비어플러스|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"프리존|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"연어잡는 고양이|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쁘띠방|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"신촌 현명포차|일반음식점|한식": {
+"category_ai": "포장마차",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"투엔디(2nd)|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"현명식탁|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"고베규카츠 신촌점|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"소노레스토랑|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"미림|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"소소|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"설화|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"애니|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"애니|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"창천동13-3|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"24시 김부찌|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"식물가 테라스|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"사랑|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"이슈|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"소설|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"까뮤|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"비|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"예랑|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"사랑|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"산더미 갈비탕|일반음식점|한식": {
+"category_ai": "갈비탕집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"요초밥|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"진미미|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"비|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"시오램(sio lamb)|일반음식점|중국식": {
+"category_ai": "양고기집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"한국하겐다즈 신촌점|일반음식점|한식": {
+"category_ai": "아이스크림가게",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"홍춘천|일반음식점|까페": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"훌랄라바베큐치킨|일반음식점|까페": {
+"category_ai": "치킨집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"1059-3 베이글 커피 하우스(1059-3 Bagel&Coffee house)|휴게음식점|일반조리판매": {
+"category_ai": "베이글카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"헤스|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"김도사불백(신촌점)|일반음식점|한식": {
+"category_ai": "불백집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"레몬|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"조약돌|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"제인엔비|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"폼생주사|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"육회지존1|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"로그인|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"홍콩반점 0410(신촌2호점)|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"천하제일왕족발|일반음식점|기타": {
+"category_ai": "족발·보쌈집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신촌 포가레|일반음식점|기타": {
+"category_ai": "쌀국숫집",
+"conf": "보통",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"신계치라면전문점|휴게음식점|일반조리판매": {
+"category_ai": "라면집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"밤섬주물럭|일반음식점|한식": {
+"category_ai": "주물럭집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"밤섬주물럭|일반음식점|경양식": {
+"category_ai": "주물럭집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"섬진강민물장어|일반음식점|한식": {
+"category_ai": "장어집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"명물갈비|일반음식점|한식": {
+"category_ai": "갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"탐앤탐스 신촌점|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"가을날의동화|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"스크린|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"가을날의동화|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"슈퍼맨|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"거품3|일반음식점|정종/대포집/소주방": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"까끌래|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"깜|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"카프카|일반음식점|기타": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"탐앤탐스 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"봉추찜닭 신촌점|일반음식점|경양식": {
+"category_ai": "찜닭집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"에이유(Au) 신촌점|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"실크로드|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"어린왕자|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"맥심|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"화난 떡볶이|일반음식점|경양식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"중앙 즉석 닭발(신촌점)|일반음식점|한식": {
+"category_ai": "닭발집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"풍미각, 신사풍미|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신사풍미|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"블링블링 노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"태흥빙실카페|휴게음식점|전통찻집": {
+"category_ai": "찻집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"홍콩식당|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"경희북경오리|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"호코 신촌점|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"야타|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"동학뉴욕비|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"쿠키|휴게음식점|일반조리판매": {
+"category_ai": "디저트카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쿠키|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"보브|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"이 마리|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"성산비스트로|휴게음식점|일반조리판매": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"뉴욕비앤씨|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"1002|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"이연식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"링|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"이조식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"준스그릴|일반음식점|기타": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"준스그릴|휴게음식점|기타 휴게음식점": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"준스그릴|일반음식점|한식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"미삼미|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"취향저격|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"스스라멘|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"시실리|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"빨간고양이|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쉬바펍|일반음식점|경양식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"철가방|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"친구네순대국|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"라구식당|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"유원섬커피|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"?스|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"장승해물탕|일반음식점|한식": {
+"category_ai": "해물탕집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"어머니민토|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"댄싱홍콩|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"빈스빈스커피 신촌점|휴게음식점|전통찻집": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"뉴욕비앤씨|일반음식점|까페": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"뉴욕비|일반음식점|한식": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"산들해관 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"복성각|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"Y치킨|일반음식점|분식": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"할리스 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"레베카|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"김지연|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"영풍치킨|일반음식점|분식": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"전설의언덕|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"블루죤|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"통하는사람들|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"와코|휴게음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"신당동떡볶이 떡볶이의꿈|일반음식점|분식": {
+"category_ai": "떡볶이집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"칼라비디오극장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"바이더웨이|휴게음식점|기타 휴게음식점": {
+"category_ai": "편의점",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"보바커피|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"선셋블러바드|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"분더커피바 신촌|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"카누헤어 신촌점|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"고바우|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"카프|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"태|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"한옥식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"한옥갈비|일반음식점|한식": {
+"category_ai": "갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"명동분식|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꼬랑대기|휴게음식점|일반조리판매": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"고삼이 2호점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"박리분식|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"스무디킹신촌점|휴게음식점|패스트푸드": {
+"category_ai": "스무디가게",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"존스테이블|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"에이바헤어 신촌점|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"샵브이알|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쥬씨 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이마트24 R연세로점|휴게음식점|편의점": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"롤링 마켓|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"먹자집|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"홀리몰리(HolyMoly)|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"아마데우스|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"웬디스신촌점|휴게음식점|일반조리판매": {
+"category_ai": "햄버거집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"블루클럽|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"21세기북세상|휴게음식점|일반조리판매": {
+"category_ai": "서점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"소공동뚝배기집 신촌점|일반음식점|분식": {
+"category_ai": "뚝배기집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"아이스베리|휴게음식점|패스트푸드": {
+"category_ai": "아이스크림가게",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"보스톤킹커피|휴게음식점|패스트푸드": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"하나|일반음식점|까페": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"(주) 아모제오므토토마토 신촌점|일반음식점|기타": {
+"category_ai": "피자집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"차룽반점(신촌점)|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"망고식스(신촌점)|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"(주)빌리엔젤 신촌|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"신촌고바우집|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"코코스신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"조용한 예약 독방|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"헥사돔|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"헥사돔|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"비숍|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"크레마|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"신촌형제갈비|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"언더우드 스터디카페|일반음식점|분식": {
+"category_ai": "스터디카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"4층불고기|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"주식회사 신촌형제갈비 3층|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꼬숑|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"독립문1897설렁탕|일반음식점|한식": {
+"category_ai": "설렁탕집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"별당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"신촌꽃돼지|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"야마노라멘|일반음식점|일식": {
+"category_ai": "라멘집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"갈비탕1972|일반음식점|한식": {
+"category_ai": "갈비탕집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"장터국수체인점|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"솔레미오|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"폴링|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"남도참치|일반음식점|경양식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"(주)롯데리아 신촌연세로점|휴게음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"투썸플레이스 신촌연세로점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"투썸플레이스 신촌연세로점|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"종로김밥|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"흑단|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"통나무집|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"오두막|휴게음식점|다방": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"산천칡냉면|일반음식점|경양식": {
+"category_ai": "냉면집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꼬추와마늘|일반음식점|경양식": {
+"category_ai": "치킨집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"로시망고|휴게음식점|일반조리판매": {
+"category_ai": "디저트카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"엔제리너스커피 연대점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"제오헤어 신촌점|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"타코벨 신촌점|일반음식점|경양식": {
+"category_ai": "멕시칸식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"독수리|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"빵굼터|휴게음식점|과자점": {
+"category_ai": "베이커리",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"캠브리지|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"(주) 뉴욕스토리연대점|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"우노신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"이글팝|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"이철헤어커커|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"독수리다방|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"디베이글|휴게음식점|커피숍": {
+"category_ai": "베이커리",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"카툰공감 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"아크피씨|휴게음식점|일반조리판매": {
+"category_ai": "PC방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"블루포스PC|휴게음식점|일반조리판매": {
+"category_ai": "PC방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"커피?(COFFEE#)|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"두블레(DooBLe)|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"짐박스피트니스 신촌점|휴게음식점|기타 휴게음식점": {
+"category_ai": "헬스장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"빙글빙글|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"옵션|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"장안옥|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"초원각|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"이판저판고기판|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"라구식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"보단호프|일반음식점|분식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"클리프행어|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"팔복식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"복성각3|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"복성각|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"복성각2|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"뮤엘(mul)|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"뉴시티|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"신촌부폐|일반음식점|뷔페식": {
+"category_ai": "뷔페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"피자생각|일반음식점|패스트푸드": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꼬레철판볶음밥신촌점|일반음식점|기타": {
+"category_ai": "철판볶음밥집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"그라찌에|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"타이거버거신촌점|휴게음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"덮비랑|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"샌드앤후르츠|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"뚝배기우동|일반음식점|기타": {
+"category_ai": "우동집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"철판불버거|일반음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"눈울타리|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"유객주|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"수노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"뮤엘|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"스시엔 신촌점|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꾼Ⅱ|일반음식점|호프/통닭": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"아이 펍(i pub)|일반음식점|호프/통닭": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"꾼노리|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"스트라이크팡|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"에스엔에스PC방|휴게음식점|기타 휴게음식점": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"휴 코인노래연습장 신촌 명물거리점|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"히어로보드게임카페 신촌점|일반음식점|기타": {
+"category_ai": "보드게임카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"옵티멈존PC카페 신촌역점|휴게음식점|기타 휴게음식점": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"명물곱창집|일반음식점|한식": {
+"category_ai": "곱창집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"백화주막|일반음식점|분식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"두농|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"신촌아리랑|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"지글러|휴게음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"길손|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"댄싱엔터(주)안다미로엔터|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"로즈버드|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"니지|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"카페(cafe)프린세스 스토리(story)|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"엔터카페|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"신촌스위트카페|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"닭갈비 제작소|일반음식점|호프/통닭": {
+"category_ai": "닭갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"주)인플러스 월드|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"오사카부루스|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"리골레토 시카고피자|일반음식점|기타": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"킹|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"카틀레아|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"미즈|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"샤넬|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"싱어송|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"라이크 효'헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"건륭 산시도삭면|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"올모스트다이(Almostdie)|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"왕건카레 신촌본점|일반음식점|한식": {
+"category_ai": "카레집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"샤갈의눈내리는마을|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"웨스트엔드|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"샤갈의눈내리는마을|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"(주)엠투지타코벨 신촌지점|휴게음식점|패스트푸드": {
+"category_ai": "멕시칸 패스트푸드점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"코푸플레이트|일반음식점|기타": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"교촌치킨 신촌점|일반음식점|기타": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"거북이의 기적 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"종각국수|일반음식점|분식": {
+"category_ai": "국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"새내기노래방|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"와플하우스|휴게음식점|과자점": {
+"category_ai": "베이커리",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"와플박스|휴게음식점|패스트푸드": {
+"category_ai": "와플집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"원시림|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"난다랑멤버스|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"비인|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"파파이스치킨.신촌점|휴게음식점|패스트푸드": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"나뚜루|휴게음식점|기타 휴게음식점": {
+"category_ai": "아이스크림가게",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"스타벅스연대정문점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"스무디킹신촌점|휴게음식점|기타 휴게음식점": {
+"category_ai": "스무디가게",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"한국맥도날드(유)연세대점|휴게음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"자도랭킹샵 신촌연세점|휴게음식점|편의점": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"자도랭킹? 신촌연세점|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"브라더한정식 도시락 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"실로암헤어?|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"주선생|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"제이씨(JC)미용실|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"레알치맥|일반음식점|기타": {
+"category_ai": "치킨집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"24시전주명가콩나물국밥|일반음식점|한식": {
+"category_ai": "국밥집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"백스비어 신촌점|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"리춘시장 신촌점|일반음식점|기타": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"가온누리|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"멘지 신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"시골|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"가온누리|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"시골|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"GS25연대2점|휴게음식점|편의점": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"제이포차 세계맥주|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"캠퍼스|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"두산상사(주)요시노야신촌점|일반음식점|패스트푸드": {
+"category_ai": "햄버거집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"퍼즐|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"가로등642|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"여우사이|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"J네일|미용업|네일아트업": {
+"category_ai": "네일샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"리코스타 코인노래연습장 연대점|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"모던호프|일반음식점|한식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쌍떼원두커피전문점|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"모꼬지|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"장군닭갈비|일반음식점|경양식": {
+"category_ai": "닭갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"싱어송 노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"엔키|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"신촌도깨비살|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"베레베레|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"샤보레|휴게음식점|패스트푸드": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"레드앤블루|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"헤븐스도어(Heaven's Door)|일반음식점|경양식": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"루9(rue 9)|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"정통집(신촌점)|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"레스트(REST)|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"새술막|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"오늘의그날|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쉬갈|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"고래발|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"세세|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"한신포차|일반음식점|분식": {
+"category_ai": "포장마차",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"배낭메고세계로|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"가르텐비어|일반음식점|정종/대포집/소주방": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"바코드|일반음식점|경양식": {
+"category_ai": "위스키바",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"A-YO|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"유객주신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"자자주노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"카페코이 (Cafe Coi)|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"시장을 여는 사람들 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"코이스터디카페|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신촌관|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"장인닭갈비신촌|일반음식점|한식": {
+"category_ai": "닭갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"토르|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"씨저스|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"크림|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"배스킨라빈스 연대점|휴게음식점|기타 휴게음식점": {
+"category_ai": "아이스크림가게",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"컴포즈 커피 신촌 연세대점|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"헤어디하트 신촌점|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"탁심케밥 연세대점|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "케밥집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신촌반점|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"러너웨이|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"비바|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"연화루|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"루이암스트롱|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"메카|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"독수리|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"와그너|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"햇빛촌|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"비바|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"네바다수|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"엠헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"캔모아|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"주트|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"퀴즈피플|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"내가 만든 미 케익|휴게음식점|커피숍": {
+"category_ai": "디저트카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"커매닉(KERMANIG)|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"대포찜닭|일반음식점|한식": {
+"category_ai": "찜닭집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"치즈를사랑한찜닭|일반음식점|한식": {
+"category_ai": "찜닭집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이지와 신촌점|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"요한헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"어썸 코인노래연습장 신촌2호점|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"복조리|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"쿠스코|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"바쿨|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"제니스|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"슐탄노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"케이지(CAGE)|일반음식점|호프/통닭": {
+"category_ai": "치킨집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"위너카지노카페|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"제이제이 카페앤바|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"포베이신촌점|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "인도·태국음식점",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"앤하우스|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"타마고 신촌점|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"주식회사 백년당|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"핵밥 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"카네스|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"영감과시인|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"김가네|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"아기자기|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"포맨미용실|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"공차 신촌연세로점|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"사주카페세일|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"루블리 뷰티|미용업|네일아트업": {
+"category_ai": "네일샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"모아모아|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"상아탑분식|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"맥스호프|일반음식점|분식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"맥스호프|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"하이디|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"밥나와라뚝딱술나와라뚝딱|일반음식점|한식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"젠Ⅲ|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"신포우리만두|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"빈스앤베리즈신촌점|일반음식점|한식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"준오헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"라장다꼬바|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"탐앤탐스 연대점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"포메인 신촌점|일반음식점|외국음식전문점(인도,태국등)": {
+"category_ai": "인도·태국음식점",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"헤어더뷰 신촌점|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"호랑회전훠궈|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"와와!육개짱|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"영분식|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"동아리|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"퍼니(FUNNY)|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"씽씽노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"남오토코 신촌점|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"피자조팩토리|일반음식점|호프/통닭": {
+"category_ai": "피자집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"봉구스밥버거 연세대점|일반음식점|한식": {
+"category_ai": "햄버거집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"오로라|미용업|네일아트업": {
+"category_ai": "네일샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"키친31(kitchen31)|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"오로라|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"사천마라탕|일반음식점|중국식": {
+"category_ai": "마라탕집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"생마차 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"리틀쿠바|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "높음",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"아이란도|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"비원|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"김밥가족|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"추억의책가방|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"치킨마루|일반음식점|한식": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"수사주까페|일반음식점|까페": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"물음표|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"장군혼밥|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"코펜하겐|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"언가|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"피자벨|휴게음식점|다방": {
+"category_ai": "피자집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"니키레스토랑|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"스태프|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"헤어시네마|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"피자벨|일반음식점|경양식": {
+"category_ai": "피자집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"러빙헛|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"그린컵연대점|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"오렌지?|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"명동사골칼국수|일반음식점|한식": {
+"category_ai": "칼국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"나이스샤워|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"이탈리안플레이트|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"스타벅스연대점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"콩불 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"김가네|휴게음식점|일반조리판매": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"한솥도시락 신촌연세로점|일반음식점|김밥(도시락)": {
+"category_ai": "도시락집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이가네|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"아운티제니 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"우미정|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"피네|일반음식점|뷔페식": {
+"category_ai": "뷔페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"주.기린레스토랑씨스템|일반음식점|한식": {
+"category_ai": "레스토랑",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"미도참치|일반음식점|한식": {
+"category_ai": "횟집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"와치|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"마녀주방 신촌점|일반음식점|한식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"만화카페 캣툰 신촌점|휴게음식점|기타 휴게음식점": {
+"category_ai": "만화카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"별관|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"제주도통갈비|일반음식점|한식": {
+"category_ai": "통갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"제주도회관|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"스카이포차|일반음식점|경양식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"통갈비집|일반음식점|한식": {
+"category_ai": "통갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"리자|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"제주도통갈비집|일반음식점|한식": {
+"category_ai": "통갈비집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"화조|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"화수목|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"하가|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"포티올리 에스프세소|일반음식점|분식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"모자이크삼겹살|일반음식점|경양식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"버블티|휴게음식점|패스트푸드": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"가야|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"신촌점 돌배기집|일반음식점|한식": {
+"category_ai": "돌배기집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"요나인|휴게음식점|패스트푸드": {
+"category_ai": "패스트푸드점",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"루비튜스데이 신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"미디어|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"앤드|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"클럽떡볶이|일반음식점|한식": {
+"category_ai": "떡볶이집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"착한돼지 신촌점|일반음식점|경양식": {
+"category_ai": "돼지고기집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"삼주외식산업(주)웰차이신촌점|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"와라와라|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"오렌지신촌점|일반음식점|기타": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"와라와라|일반음식점|기타": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"와라와라 신촌명물거리점|일반음식점|한식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"벨라테라피|미용업|피부미용업": {
+"category_ai": "피부관리실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"놀숲|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"놀숲|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"세븐일레븐 신촌명물점|휴게음식점|편의점": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"프리미엄피씨방|휴게음식점|기타 휴게음식점": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"유후 신촌점|일반음식점|기타": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"엔타로커피(ENTARO COFFEE)|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"양꽃|일반음식점|한식": {
+"category_ai": "양꼬치집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"라피오레(La.fiore)|미용업|메이크업업": {
+"category_ai": "메이크업샵",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"원쁠집|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"라피아캐슬|휴게음식점|기타 휴게음식점": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"상무초밥 신촌점|일반음식점|일식": {
+"category_ai": "초밥집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"장원식당|일반음식점|경양식": {
+"category_ai": "식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"에버|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"대자부|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"컴백분식|일반음식점|한식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"돈토|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"원동별미갈비찜|일반음식점|한식": {
+"category_ai": "갈비찜집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"하늘본닭|일반음식점|한식": {
+"category_ai": "닭요리집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"미도인 신촌|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"와라 코인 노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"민속주점|일반음식점|한식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"에이|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"시선집중|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"봉추찜닭|일반음식점|한식": {
+"category_ai": "찜닭집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"육통껍데기|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"샛길식당|일반음식점|한식": {
+"category_ai": "식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"신촌에온 닭|일반음식점|한식": {
+"category_ai": "닭요리집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"헌치브라운(Hunch Brown)|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"투 파인드 피터|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"비엠(BM)|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"브랜드집  카페|일반음식점|까페": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"비아메렝게|일반음식점|한식": {
+"category_ai": "멕시칸 음식점",
+"conf": "높음",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"에이따치|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"스쿼드 맨즈헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"우드스탁|일반음식점|경양식": {
+"category_ai": "록카페",
+"conf": "보통",
+"basis": "상호+웹검색",
+"need_search": false,
+"searched": true
+},
+"맥주타임|일반음식점|경양식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"피망과 토마토|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"도토리칼국수|일반음식점|호프/통닭": {
+"category_ai": "칼국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"대명꼬기|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"골목집|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"연대껍데기|일반음식점|정종/대포집/소주방": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"소도적|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"골목대장|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"타궐안|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"춘풍식리|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"천하일면 신촌점|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"가문의우동 신촌연세대본점|일반음식점|한식": {
+"category_ai": "우동집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"마포24시껍데기집|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신사분식|일반음식점|경양식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신촌서서갈비|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"보통의 식사 돈까스|일반음식점|경양식": {
+"category_ai": "돈까스집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이화에|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"신선설농탕|일반음식점|경양식": {
+"category_ai": "설렁탕집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"육회 꽃피다|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"마포등심|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"김촌 신촌점|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"카니발 피자|일반음식점|일식": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"아이리쉬|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"어머니가 구워주신 생선구이|일반음식점|일식": {
+"category_ai": "생선구이집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"동양참치|일반음식점|분식": {
+"category_ai": "횟집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"구이쟁이꾼|일반음식점|경양식": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"매직앤컬러|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"성구가 끓여주는 부대찌게|일반음식점|한식": {
+"category_ai": "부대찌개집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"큐브|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"고르드신촌|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"버터앤쉘터(Butter&Shelter) 신촌점|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"샤바|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"챨리스|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"모터리|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"민들레영토|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"바보축제|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"민들레영토|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"라쿠 코인 노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"헤이카페|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"착한돼지|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"퍼스트도마|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"삼육구(369)|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"와다다 코인노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"cafe 신촌명물점|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"한강식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false
+},
+"스타|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"베스킨라빈스 카페31신촌점|일반음식점|기타": {
+"category_ai": "아이스크림가게",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"신촌카페테리아|일반음식점|기타": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"아토 규카츠 신촌1호점|일반음식점|한식": {
+"category_ai": "규카츠집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이태리마담 신촌점|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"그린보이즈 샐러드&포케 신촌직영점|일반음식점|기타": {
+"category_ai": "샐러드가게",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"드라마|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"곰바위|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"맛있는 순두부|일반음식점|한식": {
+"category_ai": "순두부집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"예그린|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"행복사주|일반음식점|기타": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"모델아트|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"포티드|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"샤넬|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"바이오|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"바이오|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"아미|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"원조24시껍데기집|일반음식점|정종/대포집/소주방": {
+"category_ai": "족발·보쌈집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"원조24시껍데기|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"원조24시껍데기|일반음식점|기타": {
+"category_ai": "족발·보쌈집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"스떼이끄300g|일반음식점|경양식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"설란|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"놀러와|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"전주식당|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"마당호프|일반음식점|정종/대포집/소주방": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"다비드코리아(샵다비드#DAVID)|일반음식점|라이브카페": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"백소정|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"구이가|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"제주돈1848|일반음식점|식육(숯불구이)": {
+"category_ai": "고깃집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"헐리우드|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"알파연대점(독수리마트&문구사)|휴게음식점|편의점": {
+"category_ai": "편의점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"차이나비스트로|일반음식점|한식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"렛 미 얼론|일반음식점|기타": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"에이치|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"치킨버스 신촌점|일반음식점|호프/통닭": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"나인드림다방|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"제임스시카고피자(신촌점)|일반음식점|기타": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"파생도시|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"백순대본가 새맛|일반음식점|기타": {
+"category_ai": "족발·보쌈집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"새맛곱창|일반음식점|기타": {
+"category_ai": "곱창집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"렛고(Let Go)|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"용가리노래방|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"지스타 신촌점|일반음식점|일식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"카페언더우드|휴게음식점|커피숍": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"독수리분식|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"삼삼|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"베네치아|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"메차쿠차|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"둥지식당|일반음식점|경양식": {
+"category_ai": "식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"버프|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"프리즘|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"리갈|휴게음식점|다방": {
+"category_ai": "다방",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"공룡밥그릇|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"라떼|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"웹|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"은정식당|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"모세미용실|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"꾸이꾸이 숯불 두마리치킨 신촌점|일반음식점|중국식": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"축구카페 아이오코메떼|일반음식점|정종/대포집/소주방": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"누들박스 신촌점|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"스필버그|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"트르와자미|휴게음식점|기타 휴게음식점": {
+"category_ai": "카페",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"닭요리가 맛있는 집|일반음식점|한식": {
+"category_ai": "닭요리집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"더멜팅팟 신촌점|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"이삭 토스트|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"미소헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"쿠벤(신촌점)|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"일미우래포차|일반음식점|한식": {
+"category_ai": "포차",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"태|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"쪼리375|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"하루미|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"팔코호프|일반음식점|경양식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"똥개네 퓨전포차|일반음식점|경양식": {
+"category_ai": "포차",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"삼덕통닭 신촌점|일반음식점|한식": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"톰톰|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"지지탑|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"질러|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"브릭스5221맥주(BRIX5221맥주)|일반음식점|경양식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"보스|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"다사랑치킨신촌점|일반음식점|정종/대포집/소주방": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"임프스|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"프라이빗 신촌점|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"바플라이(Barfly:별밤)|일반음식점|감성주점": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"금별맥주 신촌점|일반음식점|한식": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"푸라닭 신촌|일반음식점|호프/통닭": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"초원|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"미락분식|일반음식점|한식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"십이야|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"와이클럽|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"해피테이블|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"마두헤어존|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"콩불|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"황궁|일반음식점|한식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"황궁투|일반음식점|중국식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"메시헤어|미용업|일반미용업": {
+"category_ai": "미용실",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"라화쿵부|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"잇츠|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false
+},
+"중경식객 신촌점|일반음식점|경양식": {
+"category_ai": "중식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"핫앤비어|일반음식점|한식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"아름나라|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"3학년3반|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"와드코인노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"오늘통닭 신촌점|일반음식점|호프/통닭": {
+"category_ai": "치킨집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"아름나라|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"들꽃이있던자리|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"오신다 떡볶이|일반음식점|호프/통닭": {
+"category_ai": "분식집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"사또꼬치|일반음식점|분식": {
+"category_ai": "꼬치구이집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"막걸리 싸롱|일반음식점|분식": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"사또보쌈왕족|일반음식점|한식": {
+"category_ai": "족발·보쌈집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"맨처음힘|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"소나타노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"준서네 양꼬치|일반음식점|호프/통닭": {
+"category_ai": "양꼬치집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"소나타 노래방|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"요이스시|일반음식점|한식": {
+"category_ai": "일식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"K ZONE 노래연습장|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"데이지|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"허스토리|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"열린마당|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"개구리반찬|일반음식점|분식": {
+"category_ai": "반찬가게",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"원시림|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"라제스커피전문점|휴게음식점|다방": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"열린마당2|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"이공공이|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"위드 에스프레소|일반음식점|경양식": {
+"category_ai": "카페",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"식스어클락|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"엔조이락|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"테크노노래방|노래연습장업|노래연습장업": {
+"category_ai": "노래방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"엔조이락|일반음식점|한식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"바-프로(Bar-Pro)|일반음식점|호프/통닭": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"양꼬치야(夜)|일반음식점|중국식": {
+"category_ai": "양꼬치집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"한사발포차 신촌점|일반음식점|한식": {
+"category_ai": "포장마차",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"조선의육개장칼국수|일반음식점|한식": {
+"category_ai": "칼국수집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"부산완당,부산밀면|일반음식점|분식": {
+"category_ai": "분식집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"미디|일반음식점|정종/대포집/소주방": {
+"category_ai": "술집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"텐동 미세기|일반음식점|일식": {
+"category_ai": "텐동집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"다림방(신촌점)|일반음식점|한식": {
+"category_ai": "한식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": true
+},
+"피자매니|일반음식점|패스트푸드": {
+"category_ai": "피자집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"지바고|일반음식점|경양식": {
+"category_ai": "",
+"conf": "없음",
+"basis": "",
+"need_search": false,
+"searched": true
+},
+"맥주창고|일반음식점|기타": {
+"category_ai": "호프집",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": true
+},
+"미스터서왕만두|일반음식점|한식": {
+"category_ai": "만두집",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"프랭클린 스테이크 하우스|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"153스테이크|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "높음",
+"basis": "상호",
+"need_search": false
+},
+"리정원다옴|일반음식점|한식": {
+"category_ai": "고깃집",
+"conf": "보통",
+"basis": "웹검색",
+"need_search": false,
+"searched": true
+},
+"개성|숙박업|숙박업": {
+"category_ai": "숙박업소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"충남|숙박업|숙박업": {
+"category_ai": "숙박업소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"큐|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"에버당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"사이버리아PC방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"PC랑|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"케이2 당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"전망대 당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"라이온pc방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"잎사귀치과병원|병원|치과병원": {
+"category_ai": "치과",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"오버더레인보우안경원|안경업|안경업": {
+"category_ai": "안경점",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"봉화|숙박업|숙박업": {
+"category_ai": "숙박업소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"이글스 PC|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"열린건강약국|약국|약국": {
+"category_ai": "약국",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"테크플러스PC게임방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"제우스 PC방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"세상에 없는 데이트, 샵브이알|복합유통게임제공업|복합유통게임제공업": {
+"category_ai": "VR체험관",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"Holy fit(홀리핏)|체력단련장업|체력단련장업": {
+"category_ai": "헬스장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"비숍|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"무아당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"사이버랜드|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"레몬 피씨방 Natural Zone|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"슬기방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"이글휘트니스센타|체력단련장업|체력단련장업": {
+"category_ai": "헬스장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"이글|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"독수리약국|약국|약국": {
+"category_ai": "약국",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"인터지존 PC방 신촌점|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"독수리 당구클럽|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"짐박스피트니스 신촌점|체력단련장업|체력단련장업": {
+"category_ai": "헬스장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"아크PC|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"블루포스PC|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"캠프VR신촌|복합유통게임제공업|복합유통게임제공업": {
+"category_ai": "VR체험관",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"이글게임장|일반게임제공업|일반게임제공업": {
+"category_ai": "오락실",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"미림|숙박업|숙박업": {
+"category_ai": "숙박업소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"보성|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"메가플스|일반게임제공업|일반게임제공업": {
+"category_ai": "플스방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"스마일 멀티방(신촌점)|복합유통게임제공업|복합유통게임제공업": {
+"category_ai": "멀티방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"신촌 당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"옵티멈존PC카페 신촌역점|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"(주)안다미로엔터|일반게임제공업|일반게임제공업": {
+"category_ai": "노래방",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"안다미로엔터|일반게임제공업|일반게임제공업": {
+"category_ai": "노래방",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"앙상블(주)안다미로엔터|일반게임제공업|일반게임제공업": {
+"category_ai": "노래방",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"엔터프라이즈|일반게임제공업|일반게임제공업": {
+"category_ai": "노래방",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"엔터노래연습장(주)안다미로엔터|일반게임제공업|일반게임제공업": {
+"category_ai": "노래방",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"아이센스 PC방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"나무약국|약국|약국": {
+"category_ai": "약국",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"허슬러|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"상아|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"세진|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"위닝플스방|일반게임제공업|일반게임제공업": {
+"category_ai": "플스방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"수리 당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"네티즌 PC방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"마이피씨클럽|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"현대사이버프라자|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"인터넷 존|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"미래|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"오원당구클럽|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"오원|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"A+(에이플러스)|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"반도|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"독수리|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"판게아|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"클럽오유 신촌점|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"판게아|복합유통게임제공업|복합유통게임제공업": {
+"category_ai": "멀티방",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"동원|숙박업|숙박업": {
+"category_ai": "숙박업소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"장미당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"사이버큐|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"김광수헤어커트|이용업|일반이용업": {
+"category_ai": "이발소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"와이|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"또 VMG|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"슈퍼|일반게임제공업|일반게임제공업": {
+"category_ai": "오락실",
+"conf": "낮음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"레몬PC존|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"season i pc zone|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"새현대약국|약국|약국": {
+"category_ai": "약국",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"야우리피시방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"멀티플러스 신촌연대점|복합유통게임제공업|복합유통게임제공업": {
+"category_ai": "멀티방",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"프리미엄 PC방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"현대|이용업|일반이용업": {
+"category_ai": "이발소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"솔리드|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"한탑 당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"노블당구클럽|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"용 당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"대신여관|숙박업|숙박업": {
+"category_ai": "여관",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"창희|숙박업|숙박업": {
+"category_ai": "숙박업소",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"홀인원|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"알라딘당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"허리우드|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"독거미 포켓클럽|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"갤럭시당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"CNN PC플라자|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"미림|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"새터당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"신촌당구장|당구장업|당구장업": {
+"category_ai": "당구장",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"이글캠퍼PC방스|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"인터밸리+|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"밤새지말란말이야|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"사이버 이프프|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"보보스 PC존|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"정문약국|약국|약국": {
+"category_ai": "약국",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"일심약국|약국|약국": {
+"category_ai": "약국",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"맥스피씨방|인터넷컴퓨터게임시설제공업|인터넷컴퓨터게임시설제공업": {
+"category_ai": "PC방",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"fusionpub||": {
+"category_ai": "펍",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"whitecafe||": {
+"category_ai": "카페",
+"conf": "높음",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"joymission||": {
+"category_ai": "선교단체",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"사바사바||": {
+"category_ai": "호프집",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"obar||": {
+"category_ai": "웨스턴바",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+},
+"아키식당||": {
+"category_ai": "식당",
+"conf": "보통",
+"basis": "상호",
+"need_search": false,
+"searched": false
+},
+"cassecroute||": {
+"category_ai": "샌드위치·베이커리 카페",
+"conf": "높음",
+"basis": "사용자 확인",
+"need_search": false,
+"searched": false
+}
+}

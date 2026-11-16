@@ -86,7 +86,7 @@ def cat_terms(cats):
                 out.update(SYN.get(tok, []))
     return {t.lower() for t in out if t}
 
-def _text(r): return " ".join([r["name"], r["category"], r["license_type"], r["observed_as"]])
+def _text(r): return " ".join([r["name"], r["category"], r["license_type"], r["observed_as"], r.get("category_ai", "")])   # category_ai 는 AI 추정 업종(비공식)
 
 def _hint_score(h, r):
     h = h.replace(" ", "")
@@ -142,7 +142,7 @@ def gather_web(clue, exact, wide, n_each=4, max_queries=5):
     if clue["name_hints"] or clue["categories"]:
         queries.append(" ".join([place, str(clue["year_from"]) + "년" if clue["year_from"] > 1992 else "", *clue["categories"], *clue["name_hints"]]).strip())
     for c in (exact + wide)[:3]:
-        if c["name"] not in ("상호", "상호판독보류"): queries.append(f"{c['name']} 창천동 신촌 {c['category'] or (clue['categories'][0] if clue['categories'] else '')}".strip())
+        if c["name"] not in ("상호", "상호판독보류"): queries.append(f"{c['name']} 창천동 신촌 {c['category'] or c.get('category_ai') or (clue['categories'][0] if clue['categories'] else '')}".strip())
     for q in queries[:max_queries]:
         for x in liner.search(q, n_each):
             if x["url"] in seen: continue
@@ -178,9 +178,10 @@ def judge(text, clue, cands, ev, web_used, rejected=()):
            "상호 조각까지 맞으면 확신을 높인다. 일부만 맞으면 '추정', 근거가 없거나 충돌하면 '미확인'. 확장 tier는 시기나 위치가 어긋난다는 점을 reason에 밝힌다. "
            "(3) reason은 무엇이 일치·충돌하는지 100자 이내로, id(D·W 번호)와 'tier'라는 말 대신 상호명과 '정확 조건'·'넓힌 범위' 같은 표현을 쓴다. (4) evidence_ids는 주어진 W·D id만. "
            "(5) 웹 근거에서 내부 후보에 없는 새 상호가 단서와 맞아 보이면 leads에 넣는다. name에는 상호만, 설명은 why에. 단서와 실제로 맞는 경우에만 넣고, 맞지 않는 곳은 아예 넣지 않는다(불일치를 설명하려고 넣지 말 것). 항상 미검증이다. "
+           "(5-1) 후보의 'AI추정업종'은 공식 인허가 업종이 아니라 상호나 웹 검색으로 AI가 추정한 값이다. 업종 일치를 판단할 때 참고는 하되, 공식 업종보다 약한 근거로 다루고, 업종 일치를 이 값에 의존했다면 reason과 answer에 '업종은 AI가 상호로 추정한 것이라 정확하지 않을 수 있다'고 밝힌다. 공식 업종과 AI 추정이 다르면 공식 업종을 우선한다. "
            "(6) answer는 사용자에게 보일 2문장 요약. 정확 결과가 있으면 그것을 먼저 말하고, 확신이 낮으면 그렇게 말한다. 웹 검색을 쓰지 않았다면 쓰지 않았다고 사실대로 둔다. "
            "(7) 제외한 후보가 있으면 answer에서 그 후보를 뺐다고 밝히고, 남은 후보 중 위치·시기가 가까운 것을 말한다. follow_ups는 결과를 좁히거나 바로잡기 위해 사용자에게 되물을 짧은 질문 0~3개(예: 큰길 쪽이었나요? 간판 색이 기억나나요?). 근거 없이 묻지 말고 후보 사이를 가르는 질문만.")
-    fmt = lambda c: f"{c['id']} | tier:{'정확' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
+    fmt = lambda c: f"{c['id']} | tier:{'정확' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']}{(' | AI추정업종(' + c['category_ai_basis'] + ', 확신 ' + c['category_ai_conf'] + '):' + c['category_ai']) if c.get('category_ai') else ''} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
     cl = "\n".join(fmt(c) for c in cands) or "(내부 후보 없음)"
     wl = "\n".join(f"{e['id']} | {e['title'][:80]} | {e['desc'][:160]} | {e['date']}" for e in ev) if web_used else "(웹 검색 안 함)"
     if web_used and not ev: wl = "(웹 근거 없음)"
@@ -226,7 +227,7 @@ def make_suggestion(res, cands, clue, scope, ref=None):
             "text": f"{scope['anchor']} 기준 반경을 {nxt}m로 넓혀 다시 찾아볼까요?"}
 
 # ---------- 실행 ----------
-SLIM = ("id", "tier", "jibun", "name", "category", "start", "end", "floor", "grade", "score", "dist_m", "observed_as")
+SLIM = ("id", "tier", "jibun", "name", "category", "category_ai", "category_ai_conf", "start", "end", "floor", "grade", "score", "dist_m", "observed_as")
 
 def run(text, state=None):
     """단계마다 dict를 yield 한다. 마지막 'done' 이벤트의 state를 화면이 보관했다가 다음 질문에 다시 보낸다."""
