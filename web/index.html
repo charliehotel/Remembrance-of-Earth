@@ -1127,10 +1127,12 @@ function init(S) {
   const KCODE = { 87: "KeyW", 65: "KeyA", 83: "KeyS", 68: "KeyD", 81: "KeyQ", 69: "KeyE", 82: "KeyR", 70: "KeyF" };
   const kc = e => /^(Key[A-Z]|Arrow|Shift|Bracket|Page|Space|Backslash|Equal|Minus|Numpad)/.test(e.code || "") ? e.code
     : JAMO[e.key] || (/^[a-z]$/i.test(e.key || "") ? "Key" + e.key.toUpperCase() : "") || KCODE[e.keyCode] || e.code || "";
+  // 글자를 입력하는 칸(검색창, 에이전트 입력창 등)에 포커스가 있으면 지도 단축키를 쓰지 않는다
+  const typing = t => !!t && (t.isContentEditable || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && /^(text|search|url|email|tel|password|number|)$/.test(t.type || "")));
   window.addEventListener("keydown", ev => {
     const e = { code: kc(ev), ctrlKey: ev.ctrlKey, metaKey: ev.metaKey, altKey: ev.altKey, target: ev.target,
                 preventDefault: () => ev.preventDefault(), stopPropagation: () => ev.stopPropagation() };
-    if (e.target === qInput) return;   // 검색창에 입력 중에는 단축키를 쓰지 않는다
+    if (typing(e.target) || typing(document.activeElement)) return;
     if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); return; }
     if (!e.ctrlKey && !e.metaKey && !e.altKey) {
       if (e.code === "Backslash") { e.preventDefault(); e.stopPropagation(); if (walking) { heading = 0; face = 0; wpitch = WP_DEF; wdist = WD_DEF; applyWalkCam(); } else map.resetNorth(); return; }
@@ -1159,7 +1161,7 @@ function init(S) {
     window.addEventListener("mouseup", () => { if (!drag) return; lookDragged = drag.moved > 4; drag = null; cv.style.cursor = "";
       setTimeout(() => lookDragged = false, 0); }); }
   window.addEventListener("blur", () => { keys.clear(); pressed.clear(); });
-  window.addEventListener("keydown", e => { if (e.target !== qInput) { const c = kc(e); pressed.add(c); flash.set(c, performance.now() + 180); } }, true);
+  window.addEventListener("keydown", e => { if (!typing(e.target)) { const c = kc(e); pressed.add(c); flash.set(c, performance.now() + 180); } }, true);
   window.addEventListener("keyup", e => pressed.delete(kc(e)), true);
 
   function frame(t) {
