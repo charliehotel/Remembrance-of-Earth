@@ -24,11 +24,12 @@ ap.add_argument("--seed", type=int, default=1)
 ap.add_argument("--out", default="eval_e2e.jsonl")
 ap.add_argument("--liner", action="store_true", help="Liner 로 실행(크레딧 사용). --max-cost 필수")
 ap.add_argument("--max-cost", type=float, default=0.0, help="Liner 실행 시 누적 비용 상한(USD)")
+ap.add_argument("--from-log", default="", help="실행 없이 저장된 로그(jsonl)만 다시 집계")
 ap.add_argument("--max-errors", type=int, default=5, help="연속 오류가 이 수를 넘으면 중단")
 args = ap.parse_args()
 
 prov = liner.provider()
-if prov != "cliproxyapi" and not (args.liner and args.max_cost > 0):
+if not args.from_log and prov != "cliproxyapi" and not (args.liner and args.max_cost > 0):
     sys.exit(f"현재 공급자가 '{prov}'(Liner)입니다. 크레딧 보호를 위해 중단합니다.\n"
              "  · 테스트: .env 에 LLM_PROVIDER=cliproxyapi\n  · 최종 평가: --liner --max-cost 0.1 처럼 상한을 함께 지정")
 
@@ -104,16 +105,20 @@ def run_case(r):
     return rec
 
 done_cases = []
+if args.from_log:
+    done_cases = [json.loads(l) for l in open(args.from_log, encoding="utf-8")]
+    targets = []
 print(f"공급자 {prov} · 정답 {len(targets)}건 · 최대 {args.turns}턴 · 동시 {args.workers}", flush=True)
 t_start = time.time()
 with ThreadPoolExecutor(args.workers) as ex: list(ex.map(run_case, targets))
 outf.close()
+if args.from_log: Path(args.out).unlink(missing_ok=True)
 
 # ---------- 요약 ----------
 def pct(n, d): return f"{100 * n / d:.0f}%" if d else "-"
 print(f"\n소요 {time.time() - t_start:.0f}초" + (f" · 중단: {state_['stop']}" if state_["stop"] else "") + (f" · 누적 비용 ${state_['cost']:.4f}" if prov != "cliproxyapi" else ""))
-print("| 구분 | 건수 | 1턴 1순위 | 1턴 후보에 포함 | 2턴 안 1순위 | 3턴 안 1순위 | 최종 못 맞힘 | 오답을 '확인'으로 판정 | 웹 사용(턴) | 턴당 소요(초) |")
-print("|---|---|---|---|---|---|---|---|---|---|")
+print("| 구분 | 건수 | 1턴 1순위 | 1턴 후보에 포함 | 2턴 안 1순위 | 3턴 안 1순위 | 최종 못 맞힘 | 오답을 '확인'(건/턴) | '확인'의 정답률 | 정답 1순위 중 '확인' | 웹 사용(턴) | 턴당 소요(초) |")
+print("|---|---|---|---|---|---|---|---|---|---|---|---|")
 groups = ["전체"] + sorted({c["target"]["group"] for c in done_cases})
 for g in groups:
     cs = [c for c in done_cases if g == "전체" or c["target"]["group"] == g]
@@ -123,7 +128,8 @@ for g in groups:
     hit_by = lambda k: sum(1 for c in ok if any(t.get("hit") for t in c["turns"][:k]))
     allt = [t for c in ok for t in c["turns"] if not t.get("error")]
     fc = sum(1 for t in allt if not t["hit"] and t.get("top1_verdict") == "확인")
-    print(f"| {g} | {n} | {pct(hit_by(1), n)} | {pct(sum(1 for c in ok if c['turns'][0].get('in_cands')), n)} | {pct(hit_by(2), n)} | {pct(hit_by(3), n)} | {n - hit_by(3)} | {fc}건/{len(allt)}턴 | {pct(sum(1 for t in allt if t['web']), len(allt))} | {sum(t['sec'] for t in allt) / len(allt):.0f} |")
+    conf = [t for t in allt if t.get("top1_verdict") == "확인"]; hits = [t for t in allt if t["hit"]]
+    print(f"| {g} | {n} | {pct(hit_by(1), n)} | {pct(sum(1 for c in ok if c['turns'][0].get('in_cands')), n)} | {pct(hit_by(2), n)} | {pct(hit_by(3), n)} | {n - hit_by(3)} | {fc}건/{len(allt)}턴 | {pct(sum(1 for t in conf if t['hit']), len(conf))}({len(conf)}) | {pct(sum(1 for t in hits if t.get('top1_verdict') == '확인'), len(hits))}({len(hits)}) | {pct(sum(1 for t in allt if t['web']), len(allt))} | {sum(t['sec'] for t in allt) / len(allt):.0f} |")
 errs = [(c["target"]["name"], t["error"]) for c in done_cases for t in c["turns"] if t.get("error")]
 if errs:
     print(f"\n오류 {len(errs)}건:")

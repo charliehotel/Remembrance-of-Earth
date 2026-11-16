@@ -199,12 +199,17 @@ def judge(text, clue, cands, ev, web_used, rejected=()):
     res, model, cost = liner.chat_json(sys, user, JUDGE_SCHEMA, "judge", 2000)
     ok = {c["id"] for c in cands} | {e["id"] for e in ev}
     byid = {c["id"]: c for c in cands}
+    ex_scores = sorted((c["score"] for c in cands if c["tier"] == "exact"), reverse=True)
     for j in res["judgements"]:
         j["evidence_ids"] = [i for i in j["evidence_ids"] if i in ok]          # 존재하지 않는 근거 제거
         c = byid.get(j["id"])
         if j["verdict"] == "확인" and not (c and c["grade"] == "A") and not any(i.startswith("W") for i in j["evidence_ids"]):
             j["verdict"] = "추정"                                                # 근거 없는 '확인'은 강등
         if c and c["tier"] == "wide" and j["verdict"] == "확인": j["verdict"] = "추정"   # 조건을 넓혀 찾은 것은 확정하지 않는다
+        if c and c["tier"] == "exact" and j["verdict"] == "확인" and len(ex_scores) >= 2:    # 같은 조건의 후보가 여럿이면, 1순위가 뚜렷이 앞설 때만 확정
+            if not (c["score"] == ex_scores[0] and ex_scores[0] - ex_scores[1] >= 2):
+                j["verdict"] = "추정"
+                if "확정하지" not in j["reason"]: j["reason"] = (j["reason"].rstrip(". ") + " (같은 조건의 후보가 여럿이라 확정하지 않음)")[:140]
     for l in res["leads"]: l["evidence_ids"] = [i for i in l["evidence_ids"] if i in ok]
     res["leads"] = [l for l in res["leads"] if l["evidence_ids"]]               # 근거 없는 후보는 버림
     res["follow_ups"] = res["follow_ups"][:3]
