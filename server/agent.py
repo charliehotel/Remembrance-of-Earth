@@ -104,7 +104,7 @@ def _hint_score(h, r):
 
 def row_key(r): return f"{r['jibun']}|{r['name']}|{r['start']}"
 
-def search_tiers(db, parcels, clue, level, rejected=(), nearby=False):
+def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
     y0, y1 = clue["year_from"], clue["year_to"] + 1
     anchor_pt, anchor_name, anchored = resolve_anchor(clue["anchor"], parcels)
     r_exact = clue["radius_m"] or (30 if anchored else None)                       # 위치를 말했으면 그 근처, 아니면 제한 없음
@@ -142,7 +142,7 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False):
     exact.sort(key=dkey); wide.sort(key=dkey)
     scope = {"years": [y0, y1 - 1], "wide_years": [y0 - margin, y1 - 1 + margin], "radius_exact": r_exact, "radius_wide": r_wide,
              "anchor": anchor_name if (anchored or clue["radius_m"]) else None, "level": level, "nearby": nearby, "rejected": len(rejected)}
-    return [dict(x, tier="exact") for x in exact[:5]], [dict(x, tier="wide") for x in wide[:5]], scope
+    return [dict(x, tier="exact") for x in exact[:limit]], [dict(x, tier="wide") for x in wide[:limit]], scope
 
 # ---------- 4. 웹 검색 ----------
 def gather_web(clue, exact, wide, n_each=4, max_queries=5):
