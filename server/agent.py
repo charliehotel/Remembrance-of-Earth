@@ -59,7 +59,7 @@ CLUE_SCHEMA = {"type": "object", "additionalProperties": False,
 def parse_clue(text, prev, pending=None):
     sys = ("사용자가 기억 속 가게를 설명하거나, 이전 결과에 대해 후속 요청을 한다. 현재 해석(prev)이 주어지면 새 메시지를 반영해 갱신한다: "
            "사용자가 바꾼 항목만 바꾸고 나머지는 유지한다. 완전히 다른 가게를 찾는 새 질문이면 reset=true로 하고 이전 값을 버린다. "
-           "accept_suggestion(직전에 에이전트가 한 제안(pending)을 사용자가 받아들이면 true: '응', '네', '그렇게 해줘' 등. 제안이 없거나 다른 요청이면 false), reject_top(사용자가 직전 답변의 1순위 후보가 아니라고 하면 true: '거기가 아닌 것 같아', '그 가게는 아니야' 등), 필드: year_from/year_to(말한 시기, 한 해만 말했으면 둘 다 같은 해, 모르면 1992와 2026), categories(업종 키워드: 한식, 호프, 카페, 미용 등), "
+           "accept_suggestion(직전에 에이전트가 한 제안(pending)을 사용자가 받아들이면 true: '응', '네', '그렇게 해줘' 등. 제안이 없거나 다른 요청이면 false), reject_top(사용자가 직전 답변의 1순위 후보가 아니라고 하면 true: '거기가 아닌 것 같아', '그 가게는 아니야' 등), 필드: year_from/year_to(말한 시기, 한 해만 말했으면 둘 다 같은 해, 모르면 1992와 2026), categories(업종 키워드를 짧은 단어 단위로 2~5개(두 글자 이상): 예 '인도 카레집'이면 인도, 카레, 커리. 한식, 호프, 카페, 미용 등. 구절 통째로 넣지 않는다), "
            "name_hints(기억한 상호의 일부 글자), floor(층, 예 '1층', 모르면 빈 문자열), anchor(위치 표현: 지번이나 '창천감리교회'·'아웃백' 같은 랜드마크, 없으면 빈 문자열), "
            "radius_m(반경을 말했을 때만 m, 아니면 0), widen(이번 메시지에서 한 요청만 반영하고 prev의 값은 따르지 않는다. '범위 넓혀줘'·'더 멀리'면 wider, '좁혀줘'·'정확히'면 narrower, 아니면 none), "
            "web(이번 메시지만 기준: 웹에서도 찾아 달라 하면 force, 웹은 쓰지 말라면 skip, 아니면 auto), summary(해석 한 문장). 말하지 않은 값을 추측하지 않는다.")
@@ -67,12 +67,31 @@ def parse_clue(text, prev, pending=None):
     return liner.chat_json(sys, user, CLUE_SCHEMA, "clue", 500)
 
 # ---------- 2·3. 정확 / 확장 검색 ----------
+SYN = {"인도": ["인도", "네팔", "커리", "카레", "탄두리", "naan"], "카레": ["카레", "커리", "인도"], "커리": ["커리", "카레", "인도"],
+       "호프": ["호프", "통닭", "맥주", "주점", "소주방", "대포"], "카페": ["카페", "커피", "다방", "휴게음식점", "제과"],
+       "분식": ["분식", "떡볶이", "김밥"], "미용": ["미용", "헤어", "머리"], "중식": ["중식", "중국", "짜장", "마라"], "일식": ["일식", "초밥", "라멘", "일본"],
+       "양식": ["양식", "경양식", "스테이크", "파스타", "피자"], "치킨": ["치킨", "통닭", "닭"], "술집": ["술", "주점", "호프", "포장마차", "소주방"]}
+
+def cat_terms(cats):
+    """업종 표현 → 검색 키워드 집합. '인도 카레집' 같은 구절도 단어와 동의어로 나눠 맞춘다."""
+    out = set()
+    for c in cats:
+        c = (c or "").strip()
+        if not c: continue
+        out.add(c.replace(" ", ""))
+        for tok in re.split(r"[\s·,/()]+", c):
+            tok = re.sub(r"(집|점|가게|전문점)$", "", tok)
+            if len(tok) >= 2:                                                      # 한 글자 단어는 오탐이 많아 제외
+                out.add(tok)
+                out.update(SYN.get(tok, []))
+    return {t.lower() for t in out if t}
+
 def _text(r): return " ".join([r["name"], r["category"], r["license_type"], r["observed_as"]])
 
 def _hint_score(h, r):
     h = h.replace(" ", "")
     if not h: return 0, False
-    if h in _text(r).replace(" ", ""): return 4, True
+    if h.lower() in _text(r).replace(" ", "").lower(): return 4, True
     return 0.5 * sum(ch in r["name"] for ch in set(h)) / len(set(h)), False
 
 def row_key(r): return f"{r['jibun']}|{r['name']}|{r['start']}"
@@ -84,6 +103,7 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False):
     r_wide = max(EXPAND_RADIUS_M * (level + 1), (r_exact or 0)) if (anchored or clue["radius_m"]) else None
     margin = EXPAND_YEARS * (level + 1)
     exact, wide = [], []
+    terms = cat_terms(clue["categories"])
     for r in db:
         if row_key(r) in rejected: continue                                        # 사용자가 '아니다'라고 한 후보는 제외
         s, e = _ym(r["start"], 1992), _ym(r["end"], 2026.9)
@@ -91,15 +111,15 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False):
         in_exact_years = not (e < y0 or s > y1)
         in_wide_years = not (e < y0 - margin or s > y1 + margin)
         if not in_wide_years: continue
-        text = _text(r).replace(" ", "")
-        cat_ok = (not clue["categories"]) or any(c and c in text for c in clue["categories"])
+        text = _text(r).replace(" ", "").lower()
+        cat_ok = (not terms) or any(t in text for t in terms)
         hint_pts, hint_all = 0, True
         for h in clue["name_hints"]:
             pts, full = _hint_score(h, r); hint_pts += pts; hint_all &= full
         fl = clue["floor"].replace("층", "") if clue["floor"] else ""
         floor_known = bool(r["floor"] or "층" in r["observed_as"])
         floor_ok = (not fl) or (floor_known and (r["floor"] == fl or f"{fl}층" in r["observed_as"]))
-        sc = 1.0 + hint_pts + (2 if cat_ok and clue["categories"] else 0) + (1 if fl and floor_ok else 0) + (0.5 if r["grade"] == "A" else 0)
+        sc = 1.0 + hint_pts + (2 if cat_ok and terms else 0) + (1 if fl and floor_ok else 0) + (0.5 if r["grade"] == "A" else 0)
         sc -= 0 if in_exact_years else 1.0                                          # 시기를 벗어나면 감점
         is_exact = in_exact_years and cat_ok and hint_all and floor_ok and (r_exact is None or (d is not None and d <= r_exact))
         row = dict(r, score=round(sc, 2), dist_m=None if d is None else round(d))
@@ -108,7 +128,7 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False):
             if r_wide is not None and (d is None or d > r_wide): continue
             if not nearby:
                 if not clue["categories"] and not clue["name_hints"]: continue     # 조건이 없으면 확장해도 의미가 없다
-                if clue["categories"] and not cat_ok and hint_pts < 2: continue     # 업종도 상호도 안 맞으면 제외
+                if terms and not cat_ok and hint_pts < 2: continue     # 업종도 상호도 안 맞으면 제외
             wide.append(row)
     exact.sort(key=lambda x: -x["score"]); wide.sort(key=lambda x: -x["score"])
     scope = {"years": [y0, y1 - 1], "wide_years": [y0 - margin, y1 - 1 + margin], "radius_exact": r_exact, "radius_wide": r_wide,
@@ -122,7 +142,7 @@ def gather_web(clue, exact, wide, n_each=4, max_queries=5):
     if clue["name_hints"] or clue["categories"]:
         queries.append(" ".join([place, str(clue["year_from"]) + "년" if clue["year_from"] > 1992 else "", *clue["categories"], *clue["name_hints"]]).strip())
     for c in (exact + wide)[:3]:
-        if c["name"] != "상호": queries.append(f"{c['name']} 창천동 신촌 {c['category']}".strip())
+        if c["name"] not in ("상호", "상호판독보류"): queries.append(f"{c['name']} 창천동 신촌 {c['category'] or (clue['categories'][0] if clue['categories'] else '')}".strip())
     for q in queries[:max_queries]:
         for x in liner.search(q, n_each):
             if x["url"] in seen: continue
@@ -160,7 +180,7 @@ def judge(text, clue, cands, ev, web_used, rejected=()):
            "(5) 웹 근거에서 내부 후보에 없는 새 상호가 단서와 맞아 보이면 leads에 넣는다. name에는 상호만, 설명은 why에. 단서와 실제로 맞는 경우에만 넣고, 맞지 않는 곳은 아예 넣지 않는다(불일치를 설명하려고 넣지 말 것). 항상 미검증이다. "
            "(6) answer는 사용자에게 보일 2문장 요약. 정확 결과가 있으면 그것을 먼저 말하고, 확신이 낮으면 그렇게 말한다. 웹 검색을 쓰지 않았다면 쓰지 않았다고 사실대로 둔다. "
            "(7) 제외한 후보가 있으면 answer에서 그 후보를 뺐다고 밝히고, 남은 후보 중 위치·시기가 가까운 것을 말한다. follow_ups는 결과를 좁히거나 바로잡기 위해 사용자에게 되물을 짧은 질문 0~3개(예: 큰길 쪽이었나요? 간판 색이 기억나나요?). 근거 없이 묻지 말고 후보 사이를 가르는 질문만.")
-    fmt = lambda c: f"{c['id']} | tier:{'정확' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰:{(c['observed_as'] or '')[:60]}"
+    fmt = lambda c: f"{c['id']} | tier:{'정확' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
     cl = "\n".join(fmt(c) for c in cands) or "(내부 후보 없음)"
     wl = "\n".join(f"{e['id']} | {e['title'][:80]} | {e['desc'][:160]} | {e['date']}" for e in ev) if web_used else "(웹 검색 안 함)"
     if web_used and not ev: wl = "(웹 근거 없음)"
@@ -206,7 +226,7 @@ def make_suggestion(res, cands, clue, scope, ref=None):
             "text": f"{scope['anchor']} 기준 반경을 {nxt}m로 넓혀 다시 찾아볼까요?"}
 
 # ---------- 실행 ----------
-SLIM = ("id", "tier", "jibun", "name", "category", "start", "end", "floor", "grade", "score", "dist_m")
+SLIM = ("id", "tier", "jibun", "name", "category", "start", "end", "floor", "grade", "score", "dist_m", "observed_as")
 
 def run(text, state=None):
     """단계마다 dict를 yield 한다. 마지막 'done' 이벤트의 state를 화면이 보관했다가 다음 질문에 다시 보낸다."""

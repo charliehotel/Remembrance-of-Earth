@@ -5,22 +5,10 @@
       "name": "web",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
-        "-m",
-        "http.server",
-        "8765",
-        "--directory",
-        "web"
+        "server/app.py",
+        "8765"
       ],
       "port": 8765
-    },
-    {
-      "name": "app",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "server/app.py",
-        "8766"
-      ],
-      "port": 8766
     }
   ]
 }

@@ -13,13 +13,13 @@
   #bar .row { display: flex; align-items: baseline; gap: 12px; }
   #year { font-size: 28px; font-weight: 700; min-width: 70px; }
   #slider { flex: 1; }
-  #side { position: absolute; top: 12px; left: 12px; width: 300px; max-height: calc(100% - 140px); display: flex; flex-direction: column;
+  #side { position: absolute; top: 12px; left: 12px; width: 300px; max-height: calc(100% - 24px); display: flex; flex-direction: column;
           background: rgba(255,255,255,.94); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-size: 13px;   transition: transform .25s ease; }
   #band1 { flex: none; padding: 10px 14px 12px; border-radius: 10px 10px 0 0; }
   #sideHead { display: flex; align-items: center; gap: 8px; }
   .band { overflow: auto; padding: 12px 14px; border-top: 1px solid #0002; }
-  #agent { flex: 0 0 auto; max-height: 40vh; }      /* 길어지면 이 구역 안에서 스크롤 */
-  #sideBody { flex: 1 1 auto; min-height: 120px; border-radius: 0 0 10px 10px; }  /* 남는 높이는 연대기 구역이 쓴다 */
+  #agent { flex: 0 1 auto; min-height: 150px; }     /* 내용만큼 길어지고, 화면 높이를 넘으면 두 구역이 나눠 줄어들며 각자 스크롤 */
+  #sideBody { flex: 0 1 auto; min-height: 120px; border-radius: 0 0 10px 10px; }
   #sideHead .brand { flex: 1; line-height: 1.25; }
   #sideHead .ko { font-size: 17px; font-weight: 700; }
   #sideHead .en { font-size: 11px; color: #777; letter-spacing: .02em; }
@@ -73,6 +73,8 @@
   .focuscard { margin: 8px 0; padding: 8px 10px; border: 2px solid #d33; border-radius: 8px; background: #fff7f5; }
   .focuscard .n { font-size: 15px; font-weight: 700; }
   .focuscard .m { color: #555; font-size: 12px; margin-top: 3px; line-height: 1.5; }
+  #side:not(.collapsed) ~ #bar { left: calc(324px + (100% - 324px) / 2); width: min(760px, calc(100% - 348px)); }   /* 열린 사이드바를 피해 시간 바를 오른쪽 영역 가운데로 */
+  #bar { transition: left .25s ease, width .25s ease; }
   #side.collapsed { transform: translateX(calc(-100% - 12px)); }   /* 화면 왼쪽 밖으로 밀고, 오른쪽 가장자리 탭만 남긴다 */
   #side.collapsed #band1, #side.collapsed .band { visibility: hidden; transition: visibility 0s .25s; }
   #side h2 { margin: 0 0 6px; font-size: 15px; }
@@ -901,7 +903,7 @@ function init(S) {
     let cands = [], ev = [], final = null;
     try {
       const r = await fetch("/api/find", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, state: agState }) });
-      if (!r.ok || !r.body) throw new Error("에이전트 서버에 연결할 수 없습니다 (python3 server/app.py 로 실행)");
+      if (!r.ok || !r.body) throw new Error(`에이전트 서버가 응답하지 않습니다(${r.status}). 정적 서버(http.server)로 열었다면 python3 server/app.py 로 다시 실행해 주세요`);
       const rd = r.body.getReader(), dec = new TextDecoder(); let buf = "";
       for (;;) {
         const { value, done } = await rd.read(); if (done) break;
@@ -925,7 +927,7 @@ function init(S) {
       const src = ids => ids.filter(i => byE[i]).map(i => `<a href="${safeUrl(byE[i].url)}" target="_blank" rel="noopener" title="${esc(byE[i].title)} — ${esc(byE[i].desc)}">${esc(byE[i].hostname || byE[i].title.slice(0, 18))}</a>`).join("");
       const yrs = a => a[0] === a[1] ? a[0] + "년" : a[0] + "~" + a[1] + "년";
       const card = (c, j) => `<div class="agc ${c.tier}" data-i="${cands.indexOf(c)}"><b>${esc(c.name)}</b><span class="vd ${j.verdict}">${j.verdict} ${Math.round(j.confidence * 100)}%</span>
-        <div class="sub">창천동 ${esc(c.jibun)} · ${esc(c.category || "")} · ${esc(c.start)}~${esc(c.end || "")}${c.tier === "wide" && c.dist_m != null && sc.radius_wide ? " · " + c.dist_m + "m" : ""}</div><div class="why">${esc(j.reason)}</div><div class="src">${src(j.evidence_ids)}</div></div>`;
+        <div class="sub">창천동 ${esc(c.jibun)} · ${esc(c.category || (c.observed_as ? "간판 " + c.observed_as.split("|")[0].trim() : "업종 미상"))} · ${esc(c.start)}~${esc(c.end || "")}${c.tier === "wide" && c.dist_m != null && sc.radius_wide ? " · " + c.dist_m + "m" : ""}</div><div class="why">${esc(j.reason)}</div><div class="src">${src(j.evidence_ids)}</div></div>`;
       const list = tier => cands.filter(c => c.tier === tier && jById[c.id]).sort((a, b) => jById[b.id].confidence - jById[a.id].confidence);
       const ex = list("exact"), wd = list("wide");
       let h = `<div class="ans">${esc(res.answer)}</div>`;

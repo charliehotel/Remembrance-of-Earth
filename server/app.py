@@ -9,6 +9,9 @@ WEB = Path(__file__).resolve().parent.parent / "web"
 
 class H(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k): super().__init__(*a, directory=str(WEB), **k)
+    def end_headers(self):                      # 개발 중 화면 파일이 브라우저에 캐시되어 옛 화면이 보이는 일을 막는다
+        self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
     def do_POST(self):
         if self.path != "/api/find": self.send_error(404); return
         n = int(self.headers.get("Content-Length", 0))

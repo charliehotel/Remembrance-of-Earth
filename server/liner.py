@@ -46,18 +46,27 @@ def search(query, max_results=5, lang="ko"):
              "date": x.get("date", ""), "hostname": x.get("hostname", "")} for x in r.get("results", [])]
 
 def chat_json(system, user, schema, name="result", max_tokens=1500):
-    """Liner Model API. JSON 스키마 출력. 반환: (파싱된 dict, 사용 모델, 비용)."""
-    body = {"model": MODEL, "max_completion_tokens": max_tokens, "reasoning_effort": "low",
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-            "response_format": {"type": "json_schema",
-                                "json_schema": {"name": name, "schema": schema, "strict": True}}}
-    try:
-        r = _post("/chat/completions", body)
-    except RuntimeError as e:
-        if "HTTP 400" in str(e) or "HTTP 404" in str(e):
-            body["model"] = FALLBACK_MODEL; body["routing_strategy"] = "cost"
+    """Liner Model API. JSON 스키마 출력. 반환: (파싱된 dict, 사용 모델, 비용).
+    응답이 잘리거나 JSON이 깨지면 토큰 한도를 늘려 한 번 더 시도한다."""
+    model, cost_total, last = MODEL, 0.0, None
+    for attempt in range(2):
+        body = {"model": model, "max_completion_tokens": int(max_tokens * (1 + attempt)), "reasoning_effort": "low",
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                "response_format": {"type": "json_schema",
+                                    "json_schema": {"name": name, "schema": schema, "strict": True}}}
+        if model == FALLBACK_MODEL: body["routing_strategy"] = "cost"
+        try:
             r = _post("/chat/completions", body)
-        else:
-            raise
-    txt = r["choices"][0]["message"]["content"]
-    return json.loads(txt), r.get("model", body["model"]), (r.get("usage") or {}).get("cost")
+        except RuntimeError as e:
+            if model != FALLBACK_MODEL and ("HTTP 400" in str(e) or "HTTP 404" in str(e)):
+                model = FALLBACK_MODEL; body["model"] = model; body["routing_strategy"] = "cost"
+                r = _post("/chat/completions", body)
+            else:
+                raise
+        cost_total += (r.get("usage") or {}).get("cost") or 0
+        ch = r["choices"][0]
+        try:
+            return json.loads(ch["message"]["content"]), r.get("model", model), cost_total
+        except (json.JSONDecodeError, TypeError) as e:
+            last = RuntimeError(f"모델 응답을 해석하지 못했습니다(finish_reason={ch.get('finish_reason')}): {e}")
+    raise last
