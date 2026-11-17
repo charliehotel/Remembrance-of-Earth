@@ -317,17 +317,34 @@ function init(S) {
     const sig = prog ? "p" + Math.round(T * 240) : "s" + bld.length + ":" + ghost.length + ":" + ctxDet.length;
     return { bld, crane, ghost, ctxProg, ctxDet, sig, nb };
   }
+  // 지도 소스 갱신은 PUSH_MS 에 한 번만 보낸다. 재생 중 프레임마다(60Hz) 큰 GeoJSON 을 setData 하면 MapLibre 워커가 직전 로딩을
+  // 계속 취소(abandoned)해서, 재생이 끝날 때까지 건물이 화면에 반영되지 않는다(완공된 건물이 한참 뒤에야 나타나는 문제).
+  // 건너뛴 갱신은 버리지 않고 맨 마지막 상태를 뒤따라 보낸다.
+  const PUSH_MS = 120;
+  let lastPush = 0, pendingPush = null, pushTimer = 0;
+  function pushDyn(d) {
+    map.getSource("buildings").setData({ type: "FeatureCollection", features: d.bld });
+    map.getSource("cranes").setData({ type: "FeatureCollection", features: d.crane });
+    map.getSource("ghosts").setData({ type: "FeatureCollection", features: d.ghost });
+    map.getSource("ctx-prog")?.setData({ type: "FeatureCollection", features: d.ctxProg });
+    map.getSource("ctx-det")?.setData({ type: "FeatureCollection", features: d.ctxDet });
+  }
+  function schedulePush(d) {
+    const wait = PUSH_MS - (performance.now() - lastPush);
+    if (wait <= 0 && !pushTimer) { lastPush = performance.now(); pushDyn(d); return; }
+    pendingPush = d;
+    if (!pushTimer) pushTimer = setTimeout(() => {
+      pushTimer = 0; lastPush = performance.now();
+      const p = pendingPush; pendingPush = null; if (p) pushDyn(p);
+    }, Math.max(wait, 0));
+  }
   function refreshDyn(T, force) {
     updateCtx(T);
     const d = dyn(T);
     if (force || d.sig !== lastSig) {
       lastSig = d.sig;
       curBld = d.bld; occKey = "";
-      map.getSource("buildings").setData({ type: "FeatureCollection", features: d.bld });
-      map.getSource("cranes").setData({ type: "FeatureCollection", features: d.crane });
-      map.getSource("ghosts").setData({ type: "FeatureCollection", features: d.ghost });
-      map.getSource("ctx-prog")?.setData({ type: "FeatureCollection", features: d.ctxProg });
-      map.getSource("ctx-det")?.setData({ type: "FeatureCollection", features: d.ctxDet });
+      schedulePush(d);
     }
     return d.nb;
   }

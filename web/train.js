@@ -1,6 +1,7 @@
 // 경의중앙선 철도 둑(창천교회 북쪽) 위를 오가는 열차. scripts/build_rail.py 의 선로(y = 47 + 0.04x, 선로면 10.5m)를 따라 달린다.
-//  - 동행(신촌역 방향): 남쪽 선로. 신촌역 구내(동쪽)에서 감속·정차했다가 다시 출발한다. 가끔은 서지 않고 지나간다.
-//  - 서행(반대 방향): 북쪽 선로. 동쪽 끝에서 천천히 나타나 속도를 올리며 지나간다.
+//  - 동행(신촌역 방향): 남쪽 선로. 서쪽 끝에서 들어와 쉬지 않고 동쪽 끝으로 빠져나간다.
+//  - 서행(반대 방향): 북쪽 선로. 동쪽 끝에서 들어와 서쪽 끝으로 빠져나간다.
+//  신촌역은 창천교회 반경 300m 밖이라 지도에 없으므로 정차하지 않는다.
 //  - 방향마다 한 편성씩만 다닌다. 출발 간격은 무작위.
 // 열차는 MapLibre fill-extrusion 레이어('trains')로 그리고, 프레임마다 GeoJSON 을 갱신한다(차량 7~8량 x 7조각).
 const C0 = 126.93756304043873, C1 = 37.55915909082795;          // build_rail.py 의 지역 좌표 원점(교회 필지 중심)
@@ -8,7 +9,6 @@ const KX = 111320 * Math.cos(37.559 * Math.PI / 180), KY = 110540;
 const cy = x => 47 + 0.04 * x;                                   // 둑 중심선
 const NX = -0.04 / Math.hypot(1, 0.04), NY = 1 / Math.hypot(1, 0.04);   // 선로에 수직인 단위 벡터(북쪽 쪽)
 const X0 = -200, X1 = 250;                                       // 선로가 그려진 구간(m)
-const STOP = 150;                                                // 동행 열차가 서는 위치(맨 앞 x). 신촌역 구내
 const LANE = { east: -4.2, west: 4.2 };                          // 중심선에서 떨어진 정도(우측통행: 동행은 남쪽)
 const CAR_L = 19.5, GAP = 0.5, CAR_W = 3.1, DECK = 10.75;
 const VARIANTS = [
@@ -56,30 +56,14 @@ function spawn(dirName, now) {
   const v = VARIANTS[Math.floor(Math.random() * VARIANTS.length)];
   const len = n * (CAR_L + GAP) - GAP;
   const east = dirName === "east";
-  const t = { dirName, dir: east ? 1 : -1, off: LANE[dirName], n, len, v, state: "run", dwell: 0, speed: 0, cruise: rnd(14, 19),
-              pass: east && Math.random() < 0.25, head: east ? X0 : X1 + 4 };   // 동행은 서쪽 끝에서 들어오고, 서행은 동쪽 끝 바깥에서 출발
-  t.speed = east ? t.cruise : 2.5;
+  const cruise = rnd(14, 20);
+  const t = { dirName, dir: east ? 1 : -1, off: LANE[dirName], n, len, v, speed: cruise,
+              head: east ? X0 : X1 + 4 };                            // 동행은 서쪽 끝에서, 서행은 동쪽 끝 바깥에서 들어온다
   trains.push(t);
   return t;
 }
 
 function step(t, dt) {
-  const A_ACC = 0.8, A_BRK = 0.9;
-  if (t.dirName === "east") {
-    const d = STOP - t.head;
-    if (t.state === "run" && !t.pass && d > -1 && d <= t.speed * t.speed / (2 * A_BRK) + 2) t.state = "brake";
-    if (t.state === "brake") {
-      t.speed = Math.max(1.2, Math.min(t.speed, Math.sqrt(2 * A_BRK * Math.max(d, 0.01))));
-      if (d <= 0.4) { t.speed = 0; t.head = STOP; t.state = "dwell"; t.dwell = rnd(6, 11); }
-    } else if (t.state === "dwell") {
-      t.dwell -= dt;
-      if (t.dwell <= 0) { t.state = "depart"; t.pass = true; }
-    } else {
-      t.speed = Math.min(t.cruise, t.speed + A_ACC * dt);
-    }
-  } else {
-    t.speed = Math.min(t.cruise, t.speed + A_ACC * dt);
-  }
   t.head += t.dir * t.speed * dt;
 }
 const gone = t => t.dirName === "east" ? t.head - t.len > X1 + 5 : t.head + t.len < X0 - 5;
@@ -91,7 +75,7 @@ function frame(map, ts) {
   if (!last) last = now;
   const dt = Math.min(0.25, now - last);
   last = now; acc += dt;
-  if (acc < 0.05) return;                                         // 20 fps 로 갱신
+  if (acc < 0.1) return;                                          // 10 fps 로 갱신(건물 소스와 MapLibre 워커를 같이 쓰므로 과하게 보내지 않는다)
   const h = acc; acc = 0;
   for (const t of trains) step(t, h);
   for (let i = trains.length - 1; i >= 0; i--) if (gone(trains[i])) trains.splice(i, 1);
@@ -111,8 +95,8 @@ function attach(map) {
   const before = map.getLayer("ctx-bld-x") ? "ctx-bld-x" : undefined;
   map.addLayer({ id: "trains", type: "fill-extrusion", source: "trains", paint: {
     "fill-extrusion-color": ["get", "c"], "fill-extrusion-base": ["get", "b"], "fill-extrusion-height": ["get", "h"], "fill-extrusion-opacity": 1 } }, before);
-  const t0 = spawn("east", 0);                                    // 처음부터 신촌역에 서 있는 열차가 한 편성 있다
-  t0.head = STOP; t0.state = "dwell"; t0.dwell = rnd(4, 8); t0.speed = 0;
+  const t0 = spawn("east", 0);                                    // 처음부터 선로 가운데를 달리는 열차가 한 편성 있다
+  t0.head = rnd(-20, 120);
   nextSpawn = performance.now() / 1000 + rnd(3, 8);
   requestAnimationFrame(ts => frame(map, ts));
 }
