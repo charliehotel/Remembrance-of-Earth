@@ -69,6 +69,7 @@
   #areaHint { font-size: 11.5px; color: #666; margin-top: 5px; }
   #areaChip { margin: 0 0 6px; padding: 4px 8px; border-radius: 12px; background: #fdecec; border: 1px solid #d33; color: #a22; font-size: 12px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
   #areaChip button { width: auto !important; margin: 0 !important; padding: 0 5px !important; background: none !important; color: #a22 !important; font-size: 14px !important; }
+  #drawSvg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
   #drawBox { position: absolute; border: 2px dashed #d33; background: #d332; pointer-events: none; z-index: 5; display: none; }
   #agChips button, #agNew { width: auto !important; margin: 0 !important; padding: 3px 9px !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 12px !important; font-size: 11.5px !important; }
   #agNew { color: #777 !important; border-color: #bbb !important; }
@@ -177,7 +178,7 @@
   </div>
   <div id="agent" class="band">
       <h2><span id="agTitle">🐝 기억 속 장소 찾기</span> <button id="agMode" type="button" title="골목의 연대기로 전환">⇄</button> <button id="agNew" title="대화를 지우고 새로 시작" hidden>새로 시작</button></h2>
-      <div id="areaTools" hidden><div class="atTitle">영역 선택</div><div class="atRow"><button type="button" data-shape="rect" title="사각형: 지도를 드래그하세요">□</button><button type="button" data-shape="circle" title="원 (준비 중)" disabled>○</button><button type="button" data-shape="poly" title="다각형 (준비 중)" disabled>⬠</button></div><div id="areaHint">영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.</div></div>
+      <div id="areaTools" hidden><div class="atTitle">영역 선택</div><div class="atRow"><button type="button" data-shape="rect" title="사각형: 지도를 드래그하세요">□</button><button type="button" data-shape="circle" title="원: 지름의 양 끝을 드래그">○</button><button type="button" data-shape="poly" title="다각형: 점을 클릭해 꼭짓점을 찍고 닫으세요">⬠</button></div><div id="areaHint">영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.</div></div>
       <div id="agLog"></div><div id="arLog" hidden></div>
       <div id="areaChip" hidden></div>
       <textarea id="agText" placeholder="기억 속 장소의 단서를 AI에 물어보세요.&#10;예: 2010년경 독수리다방 앞 카레집"></textarea>
@@ -1004,14 +1005,20 @@ function init(S) {
     if (js.length) areaChip.querySelector("button").onclick = () => setAreaSel([]);
     refreshGo();
   }
-  function arm(on) {
+  const HINTS = { rect: "지도를 드래그해 사각형을 그리세요 · Esc 취소", circle: "한쪽 끝에서 반대쪽 끝까지 드래그해 원을 그리세요 · Esc 취소",
+    poly: "점을 클릭해 꼭짓점을 찍고, 첫 점을 누르거나 더블클릭하면 닫힙니다 · Backspace 되돌리기 · Esc 취소" };
+  const IDLE_HINT = "영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.";
+  let shape = null, poly = [], cur = null;
+  const toolBtns = [...areaTools.querySelectorAll("button[data-shape]")];
+  function arm(on, sh) {
     if (on && (walking || placing)) { areaHint.textContent = "걷기 모드를 끈 뒤 선택하세요"; return; }
-    armed = on; rectBtn.classList.toggle("on", on); drag = null; drawBox.style.display = "none";
-    areaHint.textContent = on ? "지도를 드래그해 사각형을 그리세요 · Esc 취소" : (area.length ? "도형을 다시 누르면 영역을 새로 그립니다" : "영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.");
+    armed = on; shape = on ? sh : null; poly = []; cur = null; drag = null; drawBox.style.display = "none"; drawSvgRender();
+    toolBtns.forEach(b => b.classList.toggle("on", on && b.dataset.shape === sh));
+    areaHint.textContent = on ? HINTS[sh] : (area.length ? "도형을 다시 누르면 영역을 새로 그립니다" : IDLE_HINT);
     map.getCanvas().style.cursor = on ? "crosshair" : "";
-    ["dragPan", "dragRotate"].forEach(k => map[k][on ? "disable" : "enable"]());
+    ["dragPan", "dragRotate", "doubleClickZoom"].forEach(k => map[k][on ? "disable" : "enable"]());
   }
-  rectBtn.onclick = () => arm(!armed);
+  toolBtns.forEach(b => b.onclick = () => arm(!(armed && shape === b.dataset.shape), b.dataset.shape));
   function setMode(m) {
     if (m === mode) return; mode = m; const a = m === "area";
     if (!a) { arm(false); setAreaSel([]); arLog.innerHTML = ""; }   // 영역이 사라지면 그 결과도 지운다(오래된 결과를 현재 선택으로 오해하지 않도록)
@@ -1031,36 +1038,78 @@ function init(S) {
   const inPoly = (p, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const a = ring[i], b = ring[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
   const ccw = (a, b, c) => (c[1] - a[1]) * (b[0] - a[0]) > (b[1] - a[1]) * (c[0] - a[0]);
   const segX = (a, b, c, d) => ccw(a, c, d) !== ccw(b, c, d) && ccw(a, b, c) !== ccw(a, b, d);
-  function parcelHitsRect(f, r) {
-    const rc = [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0, r.y1]];
-    for (const poly of polyRings(f.geometry)) {
-      const ring = poly[0].map(c => { const q = map.project(c); return [q.x, q.y]; });
-      if (Math.max(...ring.map(p => p[0])) < r.x0 || Math.min(...ring.map(p => p[0])) > r.x1 || Math.max(...ring.map(p => p[1])) < r.y0 || Math.min(...ring.map(p => p[1])) > r.y1) continue;
-      if (ring.some(p => inRect(p, r)) || rc.some(c => inPoly(c, ring))) return true;
-      for (let i = 0; i < ring.length - 1; i++) for (let k = 0; k < 4; k++) if (segX(ring[i], ring[i + 1], rc[k], rc[(k + 1) % 4])) return true;
-    }
+  const NONSITE = new Set(["도", "철", "구", "천", "제", "하", "유", "수"]);   // 도로·철도·구거·하천·제방·유지·수도용지는 영업할 자리가 아니므로 선택에서 뺀다
+  const ringsOf = f => polyRings(f.geometry).map(poly => poly[0].map(c => { const q = map.project(c); return [q.x, q.y]; }));
+  const bboxOf = pts => ({ x0: Math.min(...pts.map(p => p[0])), y0: Math.min(...pts.map(p => p[1])), x1: Math.max(...pts.map(p => p[0])), y1: Math.max(...pts.map(p => p[1])) });
+  function polysOverlap(ring, pts) {   // 화면 좌표의 두 다각형이 겹치는가(꼭짓점 포함·변 교차)
+    const a = bboxOf(ring), b = bboxOf(pts); if (a.x1 < b.x0 || a.x0 > b.x1 || a.y1 < b.y0 || a.y0 > b.y1) return false;
+    if (ring.some(p => inPoly(p, pts)) || pts.some(p => inPoly(p, ring))) return true;
+    for (let i = 0; i < ring.length - 1; i++) for (let k = 0; k < pts.length; k++) if (segX(ring[i], ring[i + 1], pts[k], pts[(k + 1) % pts.length])) return true;
     return false;
   }
-  const NONSITE = new Set(["도", "철", "구", "천", "제", "하", "유", "수"]);   // 도로·철도·구거·하천·제방·유지·수도용지는 영업할 자리가 아니므로 선택에서 뺀다
-  function parcelsInRect(r) {   // 조사 자료가 있는 필지(핵심 25 + 반경 150m) 중 영업할 수 있는 필지만 대상
+  const segDist = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy, t = l ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l)) : 0; return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); };
+  function circleOverlap(ring, c, r) {   // 원 안에 꼭짓점이 있거나, 원의 중심이 필지 안이거나, 변이 원에 닿으면 겹침
+    if (inPoly(c, ring)) return true;
+    for (let i = 0; i < ring.length - 1; i++) if (segDist(c, ring[i], ring[i + 1]) <= r) return true;
+    return false;
+  }
+  function parcelsIn(hit) {   // 조사 자료가 있는 필지(핵심 25 + 반경 150m) 중 영업할 수 있는 필지만 대상
     const cand = S.parcels.features.filter(f => !NONSITE.has(f.properties.jimok));
     if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties; if (p.r150 && !NONSITE.has(p.jimok) && !coreJ.has(p.jibun)) cand.push(f); });
-    return cand.filter(f => parcelHitsRect(f, r)).map(f => f.properties.jibun);
+    return cand.filter(f => ringsOf(f).some(hit)).map(f => f.properties.jibun);
   }
+  const rectPts = r => [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0, r.y1]];
   const cpt = e => { const b = map.getCanvas().getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
-  map.getCanvas().addEventListener("mousedown", e => { if (!armed || e.button !== 0) return; e.preventDefault(); e.stopPropagation(); drag = cpt(e); });
+  const svgNS = "http://www.w3.org/2000/svg", drawSvg = document.createElementNS(svgNS, "svg"); drawSvg.id = "drawSvg"; map.getContainer().appendChild(drawSvg);
+  function drawSvgRender() {   // 다각형을 그리는 중: 찍은 점과 선, 커서까지의 임시 선, 닫을 수 있는 첫 점
+    if (shape !== "poly" || !poly.length) { drawSvg.innerHTML = ""; return; }
+    const pts = poly.concat(cur && !drag ? [cur] : []).map(p => p.join(",")).join(" ");
+    drawSvg.innerHTML = `<polyline points="${pts}" fill="${poly.length > 2 ? "#d332" : "none"}" stroke="#d33" stroke-width="2" stroke-dasharray="6 4"/>` +
+      poly.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i === 0 && poly.length > 2 ? 7 : 4}" fill="${i === 0 ? "#fff" : "#d33"}" stroke="#d33" stroke-width="2"/>`).join("");
+  }
+  function finishArea(hit) {
+    const js = parcelsIn(hit); arm(false); setAreaSel(js);
+    if (!js.length) areaHint.textContent = "그 안에 조사된 필지가 없어요. 다시 선택해 주세요";
+  }
+  function closePoly() {
+    if (poly.length > 1 && Math.hypot(poly[poly.length - 1][0] - poly[poly.length - 2][0], poly[poly.length - 1][1] - poly[poly.length - 2][1]) < 4) poly.pop();   // 더블클릭으로 생긴 겹친 점
+    if (poly.length < 3) { areaHint.textContent = "점이 3개 이상 필요해요. 계속 찍어 주세요"; return; }
+    const pts = poly.slice(); finishArea(ring => polysOverlap(ring, pts));
+  }
+  map.getCanvas().addEventListener("mousedown", e => { if (!armed || shape === "poly" || e.button !== 0) return; e.preventDefault(); e.stopPropagation(); drag = cpt(e); });
+  map.getCanvas().addEventListener("click", e => {
+    if (!armed || shape !== "poly" || e.button !== 0) return; const p = cpt(e);
+    if (poly.length > 2 && Math.hypot(p[0] - poly[0][0], p[1] - poly[0][1]) <= 10) { closePoly(); return; }   // 첫 점을 누르면 닫는다
+    poly.push(p); cur = p; drawSvgRender();
+  });
+  map.getCanvas().addEventListener("dblclick", e => { if (armed && shape === "poly") { e.preventDefault(); closePoly(); } });
   window.addEventListener("mousemove", e => {
-    if (!armed || !drag) return; const p = cpt(e), x0 = Math.min(drag[0], p[0]), y0 = Math.min(drag[1], p[1]);
-    Object.assign(drawBox.style, { display: "block", left: x0 + "px", top: y0 + "px", width: Math.abs(p[0] - drag[0]) + "px", height: Math.abs(p[1] - drag[1]) + "px" });
+    if (!armed) return; const p = cpt(e);
+    if (shape === "poly") { cur = p; drawSvgRender(); return; }
+    if (!drag) return;
+    if (shape === "circle") {   // 누른 지점과 놓는 지점이 지름의 양 끝: 오른쪽 아래로 끌면 누른 지점이 원의 11시 방향 끝이 된다
+      const r = Math.hypot(p[0] - drag[0], p[1] - drag[1]) / 2, cx = (p[0] + drag[0]) / 2, cy = (p[1] + drag[1]) / 2;
+      Object.assign(drawBox.style, { display: "block", left: cx - r + "px", top: cy - r + "px", width: 2 * r + "px", height: 2 * r + "px", borderRadius: "50%" }); return; }
+    Object.assign(drawBox.style, { display: "block", left: Math.min(drag[0], p[0]) + "px", top: Math.min(drag[1], p[1]) + "px", width: Math.abs(p[0] - drag[0]) + "px", height: Math.abs(p[1] - drag[1]) + "px", borderRadius: "0" });
   });
   window.addEventListener("mouseup", e => {
-    if (!armed || !drag) return; const p = cpt(e), r = { x0: Math.min(drag[0], p[0]), y0: Math.min(drag[1], p[1]), x1: Math.max(drag[0], p[0]), y1: Math.max(drag[1], p[1]) };
+    if (!armed || !drag || shape === "poly") return; const p = cpt(e), c = drag;
     drag = null; drawBox.style.display = "none"; areaDragged = true; setTimeout(() => areaDragged = false, 60);
+    if (shape === "circle") {
+      const r = Math.hypot(p[0] - c[0], p[1] - c[1]) / 2, mid = [(p[0] + c[0]) / 2, (p[1] + c[1]) / 2]; if (r < 8) { areaHint.textContent = "조금 더 크게 드래그해 주세요"; return; }
+      finishArea(ring => circleOverlap(ring, mid, r)); return;
+    }
+    const r = { x0: Math.min(c[0], p[0]), y0: Math.min(c[1], p[1]), x1: Math.max(c[0], p[0]), y1: Math.max(c[1], p[1]) };
     if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { areaHint.textContent = "조금 더 크게 드래그해 주세요"; return; }
-    const js = parcelsInRect(r); arm(false); setAreaSel(js);
-    if (!js.length) areaHint.textContent = "그 안에 조사된 필지가 없어요. 다시 선택해 주세요";
+    const pts = rectPts(r); finishArea(ring => polysOverlap(ring, pts));
   });
-  window.addEventListener("keydown", e => { if (e.key === "Escape" && armed) arm(false); });
+  window.addEventListener("keydown", e => {
+    if (!armed) return;
+    if (e.key === "Escape") arm(false);
+    else if (shape === "poly" && !/^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName)) {
+      if (e.key === "Backspace") { e.preventDefault(); poly.pop(); drawSvgRender(); } else if (e.key === "Enter") { e.preventDefault(); closePoly(); }
+    }
+  });
   const fy = v => Math.floor(v), span = (a, b) => a === b ? a : a + "–" + b, pc = a => span(Math.round(a[0] * 100), Math.round(a[1] * 100)) + "%";
   function arReport(R) {
     const o = R.overview, f = R.focus, L = R.limits, secs = [];
