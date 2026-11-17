@@ -216,3 +216,43 @@ def report(rows, parcels, jibuns, focus=None):
                                 "로드뷰 조사는 연세로12길 구간에만 있고 반경 150m 확장 구간은 인허가 기록만이다.",
                                 "2011년 이전 기록에는 옛 조문이 적용됐을 수 있다.", "예측·추천은 하지 않고 기록된 이력만 설명한다."]}}
     return rep
+
+
+# ---------- AI 해설용 사실 목록 ----------
+def _rg(a, unit=""):
+    return f"{a[0]}{unit}" if a[0] == a[1] else f"{a[0]}–{a[1]}{unit}"
+
+def facts(rep):
+    """리포트의 수치를 한 줄짜리 사실(F0, F1…)로 풀어 쓴다. AI는 이 목록의 숫자만 쓸 수 있고, 코드가 서술 속 숫자를 이 목록과 대조한다."""
+    out = []
+    add = lambda t: out.append((f"F{len(out)}", t))
+    o = rep["overview"]
+    if not o["n_shops"]: return out
+    ev = o["evidence"]
+    add(f"영역: 필지 {o['n_parcels']}개(연세로12길 {o['core_parcels']}개, 주변 {o['ring_parcels']}개), 업소 {o['n_shops']}곳, 기록 기간 {o['period'][0]}~{o['period'][1]}년. "
+        f"영업 중 {o['state']['open']}곳, 폐업 {o['state']['closed']}곳, 종료 시점 불명 {o['state']['stale'] + o['state']['undated']}곳. "
+        f"근거 등급: 관측 확인 {ev[EV_OBS]}곳, 부분 관측 {ev[EV_PART]}곳, 기록만 {ev[EV_REC]}곳.")
+    C = rep.get("composition")
+    if C:
+        for y in C["years"]:
+            gs = list(C["by_year"][str(y)].items())[:8]
+            add(f"{y}년 영업 중 업소 수(확실–가능): 합계 {_rg(C['total'][str(y)], '곳')}; " + ", ".join(f"{g} {_rg(v, '곳')}" for g, v in gs))
+    V = rep["survival"]
+    if V.get("insufficient_all"):
+        add(f"영업 기간: 종료 시점을 아는 업소가 {V['n']}곳뿐이라 표본 부족(기준 {MIN_N}곳)으로 수치를 내지 않았다.")
+    else:
+        def line(name, g):
+            m = g["median"]; med = "50% 넘게 영업 중이라 중앙값 없음" if m[0] is None and m[1] is None else f"{m[0] if m[0] is not None else '?'}–{m[1] if m[1] is not None else '?'}년"
+            return f"{name}: 표본 {g['n']}곳(폐업 {g['n_closed']}곳), 3년 생존 {_rg([round(x * 100) for x in g['at']['3']], '%')}, 5년 생존 {_rg([round(x * 100) for x in g['at']['5']], '%')}, 10년 생존 {_rg([round(x * 100) for x in g['at']['10']], '%')}, 영업 기간 중앙값 {med}"
+        add("영업 기간(기록 기준, 범위는 폐업 시점 불확실성 반영) " + line("전체", V["all"]))
+        for g in V["groups"]: add("영업 기간 " + line(g["group"], g))
+        if V["insufficient"]: add("표본 부족으로 수치 없음: " + ", ".join(f"{x['group']} {x['n']}곳" for x in V["insufficient"]))
+        add(f"영업 기간 계산에서 종료 시점 불명 {V['excluded']}곳은 제외했다. 관측 없는 업소의 실제 폐업은 기록보다 최대 {V['delay_years']}년 빠를 수 있다고 가정했다.")
+    H = rep.get("history")
+    if H:
+        t = f"자리 이력: 같은 자리 업소 교체 {H['n_turnovers']}건"
+        if H["interval_median"] is not None: t += f", 개업 간격 중앙값 {H['interval_median']}년"
+        if H["gap_range_median"]: t += f", 폐업~다음 개업 공백 중앙값 {_rg(H['gap_range_median'], '년')}"
+        if H["overlap_share"] is not None: t += f", 다음 업소가 이전 업소 폐업 전에 개업한 경우 {round(H['overlap_share'] * 100)}%(호실 정보가 없어 같은 건물의 다른 호실일 수 있음)"
+        add(t + ".")
+    return out

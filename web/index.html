@@ -918,8 +918,8 @@ function init(S) {
   let agState = null, agBusy = false;
   agChips.innerHTML = AG_CHIPS.map((c, i) => `<button data-i="${i}">${c[0]}</button>`).join("");
   agChips.onclick = e => { const b = e.target.closest("button[data-i]"); if (b) agAsk(AG_CHIPS[+b.dataset.i][1]); };
-  agNew.onclick = () => { if (mode === "area") { arLog.innerHTML = ""; setAreaSel([]); agNew.hidden = true; return; } agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집"; };
-  const ask = t => mode === "area" ? arAsk(t) : agAsk(t);
+  agNew.onclick = () => { if (mode === "area") { resetArea(); return; } agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집"; };
+  const ask = t => mode === "area" ? ((t || "").trim() && arAsk(t)) : agAsk(t);
   agText.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(agText.value); } });
   agGo.onclick = () => ask(agText.value);
   function agPick(c) {   // 후보 카드를 누르면 그 상점의 시기·필지로 이동
@@ -994,15 +994,15 @@ function init(S) {
   let mode = "find", area = [], armed = false, areaDragged = false, drag = null;
   const drawBox = document.createElement("div"); drawBox.id = "drawBox"; map.getContainer().appendChild(drawBox);
   const AREA_NONE = ["==", ["get", "jibun"], ""];
-  function refreshGo() { agGo.textContent = mode === "find" ? "찾아보기" : (area.length && !agText.value.trim() ? "영역 분석하기" : "물어보기"); }
+  function refreshGo() { agGo.textContent = mode === "find" ? "찾아보기" : "물어보기"; }
   agText.addEventListener("input", refreshGo);
   function setAreaSel(js) {   // 클릭으로 고른 필지와 같은 모양(붉은 외곽선+옅은 채움)으로 여러 필지를 동시에 강조
     area = js; const f = js.length ? ["in", ["get", "jibun"], ["literal", js]] : AREA_NONE;
     ["area-sel-fill", "area-sel-line", "area-ctx-fill", "area-ctx-line"].forEach(id => map.getLayer(id) && map.setFilter(id, f));
     const shops = js.reduce((n, j) => n + (bizByParcel[j] ? bizByParcel[j].length : 0), 0);
     areaChip.hidden = !js.length;
-    areaChip.innerHTML = js.length ? `<span>📍 선택 영역: 필지 ${js.length}개 · 업소 ${shops}곳</span><button type="button" title="영역 해제">✕</button>` : "";
-    if (js.length) areaChip.querySelector("button").onclick = () => setAreaSel([]);
+    areaChip.innerHTML = js.length ? `<span>📍 선택 영역: 필지 ${js.length}개 · 업소 ${shops}곳</span><button type="button" title="영역 해제(새로 시작)">✕</button>` : "";
+    if (js.length) areaChip.querySelector("button").onclick = resetArea;
     refreshGo();
   }
   const HINTS = { rect: "지도를 드래그해 사각형을 그리세요 · Esc 취소", circle: "한쪽 끝에서 반대쪽 끝까지 드래그해 원을 그리세요 · Esc 취소",
@@ -1010,6 +1010,7 @@ function init(S) {
   const IDLE_HINT = "영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.";
   let shape = null, poly = [], cur = null;
   const toolBtns = [...areaTools.querySelectorAll("button[data-shape]")];
+  function resetArea() { arm(false); arLog.innerHTML = ""; setAreaSel([]); agNew.hidden = true; }   // 영역 해제 = 새로 시작: 선택, 리포트, 질문 기록을 모두 지운다
   function arm(on, sh) {
     if (on && (walking || placing)) { areaHint.textContent = "걷기 모드를 끈 뒤 선택하세요"; return; }
     armed = on; shape = on ? sh : null; poly = []; cur = null; drag = null; drawBox.style.display = "none"; drawSvgRender();
@@ -1070,6 +1071,7 @@ function init(S) {
   function finishArea(hit) {
     const js = parcelsIn(hit); arm(false); setAreaSel(js);
     if (!js.length) areaHint.textContent = "그 안에 조사된 필지가 없어요. 다시 선택해 주세요";
+    else arAsk("");   // 영역을 고르면 AI 없이 바로 리포트를 보여 준다. AI는 이어지는 질문에만 쓴다
   }
   function closePoly() {
     if (poly.length > 1 && Math.hypot(poly[poly.length - 1][0] - poly[poly.length - 2][0], poly[poly.length - 1][1] - poly[poly.length - 2][1]) < 4) poly.pop();   // 더블클릭으로 생긴 겹친 점
@@ -1111,7 +1113,7 @@ function init(S) {
     }
   });
   const fy = v => Math.floor(v), span = (a, b) => a === b ? a : a + "–" + b, pc = a => span(Math.round(a[0] * 100), Math.round(a[1] * 100)) + "%";
-  function arReport(R) {
+  function arReport(R, only) {
     const o = R.overview, f = R.focus, L = R.limits, secs = [];
     const ev = o.evidence, badge = (c, k, n) => n ? `<span class="ev ${c}">${k} ${n}</span>` : "";
     if (!o.n_shops) return `<div class="rp"><div class="ans">이 영역에는 조사된 업소 기록이 없어요.</div></div>`;
@@ -1142,6 +1144,7 @@ function init(S) {
         <details><summary>필지별 이력 보기(${H.parcels.length}${H.truncated ? "+" + H.truncated : ""}곳)</summary>${H.parcels.map(p => `<div style="margin-top:6px"><span class="hl" data-j="${esc(p.jibun)}">창천동 ${esc(p.jibun)}</span> · ${p.n}곳${p.floors_known ? "" : " · 층 정보 일부 없음"}<ul>${p.entries.map(e => `<li>${ent(e)}</li>`).join("")}</ul></div>`).join("")}</details>`]);
     }
     secs.push(["limits", "한계", `<div class="basis">${esc(L.basis)}</div><ul>${L.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`]);
+    if (only) { const s1 = secs.find(x => x[0] === only); return s1 ? `<div class="rp"><h3>${s1[1]}</h3>${s1[2]}</div>` : ""; }   // 질문 답변 밑에 붙일 해당 섹션만
     if (f) { const i = secs.findIndex(s => s[0] === f); if (i > 1) secs.splice(1, 0, secs.splice(i, 1)[0]); }
     return `<div class="rp"><div class="basis">골목의 연대기 · 기록 기준 리포트${f ? " · 질문의 관점을 앞에 놓았습니다" : ""}</div>${secs.map(s => `<div class="${s[0] === f ? "focus" : ""}"><h3>${s[1]}</h3>${s[2]}</div>`).join("")}</div>`;
   }
@@ -1149,12 +1152,22 @@ function init(S) {
     text = (text || "").trim(); if (agBusy) return;
     if (!area.length) { const n = document.createElement("div"); n.className = "aga"; n.innerHTML = `<div class="ans">먼저 지도에서 영역을 선택해 주세요. □를 누르고 지도를 드래그하면 됩니다.</div>`; arLog.appendChild(n); agNew.hidden = false; n.scrollIntoView({ block: "nearest" }); return; }
     agBusy = true; agGo.disabled = true; agText.value = ""; refreshGo();
-    const u = document.createElement("div"); u.className = "agu"; u.textContent = `[필지 ${area.length}개] ${text || "선택 영역 분석"}`; arLog.appendChild(u);
-    const box = document.createElement("div"); box.className = "aga"; box.textContent = "분석 중…"; arLog.appendChild(box); agNew.hidden = false;
+    const u = document.createElement("div"); u.className = "agu"; u.textContent = `[필지 ${area.length}개] ${text || "영역 분석"}`; arLog.appendChild(u);
+    const box = document.createElement("div"); box.className = "aga"; box.textContent = text ? "AI가 리포트를 읽고 답하는 중…" : "분석 중…"; arLog.appendChild(box); agNew.hidden = false; 
     try {
       const r = await fetch("/api/area", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, jibuns: area }) });
       if (!r.ok) throw new Error(`분석 서버가 응답하지 않습니다(${r.status}). python3 server/app.py 로 실행했는지 확인해 주세요`);
-      box.innerHTML = arReport((await r.json()).report);
+      const m = await r.json(), ai = m.ai;
+      if (!text) box.innerHTML = arReport(m.report);
+      else if (!ai || ai.error) box.innerHTML = `<div class="ans">⚠ AI 해설을 만들지 못했습니다${ai && ai.error ? ": " + esc(ai.error) : ""}. 리포트의 표를 참고해 주세요.</div>` + arReport(m.report, m.report.focus);
+      else {
+        const w = ai.web, byW = Object.fromEntries((w.evidence || []).map(x => [x.id, x]));
+        const src = (ai.web_ids || []).filter(i => byW[i]).map(i => `<a href="${safeUrl(byW[i].url)}" target="_blank" rel="noopener" title="${esc(byW[i].title)}">${esc(byW[i].hostname || byW[i].title.slice(0, 18))}</a>`).join(" ");
+        box.innerHTML = `<div class="ans">${esc(ai.answer)}</div>` +
+          (w.used ? `<div class="web">🌐 웹 검색 사용 · ${esc(w.label)} ${w.n}건 — ${esc(w.reason)}</div>${src ? `<div class="src" style="font-size:11.5px;margin:2px 0">${src}</div>` : ""}` : `<div class="web off">웹 검색 안 함 — ${esc(w.reason)}</div>`) +
+          (m.report.focus ? arReport(m.report, m.report.focus) : "") +
+          `<div class="agnote">${esc(ai.mdl || "모델")} ${esc(ai.model)}${ai.cost_usd ? " · 이번 질문 비용 약 $" + ai.cost_usd : ""}. 답변 속 숫자는 계산 결과와 대조했고${ai.dropped ? " 어긋난 " + ai.dropped + "문장은 뺐습니다" : " 어긋난 문장은 없었습니다"}. 근거를 직접 확인하세요.</div>`;
+      }
       box.querySelectorAll(".hl[data-j]").forEach(a => a.onclick = () => { focusBiz = null; goParcel(a.dataset.j); });
     } catch (e) { box.textContent = "⚠ " + e.message; }
     agBusy = false; agGo.disabled = false; box.scrollIntoView({ block: "nearest" });

@@ -3,7 +3,7 @@ import json, sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import agent, analysis
+import agent, analysis, area_agent
 
 WEB = Path(__file__).resolve().parent.parent / "web"
 
@@ -35,7 +35,16 @@ class H(SimpleHTTPRequestHandler):
             rows, parcels = db()
             js = [j for j in (body.get("jibuns") or []) if isinstance(j, str) and j in parcels][:400]
             text = (body.get("text") or "").strip()[:500]
-            out = json.dumps({"report": analysis.report(rows, parcels, js, guess_focus(text)), "text": text}, ensure_ascii=False).encode()
+            rep = analysis.report(rows, parcels, js, guess_focus(text) if text else None)
+            ai = None
+            if text:                                  # 영역만 고르면 AI 없이 리포트만. 질문이 있을 때만 AI를 부른다
+                try:
+                    ai = area_agent.ask(rep, text)
+                    if ai.get("focus") in ("overview", "composition", "survival", "history"): rep["focus"] = ai["focus"]
+                    elif ai.get("focus") == "none": rep["focus"] = None
+                except Exception as e:                # 키 값은 예외 메시지에 들어가지 않는다
+                    ai = {"error": str(e)[:200]}
+            out = json.dumps({"report": rep, "text": text, "ai": ai}, ensure_ascii=False).encode()
             self.send_response(200); self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(out))); self.end_headers(); self.wfile.write(out); return
         text = (body.get("text") or "").strip()[:500]
