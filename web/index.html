@@ -36,7 +36,8 @@
   #results li:hover, #results li.sel { background: #eef3ff; }
   #results .sub { color: #777; font-size: 11px; }
   #results .none { color: #777; cursor: default; }
-  #q { margin-bottom: 8px; font-family: inherit; resize: none; min-height: 54px; }
+  .qDesc { margin: 0 0 6px; font-size: 12.5px; color: #555; line-height: 1.5; }
+  #q { margin-bottom: 8px; font-family: inherit; resize: none; min-height: 0; overflow: hidden; }
   #agent textarea { width: 100%; box-sizing: border-box; padding: 7px 10px; border: 1px solid #bbb; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 54px; }
   #agent button { margin-top: 6px; width: 100%; padding: 7px; border: 0; border-radius: 6px; background: #2d6a3e; color: #fff; font-size: 13px; cursor: pointer; }
   #agent button:disabled { background: #999; cursor: default; }
@@ -58,12 +59,14 @@
   #agChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
   #agMode { width: auto !important; margin: 0 0 0 4px !important; padding: 0 7px !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 12px !important; font-size: 13px !important; line-height: 20px; vertical-align: 2px; }
   #agMode.on { background: #2d6a3e !important; color: #fff !important; }
-  #areaTools { display: flex; align-items: center; gap: 6px; margin: 2px 0 6px; }
+  #areaTools { margin: 2px 0 8px; padding: 6px 8px 7px; border: 1px solid #2d6a3e55; border-radius: 8px; background: #f3faf5; }
+  #areaTools .atTitle { font-size: 12px; font-weight: 600; color: #2d6a3e; margin-bottom: 5px; } #areaTools .atRow { display: flex; gap: 6px; }
   #areaTools[hidden], #arLog[hidden], #agLog[hidden], #areaChip[hidden] { display: none; }
-  #areaTools button { width: 34px !important; height: 30px; margin: 0 !important; padding: 0 !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 6px !important; font-size: 17px !important; line-height: 1; }
+  #areaTools button { flex: 1 1 0; width: auto !important; height: 38px; margin: 0 !important; padding: 0 !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 6px !important; font-size: 24px !important; line-height: 1; }
+  #areaTools button[data-shape="circle"] { font-size: 30px !important; } #areaTools button[data-shape="poly"] { font-size: 25px !important; }
   #areaTools button.on { background: #2d6a3e !important; color: #fff !important; }
   #areaTools button:disabled { color: #bbb !important; border-color: #ddd !important; cursor: default; }
-  #areaHint { font-size: 11.5px; color: #777; margin-left: 4px; }
+  #areaHint { font-size: 11.5px; color: #666; margin-top: 5px; }
   #areaChip { margin: 0 0 6px; padding: 4px 8px; border-radius: 12px; background: #fdecec; border: 1px solid #d33; color: #a22; font-size: 12px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
   #areaChip button { width: auto !important; margin: 0 !important; padding: 0 5px !important; background: none !important; color: #a22 !important; font-size: 14px !important; }
   #drawBox { position: absolute; border: 2px dashed #d33; background: #d332; pointer-events: none; z-index: 5; display: none; }
@@ -174,7 +177,7 @@
   </div>
   <div id="agent" class="band">
       <h2><span id="agTitle">🐝 기억 속 장소 찾기</span> <button id="agMode" type="button" title="골목의 연대기로 전환">⇄</button> <button id="agNew" title="대화를 지우고 새로 시작" hidden>새로 시작</button></h2>
-      <div id="areaTools" hidden><button type="button" data-shape="rect" title="사각형으로 영역 선택: 지도를 드래그하세요">□</button><button type="button" data-shape="circle" title="원 (준비 중)" disabled>○</button><button type="button" data-shape="poly" title="다각형 (준비 중)" disabled>⬠</button><span id="areaHint">영역 선택</span></div>
+      <div id="areaTools" hidden><div class="atTitle">영역 선택</div><div class="atRow"><button type="button" data-shape="rect" title="사각형: 지도를 드래그하세요">□</button><button type="button" data-shape="circle" title="원 (준비 중)" disabled>○</button><button type="button" data-shape="poly" title="다각형 (준비 중)" disabled>⬠</button></div><div id="areaHint">영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.</div></div>
       <div id="agLog"></div><div id="arLog" hidden></div>
       <div id="areaChip" hidden></div>
       <textarea id="agText" placeholder="기억 속 장소의 단서를 AI에 물어보세요.&#10;예: 2010년경 독수리다방 앞 카레집"></textarea>
@@ -183,7 +186,8 @@
   </div>
   <div id="sideBody" class="band">
       <h2>🕵️ 자리의 연대기</h2>
-      <textarea id="q" rows="2" placeholder="지번이나 상호를 검색해 보세요. 입점해 있던 상점 정보를 연대별로 보여줍니다. (예: 2-7, 아웃백)" autocomplete="off" spellcheck="false"></textarea>
+      <p class="qDesc">지번이나 상호를 검색해 보세요. 입점해 있던 상점 정보를 연대별로 보여줍니다.</p>
+      <textarea id="q" rows="1" placeholder="예: 창천동 2-7, 아웃백" autocomplete="off" spellcheck="false"></textarea>
       <ul id="results" hidden></ul>
       <div id="detail"><div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div></div>
   </div>
@@ -985,7 +989,7 @@ function init(S) {
   // ---------- 골목의 연대기: 영역 선택 → 필지 자동 선택 → 분석 리포트 (코드 계산, server/analysis.py) ----------
   const agMode = document.getElementById("agMode"), agTitle = document.getElementById("agTitle"), areaTools = document.getElementById("areaTools"), areaHint = document.getElementById("areaHint"),
     arLog = document.getElementById("arLog"), areaChip = document.getElementById("areaChip"), rectBtn = areaTools.querySelector('[data-shape="rect"]');
-  const FIND_PH = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집", AREA_PH = "선택한 영역을 AI에 물어보세요.\n예: 이 골목 업종이 어떻게 바뀌었어?";
+  const FIND_PH = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집", AREA_PH = "예: 이 골목 업종이 어떻게 바뀌었어?";
   let mode = "find", area = [], armed = false, areaDragged = false, drag = null;
   const drawBox = document.createElement("div"); drawBox.id = "drawBox"; map.getContainer().appendChild(drawBox);
   const AREA_NONE = ["==", ["get", "jibun"], ""];
@@ -1003,14 +1007,14 @@ function init(S) {
   function arm(on) {
     if (on && (walking || placing)) { areaHint.textContent = "걷기 모드를 끈 뒤 선택하세요"; return; }
     armed = on; rectBtn.classList.toggle("on", on); drag = null; drawBox.style.display = "none";
-    areaHint.textContent = on ? "지도를 드래그해 사각형을 그리세요 · Esc 취소" : (area.length ? "다시 누르면 영역을 새로 그립니다" : "영역 선택");
+    areaHint.textContent = on ? "지도를 드래그해 사각형을 그리세요 · Esc 취소" : (area.length ? "도형을 다시 누르면 영역을 새로 그립니다" : "영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.");
     map.getCanvas().style.cursor = on ? "crosshair" : "";
     ["dragPan", "dragRotate"].forEach(k => map[k][on ? "disable" : "enable"]());
   }
   rectBtn.onclick = () => arm(!armed);
   function setMode(m) {
     if (m === mode) return; mode = m; const a = m === "area";
-    if (!a) { arm(false); setAreaSel([]); }
+    if (!a) { arm(false); setAreaSel([]); arLog.innerHTML = ""; }   // 영역이 사라지면 그 결과도 지운다(오래된 결과를 현재 선택으로 오해하지 않도록)
     else clearSelection();
     agMode.classList.toggle("on", a); agMode.title = a ? "기억 속 장소 찾기로 전환" : "골목의 연대기로 전환";
     agTitle.textContent = a ? "🐝 골목의 연대기" : "🐝 기억 속 장소 찾기";
