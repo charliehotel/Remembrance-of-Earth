@@ -6,16 +6,16 @@
   3. 코드가 답 속 숫자를 사실 목록·웹 근거·질문의 숫자와 대조해, 어긋난 문장은 버린다.
 """
 import re
-import analysis, liner
+import analysis, liner, region
 
-REL = re.compile(r"신촌|연세로|창천|명물길|명물거리|연세대|이대|이화여대|서대문")   # 검색 결과가 이 일대 이야기인지 가르는 최소 기준
+REL = region.LOCAL_RE   # 검색 결과가 이 일대 이야기인지 가르는 최소 기준
 WHY = re.compile(r"왜|이유|때문|원인|배경|무슨 일|어떻게 된|영향")
 FOCUS = ["overview", "composition", "survival", "history", "none"]
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["focus", "answer", "used_facts", "web_ids"],
           "properties": {"focus": {"type": "string", "enum": FOCUS}, "answer": {"type": "string"},
                          "used_facts": {"type": "array", "items": {"type": "string"}}, "web_ids": {"type": "array", "items": {"type": "string"}}}}
 
-SYSTEM = ("너는 신촌 연세로12길 일대의 인허가 기록과 로드뷰 간판 관측으로 만든 '골목의 연대기' 리포트를 설명하는 분석 도우미다. "
+SYSTEM = (f"너는 {region.R['area_intro']}의 인허가 기록과 로드뷰 간판 관측으로 만든 '골목의 연대기' 리포트를 설명하는 분석 도우미다. "
           "사용자가 고른 영역의 계산 결과(사실 F0, F1…)와, 있으면 웹 근거(W0…)가 주어진다. 규칙: "
           "(1) 사실 목록에서 답할 수 있는 질문(업종 변화, 영업 기간, 자리 교체, 업종 구성 등)에는 반드시 구체적인 수치로 답한다. '알 수 없다'·'단정할 수 없다'로 시작하거나 답을 피하지 않는다. "
           "통계가 정확하지 않은 점은 답 끝에 한 문장으로 덧붙인다(기록 기준, 범위로 표시, 관측 없는 업소가 많음, 표본 수). 증감 범위가 0을 포함하지 않으면 방향이 확실하다고 말하고, 0을 포함하면 방향이 불확실하다고 말한다. "
@@ -50,7 +50,7 @@ def ask(rep, text):
     web = {"used": False, "n": 0, "label": SCH, "reason": "원인을 묻는 질문이 아니라 웹 검색은 쓰지 않음", "evidence": []}
     if WHY.search(text):
         try:
-            res = liner.search(f"신촌 연세로 명물길 창천동 상권 {text}"[:120], 5)
+            res = liner.search(f'{region.R["web_context"]} {text}'[:120], 5)
         except Exception as e:
             res = []; web["reason"] = f"웹 검색 실패({str(e)[:60]})"
         kept = [x for x in res if REL.search(f"{x.get('title', '')} {x.get('desc', '')}")]   # 신촌과 무관한 결과는 근거로 쓰지 않는다

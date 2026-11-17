@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "server"))
-import liner  # noqa: E402
+import liner, region  # noqa: E402
 
 FILES = [ROOT / "data/timeline_businesses.csv", ROOT / "data/timeline_businesses_r150.csv"]
 CACHE = ROOT / "data/category_ai_cache.json"
@@ -89,7 +89,7 @@ def search_pass(items, cache):
         lines = []
         for i, r in enumerate(chunk):
             try:
-                hits = liner.search(f"{r['name']} 신촌 창천동", 5)
+                hits = liner.search(f"{r['name']} {region.R['district']} {region.DONG}", 5)
             except Exception as e:  # noqa: BLE001
                 print("  search fail", r["name"], type(e).__name__)
                 hits = []

@@ -10,13 +10,13 @@
 import csv, json, math, re
 from collections import Counter
 from pathlib import Path
-import liner
+import liner, region
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 EXPAND_YEARS, EXPAND_RADIUS_M, MAX_LEVEL = 2, 50, 3     # 확장 단계(level)마다 ±2년·반경 50m씩 넓어진다
 
 # ---------- 데이터 ----------
-EXTRA_ANCHORS = {"31-4": "독수리다방"}      # 독수리빌딩(독수리다방, 2013~). 사용자가 위치 기준으로 자주 떠올릴 만한 곳
+EXTRA_ANCHORS = region.R["extra_anchors"]      # 독수리빌딩(독수리다방, 2013~). 사용자가 위치 기준으로 자주 떠올릴 만한 곳
 def load_db():
     """연세로12길 구간(timeline_businesses.csv)과 반경 150m 확장 구간(timeline_businesses_r150.csv)을 함께 읽는다.
     parcels 에는 확장 구간 필지도 들어 있다(core=False). 기본 위치(center)는 연세로12길 구간 필지만으로 계산한다."""
@@ -78,13 +78,13 @@ def resolve_anchor(text, parcels):
     t = (text or "").replace(" ", "")
     if t:
         for j, p in parcels.items():
-            if j == t.replace("창천동", "") or (p["anchor"] and (p["anchor"].replace(" ", "") in t or t in p["anchor"].replace(" ", ""))):
-                return (float(p["lon"]), float(p["lat"])), (p["anchor"] or f"창천동 {j}"), True
+            if j == t.replace(region.DONG, "") or (p["anchor"] and (p["anchor"].replace(" ", "") in t or t in p["anchor"].replace(" ", ""))):
+                return (float(p["lon"]), float(p["lat"])), (p["anchor"] or f"{region.DONG} {j}"), True
         for tok in re.findall(r"\d+-\d+", t):
-            if tok in parcels: return (float(parcels[tok]["lon"]), float(parcels[tok]["lat"])), f"창천동 {tok}", True
+            if tok in parcels: return (float(parcels[tok]["lon"]), float(parcels[tok]["lat"])), f"{region.DONG} {tok}", True
         for st in load_streets():                                                     # 길 이름(연세로·명물길): 선 기준
             if any(re.search(pt, t) for pt in st["patterns"]): return st["points"], st["name"], True
-    return center, "연세로12길", False
+    return center, region.R["core_name"], False
 
 # ---------- 1. 단서 해석 ----------
 CLUE_SCHEMA = {"type": "object", "additionalProperties": False,
@@ -229,11 +229,11 @@ def split_question(exact_all, parcels, clue):
 # ---------- 4. 웹 검색 ----------
 def gather_web(clue, exact, wide, n_each=4, max_queries=5):
     ev, seen, queries = [], set(), []
-    place = "신촌 연세로12길"
+    place = region.R["place"]
     if clue["name_hints"] or clue["categories"]:
         queries.append(" ".join([place, str(clue["year_from"]) + "년" if clue["year_from"] > 1992 else "", *clue["categories"], *clue["name_hints"]]).strip())
     for c in (exact + wide)[:3]:
-        if c["name"] not in ("상호", "상호판독보류"): queries.append(f"{c['name']} 창천동 신촌 {c['category'] or c.get('category_ai') or (clue['categories'][0] if clue['categories'] else '')}".strip())
+        if c["name"] not in ("상호", "상호판독보류"): queries.append(f"{c['name']} {region.DONG} {region.R['district']} {c['category'] or c.get('category_ai') or (clue['categories'][0] if clue['categories'] else '')}".strip())
     for q in queries[:max_queries]:
         for x in liner.search(q, n_each):
             if x["url"] in seen: continue
@@ -312,10 +312,10 @@ def make_suggestion(res, cands, clue, scope, ref=None):
     top = byid[ranked[0]["id"]]
     if scope["anchor"] is None and ref:    # 사용자가 이미 아니라고 한 후보 위치 기준
         return {"type": "radius", "anchor": ref["jibun"], "radius_m": EXPAND_RADIUS_M, "reject": None,
-                "text": f"{ref['name']}{josa(ref['name'], '이', '가')} 아니라면, 그 위치(창천동 {ref['jibun']})를 기준으로 반경 {EXPAND_RADIUS_M}m 안에서 다시 찾아볼까요?"}
+                "text": f"{ref['name']}{josa(ref['name'], '이', '가')} 아니라면, 그 위치({region.DONG} {ref['jibun']})를 기준으로 반경 {EXPAND_RADIUS_M}m 안에서 다시 찾아볼까요?"}
     if scope["anchor"] is None:        # 위치를 말하지 않았다 → 유력 후보 위치 기준 반경 50m
         return {"type": "radius", "anchor": top["jibun"], "radius_m": EXPAND_RADIUS_M, "reject": row_key(top),
-                "text": f"가장 유력했던 {top['name']}{josa(top['name'], '이', '가')} 아닌 것 같다면, 그 위치(창천동 {top['jibun']})를 기준으로 반경 {EXPAND_RADIUS_M}m 안에서 다시 찾아볼까요? ({top['name']}{josa(top['name'], '은', '는')} 제외합니다)"}
+                "text": f"가장 유력했던 {top['name']}{josa(top['name'], '이', '가')} 아닌 것 같다면, 그 위치({region.DONG} {top['jibun']})를 기준으로 반경 {EXPAND_RADIUS_M}m 안에서 다시 찾아볼까요? ({top['name']}{josa(top['name'], '은', '는')} 제외합니다)"}
     cur = scope["radius_wide"] or EXPAND_RADIUS_M
     if cur >= 300: return None
     nxt = cur + EXPAND_RADIUS_M

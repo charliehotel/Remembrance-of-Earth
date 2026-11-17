@@ -13,10 +13,12 @@ from pathlib import Path
 from shapely.geometry import shape
 
 ROOT = Path(__file__).resolve().parent.parent
+import sys; sys.path.insert(0, str(ROOT / "server"))
+import region  # noqa: E402
 SRC = ROOT / "data/raw/vworld/cadastral_bbox.json"
 CORE = ROOT / "data/parcels.csv"
 OUT = ROOT / "data/parcels_r150.csv"
-CENTER = (126.93764541365495, 37.559135572831806)  # scene.json context.center (창천교회 일대)
+CENTER = tuple(region.R["center"])  # scene.json context.center (창천교회 일대)
 RADIUS_M = 150
 
 

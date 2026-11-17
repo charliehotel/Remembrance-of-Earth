@@ -216,6 +216,8 @@ const FIRST_SURVEY = 2008;  // 로드뷰 간판 조사 첫 해
 init(window.SCENE);
 
 function init(S) {
+  const RG = S.region;   // config/region.json 에서 온 동네 설정(export_web.py 가 scene 에 넣는다)
+  document.title = RG.title; document.getElementById("q").placeholder = RG.search_placeholder;
   const bizByParcel = {};
   S.businesses.forEach(b => (bizByParcel[b.jibun] ||= []).push(b));
   const evByParcel = {};
@@ -351,7 +353,7 @@ function init(S) {
   const setYearLabel = T => { const y = yearOf(T), m = Math.min(12, Math.floor((T - y) * 12 + 1e-6) + 1);
     document.getElementById("year").innerHTML = `${y}<span style="font-size:.45em;opacity:.55;margin-left:4px">${m}월</span>`; };
 
-  const START_VIEW = { center: [126.9375, 37.55902], zoom: 18.85, pitch: 58, bearing: 76 };
+  const START_VIEW = RG.start_view;
   const map = new maplibregl.Map({
     container: "map", style: { version: 8, sources: {}, layers: [{ id: "bg", type: "background", paint: { "background-color": "#e9e6df" } }] },
     locale: { "NavigationControl.ZoomIn": "확대 ( = 또는 + )", "NavigationControl.ZoomOut": "축소 ( - )",
@@ -772,13 +774,13 @@ function init(S) {
     });
     onThis.forEach(b => { const here = b.spans.find(x => x.jibun === jibun).pct;
       pnote.push(`<div class="note2">${b.start}년 사용승인 ${jl(b.jibun)} 건물(${b.floors_up}층)이 이 필지 위에 ${here}% 걸쳐 있습니다.</div>`); });
-    let h = `<h2>창천동 ${jibun} <span class="tag">${y}년</span></h2>`;
+    let h = `<h2>${RG.dong} ${jibun} <span class="tag">${y}년</span></h2>`;
     if (spanSet.size) h += `<div class="legend2"><i style="border-color:#d33"></i>선택 필지 ` +
       (spanSet.size ? `<i style="border-color:#e07800;border-top-style:dashed"></i>건물이 걸친 다른 필지` : "") + `</div>`;
     h += pnote.join("");
     h += `<div class="m">${p.anchor || ""}</div>`;
     if (focusBiz && focusBiz.jibun === jibun) h += `<div class="focuscard"><div class="n">${bizName(focusBiz)}</div>
-      <div class="m">${bizKind(focusBiz)} · 창천동 ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
+      <div class="m">${bizKind(focusBiz)} · ${RG.dong} ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
     if (ghostNow) h += `<div class="note2">${T < (S.ghosts.features.find(f => f.properties.jibun === jibun) || { properties: { dstart: 0 } }).properties.dstart ? "화면의 옛 건물은" : "철거 중인 옛 건물은"} <b>모양을 알 수 없어 ${gi.kind === "tile" ? "기와 단층(갈색)" : "슬래브 건물(회색)"}으로 가정해 세운 것</b>입니다. ${Math.floor(gi.dend)}년 철거 전까지의 모습은 대장과 항공사진으로 확인하지 못한 추정입니다.</div>`;
     h += inprog.map(b => `<div class="b A"><div class="n">공사 중 ${b.floors_up}층 ${b.height}m<span class="tag">${b.a_s ? b.a_s + " 착공" : "착공일 없음"} → ${b.b_s} 사용승인</span></div>
       <div class="m">공사 기간 ${(b.b - b.a).toFixed(1)}년 · ${b.pbasis}</div></div>`).join("");
@@ -831,9 +833,9 @@ function init(S) {
     setCtxSel(jibun);
     const T = Tnow(), y = yearOf(T), p = ctxP[jibun] || {};
     const act = activeBiz(jibun, y);
-    let h = `<h2>창천동 ${jibun} <span class="tag">${y}년</span></h2><div class="m">지목 ${p.jimok || "?"}${p.jimok === "도" ? " (도로)" : ""}</div>`;
+    let h = `<h2>${RG.dong} ${jibun} <span class="tag">${y}년</span></h2><div class="m">지목 ${p.jimok || "?"}${p.jimok === "도" ? " (도로)" : ""}</div>`;
     if (focusBiz && focusBiz.jibun === jibun) h += `<div class="focuscard"><div class="n">${bizName(focusBiz)}</div>
-      <div class="m">${bizKind(focusBiz)} · 창천동 ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
+      <div class="m">${bizKind(focusBiz)} · ${RG.dong} ${jibun} ${focusBiz.floor || ""}<br>${bizPeriod(focusBiz)}<br>${GRADE[focusBiz.grade]}</div></div>`;
     if (!p.r150) {
       h += p.jimok === "도" ? "" : `<div class="note2">창천교회 반경 150m 밖의 필지입니다. <b>건물 이력과 상호는 아직 조사하지 않았습니다.</b> 지도의 건물 윤곽은 현재 모습만 있습니다.</div>`;
       document.getElementById("detail").innerHTML = h; applyFloor(); renderStack(); return;
@@ -871,7 +873,7 @@ function init(S) {
   sideToggle.onclick = () => setSide(side.classList.contains("collapsed"));
   // ---------- 검색 ----------
   const qInput = document.getElementById("q"), resultsEl = document.getElementById("results");
-  const norm = t => t.toLowerCase().replace(/창천동|번지|\s+/g, "").replace(/[–—~]/g, "-");
+  const norm = t => t.toLowerCase().replace(new RegExp(RG.dong + "|번지|\\s+", "g"), "").replace(/[–—~]/g, "-");
   const bbox = g => { const xs = [], ys = []; const w = c => typeof c[0] === "number" ? (xs.push(c[0]), ys.push(c[1])) : c.forEach(w);
     w(g.coordinates); return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2]; };
   function goParcel(jibun) {
@@ -887,15 +889,15 @@ function init(S) {
     S.parcels.features.forEach(f => { const p = f.properties;
       const rank = p.jibun === n ? 0 : (/\d/.test(n) && p.jibun.startsWith(n)) || (p.anchor && p.anchor.toLowerCase().includes(n)) ? 1 : -1;
       if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun,
-        label: `창천동 ${p.jibun}${p.anchor ? " · " + p.anchor : ""}`,
+        label: `${RG.dong} ${p.jibun}${p.anchor ? " · " + p.anchor : ""}`,
         sub: p.jimok === "도" ? "도로" : `상호 ${(bizByParcel[p.jibun] || []).length}곳 기록` }); });
     if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties; if (p.jimok === "도") return;   // 주변 필지(도로 제외)
       const rank = p.jibun === n ? 0 : /\d/.test(n) && p.jibun.startsWith(n) ? 1 : -1;
-      if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun, label: `창천동 ${p.jibun}`,
+      if (rank >= 0) ps.push({ rank, type: "parcel", jibun: p.jibun, label: `${RG.dong} ${p.jibun}`,
         sub: p.r150 ? `상호 ${(bizByParcel[p.jibun] || []).length}곳 기록` : "반경 150m 밖 · 아직 조사 전" }); });
     S.businesses.forEach(b => { if (b.name !== "상호" && b.name.toLowerCase().replace(/\s+/g, "").includes(n))
       bs.push({ rank: 2, type: "biz", biz: b, jibun: b.jibun, label: b.name,
-        sub: `창천동 ${b.jibun} ${b.floor || ""} · ${b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`}` }); });
+        sub: `${RG.dong} ${b.jibun} ${b.floor || ""} · ${b.grade === "C" ? `간판 ${b.sign_first}~${b.sign_last}` : `${b.start}~${b.end || "폐업기록 없음"}`}` }); });
     ps.sort((a, b) => a.rank - b.rank || a.jibun.localeCompare(b.jibun, "en", { numeric: true }));
     bs.sort((a, b) => (a.biz.start || "").localeCompare(b.biz.start || ""));
     return ps.concat(bs).slice(0, 15);
@@ -984,7 +986,7 @@ function init(S) {
       const src = ids => ids.filter(i => byE[i]).map(i => `<a href="${safeUrl(byE[i].url)}" target="_blank" rel="noopener" title="${esc(byE[i].title)} — ${esc(byE[i].desc)}">${esc(byE[i].hostname || byE[i].title.slice(0, 18))}</a>`).join("");
       const yrs = a => a[0] === a[1] ? a[0] + "년" : a[0] + "~" + a[1] + "년";
       const card = (c, j) => `<div class="agc ${c.tier}" data-i="${cands.indexOf(c)}"><b>${esc(c.name)}</b><span class="vd ${j.verdict}">${j.verdict} ${Math.round(j.confidence * 100)}%</span>
-        <div class="sub">창천동 ${esc(c.jibun)} · ${esc(c.category || (c.observed_as ? "간판 " + c.observed_as.split("|")[0].trim() : "업종 미상"))}${c.category_ai ? " · " + esc(c.category_ai) + " (AI 추정)" : ""} · ${esc(c.start)}~${esc(c.end || "")}${c.tier === "wide" && c.dist_m != null && sc.radius_wide ? " · " + c.dist_m + "m" : ""}</div><div class="why">${esc(j.reason)}</div><div class="src">${src(j.evidence_ids)}</div></div>`;
+        <div class="sub">${RG.dong} ${esc(c.jibun)} · ${esc(c.category || (c.observed_as ? "간판 " + c.observed_as.split("|")[0].trim() : "업종 미상"))}${c.category_ai ? " · " + esc(c.category_ai) + " (AI 추정)" : ""} · ${esc(c.start)}~${esc(c.end || "")}${c.tier === "wide" && c.dist_m != null && sc.radius_wide ? " · " + c.dist_m + "m" : ""}</div><div class="why">${esc(j.reason)}</div><div class="src">${src(j.evidence_ids)}</div></div>`;
       const list = tier => cands.filter(c => c.tier === tier && jById[c.id]).sort((a, b) => jById[b.id].confidence - jById[a.id].confidence);
       const ex = list("exact"), wd = list("wide");
       let h = `<div class="ans">${esc(res.answer)}</div>`;
@@ -1162,7 +1164,7 @@ function init(S) {
       const ent = e => `${esc(e.name)}${e.floor ? " " + esc(e.floor) + "층" : ""} <span class="na">${esc(e.group)}</span> ${fy(e.start)}~${e.end ? (e.end[0] === e.end[1] || fy(e.end[0]) === fy(e.end[1]) ? fy(e.end[1]) : fy(e.end[0]) + "–" + fy(e.end[1])) : "영업 중"} <span class="na">(${esc(e.evidence)})</span>`;
       secs.push(["history", "자리 이력", `<div>같은 자리의 업소 교체 ${H.n_turnovers}건${H.interval_median != null ? ` · 개업 간격 중앙값 ${H.interval_median}년` : ""}${H.gap_range_median ? ` · 폐업~다음 개업 공백 ${span(H.gap_range_median[0], H.gap_range_median[1])}년(중앙값)` : ""}</div>
         ${H.overlap_share != null ? `<div class="basis">다음 업소가 이전 업소의 폐업 전에 개업한 경우가 ${Math.round(H.overlap_share * 100)}%입니다. 호실 정보가 없어 같은 건물의 다른 호실일 수 있습니다.</div>` : ""}
-        <details><summary>필지별 이력 보기(${H.parcels.length}${H.truncated ? "+" + H.truncated : ""}곳)</summary>${H.parcels.map(p => `<div style="margin-top:6px"><span class="hl" data-j="${esc(p.jibun)}">창천동 ${esc(p.jibun)}</span> · ${p.n}곳${p.floors_known ? "" : " · 층 정보 일부 없음"}<ul>${p.entries.map(e => `<li>${ent(e)}</li>`).join("")}</ul></div>`).join("")}</details>`]);
+        <details><summary>필지별 이력 보기(${H.parcels.length}${H.truncated ? "+" + H.truncated : ""}곳)</summary>${H.parcels.map(p => `<div style="margin-top:6px"><span class="hl" data-j="${esc(p.jibun)}">${RG.dong} ${esc(p.jibun)}</span> · ${p.n}곳${p.floors_known ? "" : " · 층 정보 일부 없음"}<ul>${p.entries.map(e => `<li>${ent(e)}</li>`).join("")}</ul></div>`).join("")}</details>`]);
     }
     secs.push(["limits", "한계", `<div class="basis">${esc(L.basis)}</div><ul>${L.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`]);
     if (only) { const s1 = secs.find(x => x[0] === only); return s1 ? `<div class="rp"><h3>${s1[1]}</h3>${s1[2]}</div>` : ""; }   // 질문 답변 밑에 붙일 해당 섹션만

@@ -20,6 +20,8 @@ from pyproj import Transformer
 from shapely.geometry import Point, shape
 
 ROOT = Path(__file__).resolve().parent.parent
+import sys; sys.path.insert(0, str(ROOT / "server"))
+import region  # noqa: E402
 # 업종별 창천동 추출본. 일반음식점 외 파일을 받으면 extract_changcheon_restaurants.py 로
 # data/interim/<이름>_changcheon.csv 를 만든 뒤 아래 목록에 이름을 추가한다.
 SOURCES = {"일반음식점": "restaurants", "휴게음식점": "rest_cafe", "노래연습장업": "karaoke", "미용업": "beauty",
@@ -41,7 +43,7 @@ def date10(s):
 
 
 def parse_jibun(addr):
-    m = re.search(r"창천동\s+(?:산\s*)?(\d+)(?:-(\d+))?", addr or "")
+    m = re.search(re.escape(region.DONG) + r"\s+(?:산\s*)?(\d+)(?:-(\d+))?", addr or "")
     if not m:
         return None
     return f"{m.group(1)}-{m.group(2)}" if m.group(2) else m.group(1)

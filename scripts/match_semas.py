@@ -11,13 +11,13 @@
 import csv, re, sys, difflib, collections
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "server"))
-import agent, analysis
+import agent, analysis, region
 ROOT = Path(__file__).resolve().parent.parent
 snaps = {}
-for p in sorted((ROOT / "data/semas").glob("changcheon_*.csv")):
+for p in sorted((ROOT / "data/semas").glob(f"{region.ID}_*.csv")):
     snaps[p.stem.split("_")[1]] = list(csv.DictReader(open(p, encoding="utf-8-sig")))
-if not snaps: sys.exit("data/semas/changcheon_*.csv 가 없습니다. 먼저 scripts/extract_semas.py 를 실행하세요.")
-norm = lambda s: re.sub(r"[\s\(\)\[\]·\-_.,]|점$|본점|신촌|연세|창천|\(주\)|\(유\)|주식회사|유한회사", "", s.lower())
+if not snaps: sys.exit(f"data/semas/{region.ID}_*.csv 가 없습니다. 먼저 scripts/extract_semas.py 를 실행하세요.")
+norm = lambda s: re.sub(r"[\s\(\)\[\]·\-_.,]|점$|본점|" + "|".join(region.R["name_strip"]) + r"|\(주\)|\(유\)|주식회사|유한회사", "", s.lower())
 tf = lambda d: analysis._t(f"{d[:4]}-{d[4:6]}-{d[6:]}")
 byp = {d: collections.defaultdict(list) for d in snaps}
 for d, rs in snaps.items():

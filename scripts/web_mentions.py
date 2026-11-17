@@ -20,13 +20,14 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "scripts")); sys.path.insert(0, str(ROOT / "server"))
+import region  # noqa: E402
 from crosscheck import norm  # noqa: E402
 
 CACHE = ROOT / "data/raw/kakao"
 ENDPOINT = "https://dapi.kakao.com/v2/search/{}"
 KINDS = ("blog", "cafe", "web")
-LOCAL = re.compile(r"신촌|창천|연세로")
+LOCAL = re.compile("|".join(region.R["name_strip"][:1] + [region.DONG[:-1], region.R["core_name"][:3]]))
 TAG = re.compile(r"<[^>]+>")
 
 

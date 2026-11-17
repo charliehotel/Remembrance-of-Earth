@@ -799,6 +799,7 @@ def main():
              "excluded_buildings": excluded, "ghosts": ghost_fc, "ghost_info": ghost_info, "context": context, "ctx_live": ctx_live,
              "rail": json.loads((ROOT / "data/rail.geojson").read_text()) if (ROOT / "data/rail.geojson").exists() else None,
              "walk": walk_area(parcels, buildings, context), "year_min": 1992, "year_max": 2026}
+    scene["region"] = {k: json.loads((ROOT / "config/region.json").read_text(encoding="utf-8"))[k] for k in ("gu", "dong", "district", "core_name", "title", "search_placeholder", "start_view")}
     txt = json.dumps(scene, ensure_ascii=False)
     (OUT / "scene.json").write_text(txt)
     (OUT / "scene.js").write_text("window.SCENE=" + txt + ";")  # file:// 에서도 열리도록 script 로 읽는다

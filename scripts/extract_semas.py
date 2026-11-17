@@ -1,4 +1,4 @@
-"""소상공인시장진흥공단 상가(상권)정보 분기 스냅샷(전국·서울 CSV 또는 ZIP)에서 창천동 업소만 뽑아 data/semas/ 에 쓴다.
+"""소상공인시장진흥공단 상가(상권)정보 분기 스냅샷(전국·서울 CSV 또는 ZIP)에서 config/region.json 의 동 업소만 뽑아 data/semas/ 에 쓴다.
 
 입력: data/raw/semas_history/ (또는 data/raw/) 안의 파일. 이름에 기준일(YYYYMMDD 또는 YYYYMM)이 들어 있어야 한다.
   예) 소상공인시장진흥공단_상가(상권)정보_20160930.csv, 상가(상권)정보_20151231.zip, ..._서울_202610.csv
@@ -9,6 +9,8 @@
 """
 import csv, io, re, sys, zipfile, unicodedata, calendar
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "server"))
+import region
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data/semas"; OUT.mkdir(exist_ok=True)
 csv.field_size_limit(10 ** 8)
@@ -49,12 +51,11 @@ def extract(path):
                 for r in rd:
                     g = lambda k: (r[idx[k]].strip() if idx[k] is not None and idx[k] < len(r) else "")
                     ld, addr = g("ldong"), g("jibun_addr")
-                    if "창천동" not in (ld + " " + addr): continue
-                    if "서대문" not in addr and addr: continue          # 같은 이름의 다른 동 제외(주소가 있을 때)
+                    if not region.in_region(ld, addr): continue          # 같은 이름의 다른 구 동 제외(주소가 있을 때)
                     jb = ""
                     if g("bun"): jb = str(int(g("bun") or 0)) + (f"-{int(g('bu'))}" if int(g("bu") or 0) else "")
                     else:
-                        m = re.search(r"창천동\s*(\d+)(?:-(\d+))?", addr); jb = (m.group(1) + (f"-{m.group(2)}" if m.group(2) else "")) if m else ""
+                        m = re.search(re.escape(region.DONG) + r"\s*(\d+)(?:-(\d+))?", addr); jb = (m.group(1) + (f"-{m.group(2)}" if m.group(2) else "")) if m else ""
                     f = g("floor"); f = "B" + f[1:] if f.startswith("-") else f
                     out.append({"asof": asof, "id": g("id"), "name": g("name"), "branch": g("branch"), "jibun": jb, "floor": f,
                                 "lcls": g("lcls"), "mcls": g("mcls"), "scls": g("scls"), "lon": g("lon"), "lat": g("lat")})
@@ -62,11 +63,11 @@ def extract(path):
             except UnicodeDecodeError:
                 del out[n_before:]; continue                      # 인코딩이 틀렸으면 그때까지 읽은 것을 버리고 다음 인코딩으로
         if res is None: print(f"  열을 읽지 못함: {path.name}:{member}")
-    if not out: print(f"  창천동 업소 0건: {path.name}"); return
-    dst = OUT / f"changcheon_{asof}.csv"
+    if not out: print(f"  {region.DONG} 업소 0건: {path.name}"); return
+    dst = OUT / f"{region.ID}_{asof}.csv"
     with open(dst, "w", encoding="utf-8-sig", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(out[0])); w.writeheader(); w.writerows(out)
-    print(f"  {path.name} → {dst.name}: 창천동 {len(out)}곳")
+    print(f"  {path.name} → {dst.name}: {region.DONG} {len(out)}곳")
 
 if __name__ == "__main__":
     targets = [Path(a) for a in sys.argv[1:]] or [ROOT / "data/raw/semas_history", ROOT / "data/raw"]

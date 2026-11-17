@@ -11,6 +11,7 @@
 report(rows, parcels, jibuns) 가 고정 구조의 리포트(dict)를 돌려준다. 섹션: overview, composition, survival, history, limits.
 """
 import re, statistics
+import region
 from datetime import date
 
 T_NOW = 2026.9                  # 데이터 기준 시점(마지막 로드뷰 조사 2026-06 이후)
@@ -251,7 +252,7 @@ def report(rows, parcels, jibuns, focus=None):
            "limits": {"basis": "인허가 기록과 로드뷰 간판 관측 기준", "min_n": MIN_N, "delay_years": round(delay, 1), "delay_n": len(delays), "delay_ci": delay_ci(delays),
                       "notes": ["폐업 신고에는 법정 기한이 없어 기록상 폐업일은 실제 폐업보다 늦을 수 있다(식품위생법 제37조, 2026-11 현행 확인).",
                                 f"관측이 없는 업소({ev[EV_REC]}곳)는 실제 폐업이 기록보다 최대 {delay:.1f}년 빠를 수 있다고 가정했다(관측 있는 업소 {len(delays)}곳의 지연 상한 75백분위" + (f", 표본이 작아 부트스트랩 90% 구간은 {delay_ci(delays)[0]}–{delay_ci(delays)[1]}년" if delay_ci(delays) else "") + "). 이 가정을 바꾼 결과는 영업 기간 섹션에 함께 보인다.",
-                                "로드뷰 조사는 연세로12길 구간에만 있고 반경 150m 확장 구간은 인허가 기록만이다.",
+                                f"로드뷰 조사는 {region.R['core_name']} 구간에만 있고 반경 150m 확장 구간은 인허가 기록만이다.",
                                 "2011년 이전 기록에는 옛 조문이 적용됐을 수 있다.", "예측·추천은 하지 않고 기록된 이력만 설명한다."]}}
     return rep
 
@@ -267,7 +268,7 @@ def facts(rep):
     o = rep["overview"]
     if not o["n_shops"]: return out
     ev = o["evidence"]
-    add(f"영역: 필지 {o['n_parcels']}개(연세로12길 {o['core_parcels']}개, 주변 {o['ring_parcels']}개), 업소 {o['n_shops']}곳, 기록 기간 {o['period'][0]}~{o['period'][1]}년. "
+    add(f"영역: 필지 {o['n_parcels']}개({region.R['core_name']} {o['core_parcels']}개, 주변 {o['ring_parcels']}개), 업소 {o['n_shops']}곳, 기록 기간 {o['period'][0]}~{o['period'][1]}년. "
         f"영업 중 {o['state']['open']}곳, 폐업 {o['state']['closed']}곳, 종료 시점 불명 {o['state']['stale'] + o['state']['undated']}곳. "
         f"근거 등급: 관측 확인 {ev[EV_OBS]}곳, 부분 관측 {ev[EV_PART]}곳, 기록만 {ev[EV_REC]}곳.")
     C = rep.get("composition")

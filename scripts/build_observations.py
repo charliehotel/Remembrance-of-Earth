@@ -7,12 +7,14 @@ status: observed(상호 있음) / vacant(공실) / unknown(미확인·판독불�
 import csv, re
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
+import sys; sys.path.insert(0, str(ROOT / "server"))
+import region  # noqa: E402
 rows = list(csv.reader(open(ROOT/"docs/Remembrance_of_Earth_yeonsero12gil_all12.csv", encoding="utf-8-sig")))
 h1, h2, data = rows[0], rows[1], rows[2:]
 parcel, cols = "", []
 for i in range(2, len(h1)):
     if h1[i].strip():
-        parcel = re.sub(r"창천동\s*", "", h1[i]).strip()
+        parcel = re.sub(re.escape(region.DONG) + r"\s*", "", h1[i]).strip()
     cols.append((i, parcel, h2[i].strip()))
 def status(v):
     v = v.strip()
