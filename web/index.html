@@ -61,7 +61,7 @@
   #agMode.on { background: #2d6a3e !important; color: #fff !important; }
   #areaTools { margin: 2px 0 8px; padding: 6px 8px 7px; border: 1px solid #2d6a3e55; border-radius: 8px; background: #f3faf5; }
   #areaTools .atTitle { font-size: 12px; font-weight: 600; color: #2d6a3e; margin-bottom: 5px; } #areaTools .atRow { display: flex; gap: 6px; }
-  #areaTools[hidden], #arLog[hidden], #agLog[hidden], #areaChip[hidden] { display: none; }
+  #areaTools[hidden], #arLog[hidden], #arAns[hidden], #agLog[hidden], #areaChip[hidden] { display: none; }
   #areaTools button { flex: 1 1 0; width: auto !important; height: 38px; margin: 0 !important; padding: 0 !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 6px !important; font-size: 24px !important; line-height: 1; }
   #areaTools button[data-shape="circle"] { font-size: 30px !important; } #areaTools button[data-shape="poly"] { font-size: 25px !important; }
   #areaTools button.on { background: #2d6a3e !important; color: #fff !important; }
@@ -183,6 +183,7 @@
       <div id="areaChip" hidden></div>
       <textarea id="agText" placeholder="기억 속 장소의 단서를 AI에 물어보세요.&#10;예: 2010년경 독수리다방 앞 카레집"></textarea>
       <button id="agGo">찾아보기</button>
+      <div id="arAns" hidden></div>
       <div id="agChips" hidden></div>
   </div>
   <div id="sideBody" class="band">
@@ -989,7 +990,7 @@ function init(S) {
 
   // ---------- 골목의 연대기: 영역 선택 → 필지 자동 선택 → 분석 리포트 (코드 계산, server/analysis.py) ----------
   const agMode = document.getElementById("agMode"), agTitle = document.getElementById("agTitle"), areaTools = document.getElementById("areaTools"), areaHint = document.getElementById("areaHint"),
-    arLog = document.getElementById("arLog"), areaChip = document.getElementById("areaChip"), rectBtn = areaTools.querySelector('[data-shape="rect"]');
+    arLog = document.getElementById("arLog"), arAns = document.getElementById("arAns"), areaChip = document.getElementById("areaChip"), rectBtn = areaTools.querySelector('[data-shape="rect"]');
   const FIND_PH = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집", AREA_PH = "예: 이 골목 업종이 어떻게 바뀌었어?";
   let mode = "find", area = [], armed = false, areaDragged = false, drag = null;
   const drawBox = document.createElement("div"); drawBox.id = "drawBox"; map.getContainer().appendChild(drawBox);
@@ -1010,7 +1011,7 @@ function init(S) {
   const IDLE_HINT = "영역 선택 도구를 사용하여 지도를 드래그하세요. 선택된 영역은 AI가 분석합니다.";
   let shape = null, poly = [], cur = null;
   const toolBtns = [...areaTools.querySelectorAll("button[data-shape]")];
-  function resetArea() { arm(false); arLog.innerHTML = ""; setAreaSel([]); agNew.hidden = true; }   // 영역 해제 = 새로 시작: 선택, 리포트, 질문 기록을 모두 지운다
+  function resetArea() { arm(false); arLog.innerHTML = ""; arAns.innerHTML = ""; setAreaSel([]); agNew.hidden = true; }   // 영역 해제 = 새로 시작: 선택, 리포트, 질문 기록을 모두 지운다
   function arm(on, sh) {
     if (on && (walking || placing)) { areaHint.textContent = "걷기 모드를 끈 뒤 선택하세요"; return; }
     armed = on; shape = on ? sh : null; poly = []; cur = null; drag = null; drawBox.style.display = "none"; drawSvgRender();
@@ -1022,11 +1023,11 @@ function init(S) {
   toolBtns.forEach(b => b.onclick = () => arm(!(armed && shape === b.dataset.shape), b.dataset.shape));
   function setMode(m) {
     if (m === mode) return; mode = m; const a = m === "area";
-    if (!a) { arm(false); setAreaSel([]); arLog.innerHTML = ""; }   // 영역이 사라지면 그 결과도 지운다(오래된 결과를 현재 선택으로 오해하지 않도록)
+    if (!a) { arm(false); setAreaSel([]); arLog.innerHTML = ""; arAns.innerHTML = ""; }   // 영역이 사라지면 그 결과도 지운다(오래된 결과를 현재 선택으로 오해하지 않도록)
     else clearSelection();
     agMode.classList.toggle("on", a); agMode.title = a ? "기억 속 장소 찾기로 전환" : "골목의 연대기로 전환";
     agTitle.textContent = a ? "🐝 골목의 연대기" : "🐝 기억 속 장소 찾기";
-    areaTools.hidden = !a; agLog.hidden = a; arLog.hidden = !a; agChips.hidden = a || agChips.hidden;
+    areaTools.hidden = !a; agLog.hidden = a; arLog.hidden = !a; arAns.hidden = !a; agChips.hidden = a || agChips.hidden;
     if (!a && agLog.children.length) agChips.hidden = false;
     agNew.hidden = !(a ? arLog.children.length : agLog.children.length);
     agText.placeholder = a ? AREA_PH : (agState ? "이어서 질문하거나 기억을 바로잡아 주세요 (예: 1층이 아니었던 것 같아)" : FIND_PH);
@@ -1071,7 +1072,7 @@ function init(S) {
   function finishArea(hit) {
     const js = parcelsIn(hit); arm(false); setAreaSel(js);
     if (!js.length) areaHint.textContent = "그 안에 조사된 필지가 없어요. 다시 선택해 주세요";
-    else arAsk("");   // 영역을 고르면 AI 없이 바로 리포트를 보여 준다. AI는 이어지는 질문에만 쓴다
+    else { arAns.innerHTML = ""; arAsk(""); }   // 새 영역이면 이전 질문·답변은 지우고. 영역을 고르면 AI 없이 바로 리포트를 보여 준다. AI는 이어지는 질문에만 쓴다
   }
   function closePoly() {
     if (poly.length > 1 && Math.hypot(poly[poly.length - 1][0] - poly[poly.length - 2][0], poly[poly.length - 1][1] - poly[poly.length - 2][1]) < 4) poly.pop();   // 더블클릭으로 생긴 겹친 점
@@ -1126,7 +1127,8 @@ function init(S) {
       const gs = {}; C.years.forEach(y => Object.entries(C.by_year[y]).forEach(([g, v]) => gs[g] = (gs[g] || 0) + v[1]));
       const names = Object.keys(gs).sort((a, b) => gs[b] - gs[a]).slice(0, 9);
       secs.push(["composition", "업종 구성", `<table><tr><th>업종</th>${C.years.map(y => `<th>${y}</th>`).join("")}</tr>${names.map(g => `<tr><td>${esc(g)}</td>${C.years.map(y => { const v = C.by_year[y][g]; return v ? `<td>${span(v[0], v[1])}</td>` : `<td class="na">·</td>`; }).join("")}</tr>`).join("")}
-        <tr><th>합계</th>${C.years.map(y => `<th>${span(C.total[y][0], C.total[y][1])}</th>`).join("")}</tr></table><div class="basis">숫자는 '확실–가능'입니다. 확실 = 그 해 내내 영업이 관측·기록으로 뒷받침됨, 가능 = 그 해에 영업 중이었을 수 있음.</div>`]);
+        <tr><th>합계</th>${C.years.map(y => `<th>${span(C.total[y][0], C.total[y][1])}</th>`).join("")}</tr></table><div class="basis">숫자는 '확실–가능'입니다. 확실 = 그 해 내내 영업이 관측·기록으로 뒷받침됨, 가능 = 그 해에 영업 중이었을 수 있음.</div>${(() => { const ch = (C.change || [])[0]; if (!ch) return ""; const sg = d => `${d[0] > 0 ? "+" : ""}${d[0]}~${d[1] > 0 ? "+" : ""}${d[1]}곳`;
+        return `<div style="margin-top:6px"><b>${ch.from}→${ch.to}년 변화</b> <span class="na">(증감 범위, 0을 포함하면 방향 불확실)</span><ul>${ch.items.slice(0, 5).map(x => `<li>${esc(x.group)} ${sg(x.delta)} · ${x.dir === "불확실" ? "방향 불확실" : x.dir}</li>`).join("")}</ul></div>`; })()}`]);
     }
     const V = R.survival;
     if (V.insufficient_all) secs.push(["survival", "영업 기간", `<div class="na">표본 부족: 영업 기간을 알 수 있는 업소가 ${V.n}곳이라 수치를 내지 않습니다(기준 ${L.min_n}곳).</div>`]);
@@ -1150,10 +1152,13 @@ function init(S) {
   }
   async function arAsk(text) {
     text = (text || "").trim(); if (agBusy) return;
-    if (!area.length) { const n = document.createElement("div"); n.className = "aga"; n.innerHTML = `<div class="ans">먼저 지도에서 영역을 선택해 주세요. □를 누르고 지도를 드래그하면 됩니다.</div>`; arLog.appendChild(n); agNew.hidden = false; n.scrollIntoView({ block: "nearest" }); return; }
+    if (!area.length) { const n = document.createElement("div"); n.className = "aga"; n.innerHTML = `<div class="ans">먼저 지도에서 영역을 선택해 주세요. □를 누르고 지도를 드래그하면 됩니다.</div>`; arAns.prepend(n); agNew.hidden = false; n.scrollIntoView({ block: "nearest" }); return; }
     agBusy = true; agGo.disabled = true; agText.value = ""; refreshGo();
-    const u = document.createElement("div"); u.className = "agu"; u.textContent = `[필지 ${area.length}개] ${text || "영역 분석"}`; arLog.appendChild(u);
-    const box = document.createElement("div"); box.className = "aga"; box.textContent = text ? "AI가 리포트를 읽고 답하는 중…" : "분석 중…"; arLog.appendChild(box); agNew.hidden = false; 
+    const u = document.createElement("div"); u.className = "agu"; u.textContent = `[필지 ${area.length}개] ${text || "영역 분석"}`;
+    const box = document.createElement("div"); box.className = "aga"; box.textContent = text ? "AI가 리포트를 읽고 답하는 중…" : "분석 중…";
+    const grp = document.createElement("div"); grp.className = "arQA"; grp.append(u, box);
+    if (text) arAns.prepend(grp); else arLog.appendChild(grp);   // 리포트는 입력창 위, 질문의 답은 버튼 바로 아래(최신이 맨 위)에 붙인다
+    agNew.hidden = false; 
     try {
       const r = await fetch("/api/area", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, jibuns: area }) });
       if (!r.ok) throw new Error(`분석 서버가 응답하지 않습니다(${r.status}). python3 server/app.py 로 실행했는지 확인해 주세요`);

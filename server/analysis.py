@@ -156,8 +156,25 @@ def composition(items):
             if possible:
                 c = cnt.setdefault(x["group"], [0, 0]); c[1] += 1; c[0] += 1 if lo_cert else 0
         rows[y] = cnt
-    return {"years": years, "by_year": {str(y): {g: v for g, v in sorted(c.items(), key=lambda kv: -kv[1][1])} for y, c in rows.items()},
-            "total": {str(y): [sum(v[0] for v in c.values()), sum(v[1] for v in c.values())] for y, c in rows.items()}}
+    out = {"years": years, "by_year": {str(y): {g: v for g, v in sorted(c.items(), key=lambda kv: -kv[1][1])} for y, c in rows.items()},
+           "total": {str(y): [sum(v[0] for v in c.values()), sum(v[1] for v in c.values())] for y, c in rows.items()}}
+    out["change"] = [ch for ch in (composition_change(out, 2015, 2025), composition_change(out, 2005, 2025)) if ch]
+    return out
+
+def composition_change(C, y0, y1):
+    """두 시점 사이 업종별 업소 수 변화. 증감 범위 = [끝 시점 '확실' − 시작 시점 '가능', 끝 시점 '가능' − 시작 시점 '확실'].
+    범위가 0을 포함하지 않으면 방향이 확실한 증가·감소, 포함하면 방향 불확실이다."""
+    if y0 not in C["years"] or y1 not in C["years"]: return None
+    a, b = C["by_year"][str(y0)], C["by_year"][str(y1)]
+    items = []
+    for g in set(a) | set(b):
+        s0, e0 = a.get(g, [0, 0]), b.get(g, [0, 0])
+        lo, hi = e0[0] - s0[1], e0[1] - s0[0]
+        items.append({"group": g, "from": s0, "to": e0, "delta": [lo, hi], "mid": (lo + hi) / 2, "dir": "증가" if lo > 0 else "감소" if hi < 0 else "불확실"})
+    items.sort(key=lambda x: -abs(x["mid"]))
+    t0, t1 = C["total"][str(y0)], C["total"][str(y1)]
+    return {"from": y0, "to": y1, "items": items, "total_delta": [t1[0] - t0[1], t1[1] - t0[0]],
+            "most_up": max(items, key=lambda x: x["mid"])["group"] if items else None, "most_down": min(items, key=lambda x: x["mid"])["group"] if items else None}
 
 # ---------- 자리 이력 ----------
 def history(items, max_parcels=60):
@@ -237,6 +254,11 @@ def facts(rep):
         for y in C["years"]:
             gs = list(C["by_year"][str(y)].items())[:8]
             add(f"{y}년 영업 중 업소 수(확실–가능): 합계 {_rg(C['total'][str(y)], '곳')}; " + ", ".join(f"{g} {_rg(v, '곳')}" for g, v in gs))
+    for ch in (C or {}).get("change", []):
+        sg = lambda d: f"{d[0]:+d}~{d[1]:+d}곳"
+        add(f"업종 변화 {ch['from']}년→{ch['to']}년(증감 범위: 끝 시점 확실−시작 시점 가능 ~ 끝 시점 가능−시작 시점 확실, 범위가 0을 포함하면 방향 불확실). 전체 {sg(ch['total_delta'])}. "
+            + ", ".join(f"{x['group']} {x['from'][0]}–{x['from'][1]}곳→{x['to'][0]}–{x['to'][1]}곳({sg(x['delta'])}, {x['dir'] if x['dir'] != '불확실' else '방향 불확실'})" for x in ch["items"][:7])
+            + f". 범위 중앙값 기준 가장 크게 는 업종 {ch['most_up']}, 가장 크게 준 업종 {ch['most_down']}.")
     V = rep["survival"]
     if V.get("insufficient_all"):
         add(f"영업 기간: 종료 시점을 아는 업소가 {V['n']}곳뿐이라 표본 부족(기준 {MIN_N}곳)으로 수치를 내지 않았다.")
