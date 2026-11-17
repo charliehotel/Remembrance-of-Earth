@@ -64,8 +64,18 @@ def delay_assumption(rows):
     for r in rows:
         if r.get("source") == "로드뷰 직접 조사" or "seen_after_close" in r.get("flags", ""): continue
         e, sl = _t(r.get("end")), _t(r.get("sign_last"))
+        sm = _t(r.get("semas_last"))                                     # 공공 상가정보 스냅샷의 마지막 영업 관측(폐업 기록 1년 이내인 것만 같은 업소로 본다)
+        if sm is not None and e is not None and sm <= e + 1.0 and (sl is None or sm > sl): sl = min(sm, e)
         if e is not None and sl is not None and r.get("end_basis") == "폐업일" and not r.get("end_before"): ds.append(max(0.0, e - sl))
     return (_pct(ds, 0.75) or 0.0), ds
+
+def delay_ci(ds, q=0.75, B=500, seed=0):
+    """지연 상한의 q 백분위를 부트스트랩으로 다시 구해 90% 구간을 낸다(표본이 작아 값이 얼마나 흔들리는지 보여 주려는 것)."""
+    import random
+    if len(ds) < 5: return None
+    rng = random.Random(seed)
+    vals = sorted(_pct([rng.choice(ds) for _ in ds], q) for _ in range(B))
+    return [round(vals[int(B * 0.05)], 1), round(vals[int(B * 0.95)], 1)]
 
 def prepare(rows, delay):
     """행마다 시작·종료 구간과 근거 등급을 붙인 사본 목록."""
@@ -83,6 +93,8 @@ def prepare(rows, delay):
                 x.update(state="open", e_lo=sl, e_hi=T_NOW, ev=EV_OBS)
             else:
                 x.update(state="closed", e_lo=sl, e_hi=eb)
+        elif not r.get("end") and r.get("semas_last"):                  # 공공 상가정보 스냅샷에서 영업 중이 확인됨: 갱신 흔적이 없던 행도 영업 중으로 본다
+            x.update(state="open", e_lo=max(s, _t(r["semas_last"])), e_hi=T_NOW, ev=EV_OBS)
         elif not r.get("end"):
             if r.get("end_basis") in ("폐업", "취소/말소/만료/정지/중지"):   # 폐업은 했는데 날짜가 없다
                 x.update(state="undated", e_lo=s, e_hi=T_NOW, ev=EV_REC)
@@ -92,6 +104,8 @@ def prepare(rows, delay):
                 x.update(state="open", e_lo=max(s, sl or s), e_hi=T_NOW, ev=EV_OBS if sl else EV_REC)
         else:
             hi = min(e_rec, eb) if eb is not None else e_rec
+            sm = _t(r.get("semas_last"))                                # 상가정보 스냅샷 마지막 관측도 영업 중이었다는 하한이다
+            if sm is not None and (sl is None or sm > sl) and sm <= hi + 1.0: sl = min(sm, hi)
             if sl is not None:
                 lo = sl
                 if lo > hi: lo = hi; x["note"] = "기록상 폐업 이후에도 간판이 관측됨"
@@ -219,7 +233,14 @@ def report(rows, parcels, jibuns, focus=None):
     gr = {}
     for x in usable: gr.setdefault(x["group"], []).append(x)
     surv = {"groups": [], "insufficient": [], "excluded": st["stale"] + st["undated"], "delay_years": round(delay, 1)}
-    if len(usable) >= MIN_N: surv["all"] = survival_group(usable)
+    if len(usable) >= MIN_N:
+        surv["all"] = survival_group(usable)
+        sel_rows = [r for r in rows if r["jibun"] in sel]
+        grid = sorted({0.0, round(_pct(delays, 0.5) or 0.0, 1), round(delay, 1), 3.0})     # 지연 가정을 바꿔 보았을 때 결론이 얼마나 달라지는가
+        surv["sensitivity"] = []
+        for d in grid:
+            g = survival_group([x for x in prepare(sel_rows, d) if x["state"] in ("open", "closed")])
+            surv["sensitivity"].append({"delay": d, "at5": g["at"]["5"], "median": g["median"]})
     for g, xs in sorted(gr.items(), key=lambda kv: -len(kv[1])):
         if len(xs) >= MIN_N: surv["groups"].append({"group": g, **survival_group(xs)})
         else: surv["insufficient"].append({"group": g, "n": len(xs)})
@@ -227,9 +248,9 @@ def report(rows, parcels, jibuns, focus=None):
            "composition": composition(items) if items else None,
            "survival": surv if len(usable) >= MIN_N else {"insufficient_all": True, "n": len(usable), "excluded": surv["excluded"]},
            "history": history(items) if items else None,
-           "limits": {"basis": "인허가 기록과 로드뷰 간판 관측 기준", "min_n": MIN_N, "delay_years": round(delay, 1), "delay_n": len(delays),
+           "limits": {"basis": "인허가 기록과 로드뷰 간판 관측 기준", "min_n": MIN_N, "delay_years": round(delay, 1), "delay_n": len(delays), "delay_ci": delay_ci(delays),
                       "notes": ["폐업 신고에는 법정 기한이 없어 기록상 폐업일은 실제 폐업보다 늦을 수 있다(식품위생법 제37조, 2026-11 현행 확인).",
-                                f"관측이 없는 업소({ev[EV_REC]}곳)는 실제 폐업이 기록보다 최대 {delay:.1f}년 빠를 수 있다고 가정했다(관측 있는 업소 {len(delays)}곳의 지연 상한 75백분위).",
+                                f"관측이 없는 업소({ev[EV_REC]}곳)는 실제 폐업이 기록보다 최대 {delay:.1f}년 빠를 수 있다고 가정했다(관측 있는 업소 {len(delays)}곳의 지연 상한 75백분위" + (f", 표본이 작아 부트스트랩 90% 구간은 {delay_ci(delays)[0]}–{delay_ci(delays)[1]}년" if delay_ci(delays) else "") + "). 이 가정을 바꾼 결과는 영업 기간 섹션에 함께 보인다.",
                                 "로드뷰 조사는 연세로12길 구간에만 있고 반경 150m 확장 구간은 인허가 기록만이다.",
                                 "2011년 이전 기록에는 옛 조문이 적용됐을 수 있다.", "예측·추천은 하지 않고 기록된 이력만 설명한다."]}}
     return rep
@@ -269,6 +290,8 @@ def facts(rep):
         add("영업 기간(기록 기준, 범위는 폐업 시점 불확실성 반영) " + line("전체", V["all"]))
         for g in V["groups"]: add("영업 기간 " + line(g["group"], g))
         if V["insufficient"]: add("표본 부족으로 수치 없음: " + ", ".join(f"{x['group']} {x['n']}곳" for x in V["insufficient"]))
+        if V.get("sensitivity"):
+            add("지연 가정을 바꿨을 때 전체 5년 생존 범위: " + ", ".join(f"지연 {x['delay']}년이면 {_rg([round(v * 100) for v in x['at5']], '%')}" for x in V["sensitivity"]) + ". 가정을 바꿔도 범위가 크게 흔들리지 않으면 결론이 가정에 덜 의존한다.")
         add(f"영업 기간 계산에서 종료 시점 불명 {V['excluded']}곳은 제외했다. 관측 없는 업소의 실제 폐업은 기록보다 최대 {V['delay_years']}년 빠를 수 있다고 가정했다.")
     H = rep.get("history")
     if H:

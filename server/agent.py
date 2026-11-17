@@ -29,8 +29,13 @@ def load_db():
             parcels.setdefault(r["jibun"], dict(r, anchor="", core=False))
     for j, name in EXTRA_ANCHORS.items():                                       # 반경 150m 구간 필지에 랜드마크 이름을 붙인다
         if j in parcels and not parcels[j].get("anchor"): parcels[j]["anchor"] = name
+    semas = DATA / "semas_match.csv"          # 소상공인시장진흥공단 상가정보 한 시점 스냅샷에서 '영업 중'이 확인된 행(scripts/match_semas.py)
+    sm = {x["key"]: x for x in csv.DictReader(open(semas, encoding="utf-8-sig"))} if semas.exists() else {}
     for i, r in enumerate(rows):
         r["id"] = f"D{i}"
+        m = sm.get(row_key(r))
+        r["semas_first"], r["semas_last"] = (m["first_seen"], m["last_seen"]) if m else ("", "")   # 상가정보 스냅샷에서 영업 중으로 관측된 첫·마지막 날짜
+        if m and m["floor"] and not r.get("floor"): r["floor"], r["floor_src"] = m["floor"], "상가정보"   # 층이 비어 있던 행은 상가정보의 층을 쓴다
         p = parcels.get(r["jibun"])
         r["lon"], r["lat"] = (float(p["lon"]), float(p["lat"])) if p else (None, None)
     return rows, parcels
