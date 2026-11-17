@@ -3,9 +3,24 @@ import json, sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import agent
+import agent, analysis
 
 WEB = Path(__file__).resolve().parent.parent / "web"
+
+_DB = None
+def db():
+    global _DB
+    if _DB is None: _DB = agent.load_db()
+    return _DB
+
+FOCUS_WORDS = [("survival", ("버텼", "버티", "영업 기간", "영업기간", "얼마나 했", "오래", "생존", "폐업")),
+               ("history", ("자리", "교체", "이력", "공실", "바뀌", "들어왔")),
+               ("composition", ("업종", "구성", "비중", "종류", "많았", "줄었", "늘었"))]
+def guess_focus(text):
+    """LLM 없이 질문의 관점을 키워드로 짐작한다(에이전트가 해석하지 못할 때의 대체 경로)."""
+    for f, ws in FOCUS_WORDS:
+        if any(w in text for w in ws): return f
+    return None
 
 class H(SimpleHTTPRequestHandler):
     def __init__(self, *a, **k): super().__init__(*a, directory=str(WEB), **k)
@@ -13,9 +28,16 @@ class H(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         super().end_headers()
     def do_POST(self):
-        if self.path != "/api/find": self.send_error(404); return
+        if self.path not in ("/api/find", "/api/area"): self.send_error(404); return
         n = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(n) or b"{}")
+        if self.path == "/api/area":
+            rows, parcels = db()
+            js = [j for j in (body.get("jibuns") or []) if isinstance(j, str) and j in parcels][:400]
+            text = (body.get("text") or "").strip()[:500]
+            out = json.dumps({"report": analysis.report(rows, parcels, js, guess_focus(text)), "text": text}, ensure_ascii=False).encode()
+            self.send_response(200); self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(out))); self.end_headers(); self.wfile.write(out); return
         text = (body.get("text") or "").strip()[:500]
         state = body.get("state") if isinstance(body.get("state"), dict) else None
         self.send_response(200); self.send_header("Content-Type", "application/x-ndjson")

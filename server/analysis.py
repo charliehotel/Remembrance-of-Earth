@@ -1,0 +1,218 @@
+"""골목의 연대기: 영역(필지 집합) 분석 리포트. 계산은 전부 코드가 하고 LLM·네트워크 호출은 없다.
+
+핵심 원칙
+  · 인허가 기록의 폐업일은 '행정 기록일'이다(폐업신고에 기한이 없다). 그래서 영업 종료를 한 점이 아니라
+    구간 [하한, 상한]으로 다룬다. 상한 = 기록상 폐업일(또는 '간판 없음'이 확인된 첫 시점 중 빠른 쪽),
+    하한 = 영업 중이 확인된 마지막 시점(간판 마지막 관측). 관측이 없는 업소의 하한은 가정(아래 DELAY)으로 둔다.
+  · 근거 등급: 관측 확인(구간 폭 ≤ 2년) / 부분 관측(관측은 있으나 폭이 넓음) / 기록만(관측 없음).
+  · 표본이 MIN_N 곳 미만이면 수치를 내지 않고 '표본 부족'으로 표시한다.
+  · 모든 수치는 '기록 기준'이다.
+
+report(rows, parcels, jibuns) 가 고정 구조의 리포트(dict)를 돌려준다. 섹션: overview, composition, survival, history, limits.
+"""
+import re, statistics
+from datetime import date
+
+T_NOW = 2026.9                  # 데이터 기준 시점(마지막 로드뷰 조사 2026-06 이후)
+MIN_N = 10                      # 이 수 미만이면 수치를 내지 않는다
+WIDTH_OK = 2.0                  # 구간 폭이 이 값(년) 이하이면 '관측 확인'
+CORE_YEARS = list(range(1995, 2026, 5))
+SURVIVAL_T = (3, 5, 10)
+EV_OBS, EV_PART, EV_REC = "관측 확인", "부분 관측", "기록만"
+
+# 업종 묶음: (묶음 이름, 키워드). category_ai(상호·간판 기반 추정) 우선, 없으면 인허가 업종. 위에서부터 처음 맞는 묶음.
+GROUPS = [
+    ("카페·찻집", ["카페", "커피", "다방", "찻집", "베이커리", "디저트", "아이스크림", "도넛", "와플", "스무디", "과자", "만화방", "만화", "스터디", "방탈출", "보드게임", "베이글"]),
+    ("술집·주점", ["술집", "호프", "주점", "포차", "포장마차", "정종", "대포", "소주", "펍", "오뎅바", "이자카야", "바", "맥주", "위스키", "요리주점", "감성주점", "맥주축제"]),
+    ("게임·오락", ["PC방", "인터넷컴퓨터", "게임", "당구", "노래", "오락", "플스", "멀티방", "VR", "라이브"]),
+    ("미용·건강", ["미용", "네일", "피부", "왁싱", "메이크업", "이발", "이용업", "헬스", "체력", "필라테스", "치과", "안경", "약국"]),
+    ("숙박", ["숙박", "여관", "고시원", "쉐어하우스", "파티룸"]),
+    ("패스트푸드·분식", ["패스트푸드", "햄버거", "분식", "떡볶이", "김밥", "도시락", "라면", "치킨", "통닭", "피자", "튀김", "샌드위치", "포케", "샐러드"]),
+    ("고기·구이", ["고깃", "갈비", "고기", "곱창", "대창", "숯불", "삼겹", "족발", "보쌈", "양꼬치", "양고기", "바비큐", "주물럭", "불백", "식육", "닭갈비", "닭발", "장어", "조개구이", "생선구이", "꼬치"]),
+    ("중식", ["중국", "중식", "마라", "짜장", "탕수"]),
+    ("일식", ["일식", "횟집", "초밥", "라멘", "우동", "돈까스", "규카츠", "텐동", "덮밥"]),
+    ("양식·외국음식", ["외국음식", "인도", "태국", "베트남", "네팔", "멕시칸", "케밥", "쌀국수", "지중해", "양식", "경양식", "레스토랑", "파스타", "스테이크", "뷔페"]),
+    ("한식", ["한식", "국밥", "찌개", "국수", "칼국수", "냉면", "탕", "찜", "순두부", "설렁", "뚝배기", "막국수", "반찬", "식당", "일반조리", "해물", "동태", "만두", "철판"]),
+]
+OTHER = "기타·소매·서비스"
+
+def group_of(r):
+    for text in ((r.get("category_ai") or ""), (r.get("category") or "")):
+        if not text: continue
+        for g, kws in GROUPS:
+            if any(k in text for k in kws): return g
+    return OTHER
+
+def _t(s):
+    """'YYYY-MM-DD' 또는 'YYYY-MM' → 연 단위 실수. 없으면 None."""
+    m = re.match(r"(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?", s or "")
+    if not m: return None
+    y, mo, d = int(m.group(1)), int(m.group(2) or 7), int(m.group(3) or 1)
+    try: return y + (date(y, mo, min(d, 28)).timetuple().tm_yday - 1) / 365.25
+    except ValueError: return float(y)
+
+def _pct(xs, q):
+    xs = sorted(xs)
+    if not xs: return None
+    k = (len(xs) - 1) * q; f = int(k); c = min(f + 1, len(xs) - 1)
+    return xs[f] + (xs[c] - xs[f]) * (k - f)
+
+def delay_assumption(rows):
+    """관측이 있고 폐업일 기록이 있는 업소에서, 기록이 마지막 영업 관측보다 얼마나 늦는지(조사 간격을 포함한 상한)의 75백분위.
+    관측 없는 업소의 실제 폐업이 기록보다 이만큼 빠를 수 있다고 가정하는 값이다."""
+    ds = []
+    for r in rows:
+        if r.get("source") == "로드뷰 직접 조사" or "seen_after_close" in r.get("flags", ""): continue
+        e, sl = _t(r.get("end")), _t(r.get("sign_last"))
+        if e is not None and sl is not None and r.get("end_basis") == "폐업일" and not r.get("end_before"): ds.append(max(0.0, e - sl))
+    return (_pct(ds, 0.75) or 0.0), ds
+
+def prepare(rows, delay):
+    """행마다 시작·종료 구간과 근거 등급을 붙인 사본 목록."""
+    out = []
+    for r in rows:
+        s = _t(r.get("start"))
+        if s is None: continue
+        flags = r.get("flags", "")
+        sign_only = r.get("source") == "로드뷰 직접 조사"
+        e_rec, sl, eb, sa = _t(r.get("end")), _t(r.get("sign_last")), _t(r.get("end_before")), _t(r.get("start_after"))
+        x = {"id": r["id"], "jibun": r["jibun"], "name": r["name"], "floor": r.get("floor", ""), "group": group_of(r),
+             "s": s, "s_lo": min(sa, s) if sa is not None else s, "flags": flags, "note": ""}
+        if sign_only:
+            if eb is None:                                   # 마지막 조사까지 간판이 있었다 → 영업 중
+                x.update(state="open", e_lo=sl, e_hi=T_NOW, ev=EV_OBS)
+            else:
+                x.update(state="closed", e_lo=sl, e_hi=eb)
+        elif not r.get("end"):
+            if r.get("end_basis") in ("폐업", "취소/말소/만료/정지/중지"):   # 폐업은 했는데 날짜가 없다
+                x.update(state="undated", e_lo=s, e_hi=T_NOW, ev=EV_REC)
+            elif "stale_open" in flags:                      # 기록상 영업 중이나 갱신 흔적이 없다
+                x.update(state="stale", e_lo=s, e_hi=T_NOW, ev=EV_REC)
+            else:
+                x.update(state="open", e_lo=max(s, sl or s), e_hi=T_NOW, ev=EV_OBS if sl else EV_REC)
+        else:
+            hi = min(e_rec, eb) if eb is not None else e_rec
+            if sl is not None:
+                lo = sl
+                if lo > hi: lo = hi; x["note"] = "기록상 폐업 이후에도 간판이 관측됨"
+                x.update(state="closed", e_lo=lo, e_hi=hi)
+            else:
+                x.update(state="closed", e_lo=max(s, hi - delay), e_hi=hi, ev=EV_REC)
+        if x["state"] == "closed" and "ev" not in x:
+            x["ev"] = EV_OBS if x["e_hi"] - x["e_lo"] <= WIDTH_OK else EV_PART
+        out.append(x)
+    return out
+
+# ---------- 생존분석(Kaplan–Meier, 우측 중도절단) ----------
+def km(durs):
+    """durs: [(기간, 종료 관측 여부)]. 반환: 계단 곡선 [(t, S)] (t 오름차순)."""
+    ev = sorted(durs); n = len(ev); S = 1.0; curve = []; i = 0
+    while i < len(ev):
+        t = ev[i][0]; d = c = 0
+        while i < len(ev) and ev[i][0] == t:
+            d += ev[i][1]; c += 1 - ev[i][1]; i += 1
+        if d: S *= 1 - d / n; curve.append((t, S))
+        n -= d + c
+    return curve
+
+def surv_at(curve, t):
+    S = 1.0
+    for ts, s in curve:
+        if ts <= t: S = s
+        else: break
+    return S
+
+def median_of(curve):
+    for t, s in curve:
+        if s <= 0.5: return t
+    return None
+
+def survival_group(items):
+    """items: prepare() 결과 중 종료 시점을 알 수 있는 행. 하한·상한 두 곡선."""
+    lo, hi = [], []
+    for x in items:
+        if x["state"] == "closed":
+            lo.append((max(0.0, x["e_lo"] - x["s"]), 1)); hi.append((max(0.0, x["e_hi"] - x["s_lo"]), 1))
+        else:                                                    # 영업 중: 중도절단
+            c = max(0.0, T_NOW - x["s"]); lo.append((c, 0)); hi.append((c, 0))
+    cl, ch = km(lo), km(hi)
+    ml, mh = median_of(cl), median_of(ch)
+    return {"n": len(items), "n_closed": sum(1 for x in items if x["state"] == "closed"),
+            "at": {str(t): sorted([round(surv_at(cl, t), 2), round(surv_at(ch, t), 2)]) for t in SURVIVAL_T},     # 두 곡선은 중도절단 때문에 드물게 교차하므로 작은 쪽·큰 쪽으로 낸다
+            "median": [None if ml is None else round(ml, 1), None if mh is None else round(mh, 1)]}
+
+# ---------- 구성 ----------
+def composition(items):
+    """연도별로 '확실히 영업 중'(그 해 전체를 덮음)과 '영업 중일 수 있음'(걸침) 수를 업종 묶음별로."""
+    years = [y for y in CORE_YEARS if any(x["s"] <= y + 1 for x in items)]
+    rows = {}
+    for y in years:
+        cnt = {}
+        for x in items:
+            if x["state"] in ("undated",): lo_cert, possible = False, x["s"] <= y + 1
+            else:
+                possible = x["s"] <= y + 1 and x["e_hi"] >= y
+                lo_cert = x["s_lo"] <= y and x["e_lo"] >= y + 1 if x["state"] == "closed" else (x["s"] <= y and x["state"] == "open")
+            if possible:
+                c = cnt.setdefault(x["group"], [0, 0]); c[1] += 1; c[0] += 1 if lo_cert else 0
+        rows[y] = cnt
+    return {"years": years, "by_year": {str(y): {g: v for g, v in sorted(c.items(), key=lambda kv: -kv[1][1])} for y, c in rows.items()},
+            "total": {str(y): [sum(v[0] for v in c.values()), sum(v[1] for v in c.values())] for y, c in rows.items()}}
+
+# ---------- 자리 이력 ----------
+def history(items, max_parcels=60):
+    byp = {}
+    for x in items: byp.setdefault(x["jibun"], []).append(x)
+    parcels, intervals, gaps = [], [], []
+    for j, xs in sorted(byp.items()):
+        xs = sorted(xs, key=lambda x: (x["s"], x["name"]))
+        entries = [{"name": x["name"], "floor": x["floor"], "group": x["group"], "start": round(x["s"], 1), "end": None if x["state"] in ("open", "stale") else [round(x["e_lo"], 1), round(x["e_hi"], 1)],
+                    "state": x["state"], "evidence": x["ev"]} for x in xs]
+        for a, b in zip(xs, xs[1:]):
+            same = (not a["floor"] or not b["floor"] or a["floor"] == b["floor"])
+            if not same: continue                                 # 다른 층이면 교체가 아니다
+            intervals.append(b["s"] - a["s"])
+            if a["state"] == "closed":
+                gaps.append((b["s"] - a["e_hi"], b["s"] - a["e_lo"]))
+        parcels.append({"jibun": j, "n": len(xs), "floors_known": all(x["floor"] for x in xs), "entries": entries})
+    shown = sorted(parcels, key=lambda p: -p["n"])[:max_parcels]
+    ov = [g for g in gaps if g[1] < 0]                            # 후속 개업이 이전 업소의 영업 중에 시작(같은 건물 안 공존 가능)
+    pos = [g for g in gaps if g[1] >= 0]
+    return {"n_parcels": len(parcels), "n_turnovers": len(intervals),
+            "interval_median": round(statistics.median(intervals), 1) if len(intervals) >= 3 else None,
+            "gap_range_median": ([round(statistics.median(g[0] for g in pos), 1), round(statistics.median(g[1] for g in pos), 1)] if len(pos) >= 3 else None),
+            "overlap_share": round(len(ov) / len(gaps), 2) if gaps else None, "n_gaps": len(gaps),
+            "parcels": shown, "truncated": len(parcels) - len(shown)}
+
+# ---------- 리포트 ----------
+def report(rows, parcels, jibuns, focus=None):
+    """rows: agent.load_db()의 행, parcels: 필지 사전, jibuns: 영역에 든 필지 지번 목록. focus: 'survival'|'composition'|'history'|None."""
+    delay, delays = delay_assumption(rows)                          # 가정은 영역과 무관하게 전체 관측 업소로 구한다
+    sel = set(jibuns)
+    items = prepare([r for r in rows if r["jibun"] in sel], delay)
+    n = len(items)
+    ev = {k: sum(1 for x in items if x["ev"] == k) for k in (EV_OBS, EV_PART, EV_REC)}
+    core = sum(1 for j in sel if parcels.get(j, {}).get("core")); ring = sum(1 for j in sel if j in parcels and not parcels[j].get("core"))
+    st = {k: sum(1 for x in items if x["state"] == k) for k in ("open", "closed", "stale", "undated")}
+    overview = {"n_parcels": len(sel), "core_parcels": core, "ring_parcels": ring, "n_shops": n, "evidence": ev, "state": st,
+                "period": [round(min(x["s"] for x in items)), min(2026, round(max(x["e_hi"] if x["state"] == "closed" else x["s"] for x in items)))] if items else None,
+                "seen_after_close": sum(1 for x in items if x["note"]), "enough": n >= MIN_N}
+    # 영업 기간: 종료를 알 수 있는 행(영업 중·폐업). 갱신 흔적 없는 '영업 중'과 날짜 없는 폐업은 제외
+    usable = [x for x in items if x["state"] in ("open", "closed")]
+    gr = {}
+    for x in usable: gr.setdefault(x["group"], []).append(x)
+    surv = {"groups": [], "insufficient": [], "excluded": st["stale"] + st["undated"], "delay_years": round(delay, 1)}
+    if len(usable) >= MIN_N: surv["all"] = survival_group(usable)
+    for g, xs in sorted(gr.items(), key=lambda kv: -len(kv[1])):
+        if len(xs) >= MIN_N: surv["groups"].append({"group": g, **survival_group(xs)})
+        else: surv["insufficient"].append({"group": g, "n": len(xs)})
+    rep = {"focus": focus, "overview": overview,
+           "composition": composition(items) if items else None,
+           "survival": surv if len(usable) >= MIN_N else {"insufficient_all": True, "n": len(usable), "excluded": surv["excluded"]},
+           "history": history(items) if items else None,
+           "limits": {"basis": "인허가 기록과 로드뷰 간판 관측 기준", "min_n": MIN_N, "delay_years": round(delay, 1), "delay_n": len(delays),
+                      "notes": ["폐업 신고에는 법정 기한이 없어 기록상 폐업일은 실제 폐업보다 늦을 수 있다(식품위생법 제37조, 2026-11 현행 확인).",
+                                f"관측이 없는 업소({ev[EV_REC]}곳)는 실제 폐업이 기록보다 최대 {delay:.1f}년 빠를 수 있다고 가정했다(관측 있는 업소 {len(delays)}곳의 지연 상한 75백분위).",
+                                "로드뷰 조사는 연세로12길 구간에만 있고 반경 150m 확장 구간은 인허가 기록만이다.",
+                                "2011년 이전 기록에는 옛 조문이 적용됐을 수 있다.", "예측·추천은 하지 않고 기록된 이력만 설명한다."]}}
+    return rep

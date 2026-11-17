@@ -56,10 +56,28 @@
   .aga ul.fu { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: #444; } .aga details { font-size: 11.5px; color: #777; margin-top: 4px; }
   #agChips[hidden] { display: none; }
   #agChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  #agMode { width: auto !important; margin: 0 0 0 4px !important; padding: 0 7px !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 12px !important; font-size: 13px !important; line-height: 20px; vertical-align: 2px; }
+  #agMode.on { background: #2d6a3e !important; color: #fff !important; }
+  #areaTools { display: flex; align-items: center; gap: 6px; margin: 2px 0 6px; }
+  #areaTools[hidden], #arLog[hidden], #agLog[hidden], #areaChip[hidden] { display: none; }
+  #areaTools button { width: 34px !important; height: 30px; margin: 0 !important; padding: 0 !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 6px !important; font-size: 17px !important; line-height: 1; }
+  #areaTools button.on { background: #2d6a3e !important; color: #fff !important; }
+  #areaTools button:disabled { color: #bbb !important; border-color: #ddd !important; cursor: default; }
+  #areaHint { font-size: 11.5px; color: #777; margin-left: 4px; }
+  #areaChip { margin: 0 0 6px; padding: 4px 8px; border-radius: 12px; background: #fdecec; border: 1px solid #d33; color: #a22; font-size: 12px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  #areaChip button { width: auto !important; margin: 0 !important; padding: 0 5px !important; background: none !important; color: #a22 !important; font-size: 14px !important; }
+  #drawBox { position: absolute; border: 2px dashed #d33; background: #d332; pointer-events: none; z-index: 5; display: none; }
   #agChips button, #agNew { width: auto !important; margin: 0 !important; padding: 3px 9px !important; background: #fff !important; color: #2d6a3e !important; border: 1px solid #2d6a3e !important; border-radius: 12px !important; font-size: 11.5px !important; }
   #agNew { color: #777 !important; border-color: #bbb !important; }
   .aga .sug { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: #fff7e0; border: 1px solid #e6c766; font-size: 12.5px; }
   .aga .sug button { width: auto !important; margin: 6px 6px 0 0 !important; padding: 3px 10px !important; font-size: 12px !important; }
+  .rp { margin: 6px 0 10px; font-size: 12.5px; } .rp h3 { margin: 12px 0 4px; font-size: 13px; }
+  .rp .basis { font-size: 11px; color: #777; margin: 2px 0 6px; } .rp .ev { display: inline-block; padding: 0 7px; border-radius: 9px; font-size: 11px; margin-right: 4px; background: #eee; color: #444; }
+  .rp .ev.obs { background: #dff0e3; color: #1d5a2e; } .rp .ev.part { background: #fff1c9; color: #7a5a00; } .rp .ev.rec { background: #eee; color: #555; }
+  .rp table { width: 100%; border-collapse: collapse; font-size: 11.5px; } .rp th, .rp td { padding: 3px 4px; border-bottom: 1px solid #0001; text-align: right; } .rp th:first-child, .rp td:first-child { text-align: left; }
+  .rp th { color: #777; font-weight: 500; } .rp .na { color: #999; } .rp .bar { position: relative; height: 8px; background: #0001; border-radius: 4px; min-width: 60px; } .rp .bar i { position: absolute; top: 0; bottom: 0; background: #2d6a3e; border-radius: 4px; }
+  .rp .focus { border: 1px solid #2d6a3e; border-radius: 8px; padding: 2px 8px 6px; background: #f3faf5; }
+  .rp ul { margin: 4px 0 0; padding-left: 18px; font-size: 11.5px; color: #555; } .rp details { font-size: 11.5px; margin-top: 4px; } .rp .hl { cursor: pointer; color: #1a5fb4; }
   .aga .sug.split { background: #eef7f0; border-color: #9cc7a8; }
   .aga .sug button.no { background: #fff !important; color: #777 !important; border: 1px solid #bbb !important; }
   .aglead { border-style: dashed; } .agnote { font-size: 11.5px; color: #777; margin-top: 6px; }
@@ -155,14 +173,16 @@
     <p class="intro">골목은 바뀌어도 땅은 기억합니다. 대지가 기억하는 골목과 건물, 상점의 모습을 시간 슬라이더로 보여 줍니다.</p>
   </div>
   <div id="agent" class="band">
-      <h2>🔎 기억 속 장소 찾기 <span style="font-size:11px;color:#777">AI 에이전트</span> <button id="agNew" title="대화를 지우고 새로 시작" hidden>새로 시작</button></h2>
-      <div id="agLog"></div>
-      <textarea id="agText" placeholder="기억나는 단서를 적어 보세요. 예: 2010년 무렵 독수리다방 골목에 있던 인도 카레집"></textarea>
+      <h2><span id="agTitle">🐝 기억 속 장소 찾기</span> <button id="agMode" type="button" title="골목의 연대기로 전환">⇄</button> <button id="agNew" title="대화를 지우고 새로 시작" hidden>새로 시작</button></h2>
+      <div id="areaTools" hidden><button type="button" data-shape="rect" title="사각형으로 영역 선택: 지도를 드래그하세요">□</button><button type="button" data-shape="circle" title="원 (준비 중)" disabled>○</button><button type="button" data-shape="poly" title="다각형 (준비 중)" disabled>⬠</button><span id="areaHint">영역 선택</span></div>
+      <div id="agLog"></div><div id="arLog" hidden></div>
+      <div id="areaChip" hidden></div>
+      <textarea id="agText" placeholder="기억 속 장소의 단서를 AI에 물어보세요.&#10;예: 2010년경 독수리다방 앞 카레집"></textarea>
       <button id="agGo">찾아보기</button>
       <div id="agChips" hidden></div>
   </div>
   <div id="sideBody" class="band">
-      <h2>🔎 자리의 연대기</h2>
+      <h2>🕵️ 자리의 연대기</h2>
       <textarea id="q" rows="2" placeholder="지번이나 상호를 검색해 보세요. 입점해 있던 상점 정보를 연대별로 보여줍니다. (예: 2-7, 아웃백)" autocomplete="off" spellcheck="false"></textarea>
       <ul id="results" hidden></ul>
       <div id="detail"><div class="hint">필지를 누르거나 검색하면 그 필지의 건물과 상점 이력이 보입니다.</div></div>
@@ -466,6 +486,11 @@ function init(S) {
     map.addLayer({ id: "me", type: "fill-extrusion", source: "me", layout: { visibility: "none" }, paint: {
       "fill-extrusion-color": ["get", "color"], "fill-extrusion-base": ["get", "base"],
       "fill-extrusion-height": ["get", "top"], "fill-extrusion-opacity": 1 } });
+    // 골목의 연대기 영역 선택 강조: 클릭 선택(parcel-sel)과 같은 모양을 여러 필지에 적용. 지면 레이어이므로 건물 아래에 둔다.
+    const aBefore = map.getLayer("ctx-bld") ? "ctx-bld" : "bld", aNone = ["==", ["get", "jibun"], ""];
+    [["parcels", "area-sel"], ["ctx-parcels", "area-ctx"]].forEach(([src, id]) => { if (!map.getSource(src)) return;
+      map.addLayer({ id: id + "-fill", type: "fill", source: src, filter: aNone, paint: { "fill-color": "#d33", "fill-opacity": 0.18 } }, aBefore);
+      map.addLayer({ id: id + "-line", type: "line", source: src, filter: aNone, paint: { "line-color": "#d33", "line-width": 4 } }, aBefore); });
     update();
     window.__map = map; window.__mapReady = true; window.dispatchEvent(new Event("map-ready"));   // avatar.js가 three.js 레이어를 붙인다
   });
@@ -888,9 +913,10 @@ function init(S) {
   let agState = null, agBusy = false;
   agChips.innerHTML = AG_CHIPS.map((c, i) => `<button data-i="${i}">${c[0]}</button>`).join("");
   agChips.onclick = e => { const b = e.target.closest("button[data-i]"); if (b) agAsk(AG_CHIPS[+b.dataset.i][1]); };
-  agNew.onclick = () => { agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억나는 단서를 적어 보세요. 예: 2010년 무렵 독수리다방 골목에 있던 인도 카레집"; };
-  agText.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); agAsk(agText.value); } });
-  agGo.onclick = () => agAsk(agText.value);
+  agNew.onclick = () => { if (mode === "area") { arLog.innerHTML = ""; setAreaSel([]); agNew.hidden = true; return; } agState = null; agLog.innerHTML = ""; agChips.hidden = true; agNew.hidden = true; agText.value = ""; agText.placeholder = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집"; };
+  const ask = t => mode === "area" ? arAsk(t) : agAsk(t);
+  agText.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(agText.value); } });
+  agGo.onclick = () => ask(agText.value);
   function agPick(c) {   // 후보 카드를 누르면 그 상점의 시기·필지로 이동
     const b = S.businesses.find(x => x.jibun === c.jibun && x.name === c.name && (x.start || "") === (c.start || ""));
     if (b) {
@@ -943,7 +969,7 @@ function init(S) {
       h += `<h3>정확히 맞는 결과 <small>(${m.exact_total > ex.length ? `같은 조건 ${m.exact_total}곳 중 상위 ${ex.length}곳` : ex.length})</small></h3>` + (ex.length ? ex.map(c => card(c, jById[c.id])).join("") : `<div class="none">질문 조건과 정확히 맞는 기록이 없어요.</div>`);
       if (wd.length) h += `<h3>범위를 넓혀 찾은 결과 <small>(${wd.length}) · 시기·위치가 조금 다를 수 있어요</small></h3>` + wd.map(c => card(c, jById[c.id])).join("");
       if (res.leads.length) h += `<h3>웹에서 새로 발견한 후보 <small>· 미검증, 지도에 반영되지 않음</small></h3>` + res.leads.map(l => `<div class="agc aglead" style="cursor:default"><b>${esc(l.name)}</b><span class="vd 미확인">AI 후보</span><div class="why">${esc(l.why)}</div><div class="src">${src(l.evidence_ids)}</div></div>`).join("");
-      if (m.split) h += `<div class="sug split">🔎 ${esc(m.split.text)}<br>${m.split.options.map((o, i) => `<button data-r="${i}">${esc(o.label)} (${o.count}곳)</button>`).join("")}</div>`;
+      if (m.split) h += `<div class="sug split">🐝 ${esc(m.split.text)}<br>${m.split.options.map((o, i) => `<button data-r="${i}">${esc(o.label)} (${o.count}곳)</button>`).join("")}</div>`;
       if (m.suggestion) h += `<div class="sug">💡 ${esc(m.suggestion.text)}<br><button class="yes">네, 찾아봐줘</button><button class="no">아니요</button></div>`;
       if (res.follow_ups.length) h += `<h3>에이전트의 질문</h3><ul class="fu">${res.follow_ups.map(q => `<li>${esc(q)}</li>`).join("")}</ul>`;
       h += `<div class="agnote">모델 ${esc(m.model)}${m.cost_usd ? " · 이번 질문 비용 약 $" + m.cost_usd : ""}. AI 판정은 근거를 직접 확인하세요.</div>`;
@@ -956,8 +982,134 @@ function init(S) {
     }
   }
 
+  // ---------- 골목의 연대기: 영역 선택 → 필지 자동 선택 → 분석 리포트 (코드 계산, server/analysis.py) ----------
+  const agMode = document.getElementById("agMode"), agTitle = document.getElementById("agTitle"), areaTools = document.getElementById("areaTools"), areaHint = document.getElementById("areaHint"),
+    arLog = document.getElementById("arLog"), areaChip = document.getElementById("areaChip"), rectBtn = areaTools.querySelector('[data-shape="rect"]');
+  const FIND_PH = "기억 속 장소의 단서를 AI에 물어보세요.\n예: 2010년경 독수리다방 앞 카레집", AREA_PH = "선택한 영역을 AI에 물어보세요.\n예: 이 골목 업종이 어떻게 바뀌었어?";
+  let mode = "find", area = [], armed = false, areaDragged = false, drag = null;
+  const drawBox = document.createElement("div"); drawBox.id = "drawBox"; map.getContainer().appendChild(drawBox);
+  const AREA_NONE = ["==", ["get", "jibun"], ""];
+  function refreshGo() { agGo.textContent = mode === "find" ? "찾아보기" : (area.length && !agText.value.trim() ? "영역 분석하기" : "물어보기"); }
+  agText.addEventListener("input", refreshGo);
+  function setAreaSel(js) {   // 클릭으로 고른 필지와 같은 모양(붉은 외곽선+옅은 채움)으로 여러 필지를 동시에 강조
+    area = js; const f = js.length ? ["in", ["get", "jibun"], ["literal", js]] : AREA_NONE;
+    ["area-sel-fill", "area-sel-line", "area-ctx-fill", "area-ctx-line"].forEach(id => map.getLayer(id) && map.setFilter(id, f));
+    const shops = js.reduce((n, j) => n + (bizByParcel[j] ? bizByParcel[j].length : 0), 0);
+    areaChip.hidden = !js.length;
+    areaChip.innerHTML = js.length ? `<span>📍 선택 영역: 필지 ${js.length}개 · 업소 ${shops}곳</span><button type="button" title="영역 해제">✕</button>` : "";
+    if (js.length) areaChip.querySelector("button").onclick = () => setAreaSel([]);
+    refreshGo();
+  }
+  function arm(on) {
+    if (on && (walking || placing)) { areaHint.textContent = "걷기 모드를 끈 뒤 선택하세요"; return; }
+    armed = on; rectBtn.classList.toggle("on", on); drag = null; drawBox.style.display = "none";
+    areaHint.textContent = on ? "지도를 드래그해 사각형을 그리세요 · Esc 취소" : (area.length ? "다시 누르면 영역을 새로 그립니다" : "영역 선택");
+    map.getCanvas().style.cursor = on ? "crosshair" : "";
+    ["dragPan", "dragRotate"].forEach(k => map[k][on ? "disable" : "enable"]());
+  }
+  rectBtn.onclick = () => arm(!armed);
+  function setMode(m) {
+    if (m === mode) return; mode = m; const a = m === "area";
+    if (!a) { arm(false); setAreaSel([]); }
+    else clearSelection();
+    agMode.classList.toggle("on", a); agMode.title = a ? "기억 속 장소 찾기로 전환" : "골목의 연대기로 전환";
+    agTitle.textContent = a ? "🐝 골목의 연대기" : "🐝 기억 속 장소 찾기";
+    areaTools.hidden = !a; agLog.hidden = a; arLog.hidden = !a; agChips.hidden = a || agChips.hidden;
+    if (!a && agLog.children.length) agChips.hidden = false;
+    agNew.hidden = !(a ? arLog.children.length : agLog.children.length);
+    agText.placeholder = a ? AREA_PH : (agState ? "이어서 질문하거나 기억을 바로잡아 주세요 (예: 1층이 아니었던 것 같아)" : FIND_PH);
+    refreshGo();
+  }
+  agMode.onclick = () => setMode(mode === "find" ? "area" : "find");
+  // 화면 사각형과 필지의 겹침: 필지 꼭짓점을 화면 좌표로 옮겨 검사하므로 기울어진 시점에서도 눈에 보이는 대로 선택된다.
+  const polyRings = g => g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+  const inRect = (p, r) => p[0] >= r.x0 && p[0] <= r.x1 && p[1] >= r.y0 && p[1] <= r.y1;
+  const inPoly = (p, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const a = ring[i], b = ring[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+  const ccw = (a, b, c) => (c[1] - a[1]) * (b[0] - a[0]) > (b[1] - a[1]) * (c[0] - a[0]);
+  const segX = (a, b, c, d) => ccw(a, c, d) !== ccw(b, c, d) && ccw(a, b, c) !== ccw(a, b, d);
+  function parcelHitsRect(f, r) {
+    const rc = [[r.x0, r.y0], [r.x1, r.y0], [r.x1, r.y1], [r.x0, r.y1]];
+    for (const poly of polyRings(f.geometry)) {
+      const ring = poly[0].map(c => { const q = map.project(c); return [q.x, q.y]; });
+      if (Math.max(...ring.map(p => p[0])) < r.x0 || Math.min(...ring.map(p => p[0])) > r.x1 || Math.max(...ring.map(p => p[1])) < r.y0 || Math.min(...ring.map(p => p[1])) > r.y1) continue;
+      if (ring.some(p => inRect(p, r)) || rc.some(c => inPoly(c, ring))) return true;
+      for (let i = 0; i < ring.length - 1; i++) for (let k = 0; k < 4; k++) if (segX(ring[i], ring[i + 1], rc[k], rc[(k + 1) % 4])) return true;
+    }
+    return false;
+  }
+  function parcelsInRect(r) {   // 도로 필지는 제외. 조사 자료가 있는 필지(핵심 25 + 반경 150m)만 대상
+    const cand = S.parcels.features.filter(f => f.properties.jimok !== "도");
+    if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties; if (p.r150 && p.jimok !== "도" && !coreJ.has(p.jibun)) cand.push(f); });
+    return cand.filter(f => parcelHitsRect(f, r)).map(f => f.properties.jibun);
+  }
+  const cpt = e => { const b = map.getCanvas().getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  map.getCanvas().addEventListener("mousedown", e => { if (!armed || e.button !== 0) return; e.preventDefault(); e.stopPropagation(); drag = cpt(e); });
+  window.addEventListener("mousemove", e => {
+    if (!armed || !drag) return; const p = cpt(e), x0 = Math.min(drag[0], p[0]), y0 = Math.min(drag[1], p[1]);
+    Object.assign(drawBox.style, { display: "block", left: x0 + "px", top: y0 + "px", width: Math.abs(p[0] - drag[0]) + "px", height: Math.abs(p[1] - drag[1]) + "px" });
+  });
+  window.addEventListener("mouseup", e => {
+    if (!armed || !drag) return; const p = cpt(e), r = { x0: Math.min(drag[0], p[0]), y0: Math.min(drag[1], p[1]), x1: Math.max(drag[0], p[0]), y1: Math.max(drag[1], p[1]) };
+    drag = null; drawBox.style.display = "none"; areaDragged = true; setTimeout(() => areaDragged = false, 60);
+    if (r.x1 - r.x0 < 8 || r.y1 - r.y0 < 8) { areaHint.textContent = "조금 더 크게 드래그해 주세요"; return; }
+    const js = parcelsInRect(r); arm(false); setAreaSel(js);
+    if (!js.length) areaHint.textContent = "그 안에 조사된 필지가 없어요. 다시 선택해 주세요";
+  });
+  window.addEventListener("keydown", e => { if (e.key === "Escape" && armed) arm(false); });
+  const fy = v => Math.floor(v), span = (a, b) => a === b ? a : a + "–" + b, pc = a => span(Math.round(a[0] * 100), Math.round(a[1] * 100)) + "%";
+  function arReport(R) {
+    const o = R.overview, f = R.focus, L = R.limits, secs = [];
+    const ev = o.evidence, badge = (c, k, n) => n ? `<span class="ev ${c}">${k} ${n}</span>` : "";
+    if (!o.n_shops) return `<div class="rp"><div class="ans">이 영역에는 조사된 업소 기록이 없어요.</div></div>`;
+    secs.push(["overview", "개요", `<div class="basis">기록 기준 · 필지 ${o.n_parcels}개(연세로12길 ${o.core_parcels} · 주변 ${o.ring_parcels}) · 업소 ${o.n_shops}곳 · ${o.period ? o.period[0] + "~" + o.period[1] + "년" : ""}</div>
+      <div>영업 중 ${o.state.open}곳 · 폐업 ${o.state.closed}곳${o.state.stale + o.state.undated ? ` · 종료 시점 불명 ${o.state.stale + o.state.undated}곳` : ""}</div>
+      <div style="margin-top:4px">근거 ${badge("obs", "관측 확인", ev["관측 확인"])}${badge("part", "부분 관측", ev["부분 관측"])}${badge("rec", "기록만", ev["기록만"])}</div>
+      ${o.enough ? "" : `<div class="na">업소가 ${L.min_n}곳 미만이라 일부 수치는 표본 부족으로 표시합니다.</div>`}`]);
+    const C = R.composition;
+    if (C && C.years.length) {
+      const gs = {}; C.years.forEach(y => Object.entries(C.by_year[y]).forEach(([g, v]) => gs[g] = (gs[g] || 0) + v[1]));
+      const names = Object.keys(gs).sort((a, b) => gs[b] - gs[a]).slice(0, 9);
+      secs.push(["composition", "업종 구성", `<table><tr><th>업종</th>${C.years.map(y => `<th>${y}</th>`).join("")}</tr>${names.map(g => `<tr><td>${esc(g)}</td>${C.years.map(y => { const v = C.by_year[y][g]; return v ? `<td>${span(v[0], v[1])}</td>` : `<td class="na">·</td>`; }).join("")}</tr>`).join("")}
+        <tr><th>합계</th>${C.years.map(y => `<th>${span(C.total[y][0], C.total[y][1])}</th>`).join("")}</tr></table><div class="basis">숫자는 '확실–가능'입니다. 확실 = 그 해 내내 영업이 관측·기록으로 뒷받침됨, 가능 = 그 해에 영업 중이었을 수 있음.</div>`]);
+    }
+    const V = R.survival;
+    if (V.insufficient_all) secs.push(["survival", "영업 기간", `<div class="na">표본 부족: 영업 기간을 알 수 있는 업소가 ${V.n}곳이라 수치를 내지 않습니다(기준 ${L.min_n}곳).</div>`]);
+    else {
+      const row = (name, g) => `<tr><td>${esc(name)}</td><td>${g.n}</td><td>${pc(g.at["3"])}</td><td>${pc(g.at["5"])}<div class="bar"><i style="left:${Math.round(g.at["5"][0] * 100)}%;width:${Math.max(2, Math.round((g.at["5"][1] - g.at["5"][0]) * 100))}%"></i></div></td><td>${pc(g.at["10"])}</td><td>${g.median[0] == null && g.median[1] == null ? "—" : g.median[0] == null ? "≥" + g.median[1] : g.median[1] == null ? "≥" + g.median[0] : span(g.median[0], g.median[1])}</td></tr>`;
+      secs.push(["survival", "영업 기간", `<table><tr><th>업종</th><th>표본</th><th>3년 생존</th><th>5년 생존</th><th>10년 생존</th><th>중앙값(년)</th></tr>${row("전체", V.all)}${V.groups.map(g => row(g.group, g)).join("")}</table>
+        ${V.insufficient.length ? `<div class="basis">표본 부족(수치 없음): ${V.insufficient.map(x => esc(x.group) + " " + x.n + "곳").join(", ")}</div>` : ""}
+        <div class="basis">범위는 폐업 시점의 불확실성을 반영한 하한–상한입니다. 영업 중인 업소는 아직 끝나지 않은 것으로 계산했고, 종료 시점 불명 ${V.excluded}곳은 제외했습니다.</div>`]);
+    }
+    const H = R.history;
+    if (H) {
+      const ent = e => `${esc(e.name)}${e.floor ? " " + esc(e.floor) + "층" : ""} <span class="na">${esc(e.group)}</span> ${fy(e.start)}~${e.end ? (e.end[0] === e.end[1] || fy(e.end[0]) === fy(e.end[1]) ? fy(e.end[1]) : fy(e.end[0]) + "–" + fy(e.end[1])) : "영업 중"} <span class="na">(${esc(e.evidence)})</span>`;
+      secs.push(["history", "자리 이력", `<div>같은 자리의 업소 교체 ${H.n_turnovers}건${H.interval_median != null ? ` · 개업 간격 중앙값 ${H.interval_median}년` : ""}${H.gap_range_median ? ` · 폐업~다음 개업 공백 ${span(H.gap_range_median[0], H.gap_range_median[1])}년(중앙값)` : ""}</div>
+        ${H.overlap_share != null ? `<div class="basis">다음 업소가 이전 업소의 폐업 전에 개업한 경우가 ${Math.round(H.overlap_share * 100)}%입니다. 호실 정보가 없어 같은 건물의 다른 호실일 수 있습니다.</div>` : ""}
+        <details><summary>필지별 이력 보기(${H.parcels.length}${H.truncated ? "+" + H.truncated : ""}곳)</summary>${H.parcels.map(p => `<div style="margin-top:6px"><span class="hl" data-j="${esc(p.jibun)}">창천동 ${esc(p.jibun)}</span> · ${p.n}곳${p.floors_known ? "" : " · 층 정보 일부 없음"}<ul>${p.entries.map(e => `<li>${ent(e)}</li>`).join("")}</ul></div>`).join("")}</details>`]);
+    }
+    secs.push(["limits", "한계", `<div class="basis">${esc(L.basis)}</div><ul>${L.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`]);
+    if (f) { const i = secs.findIndex(s => s[0] === f); if (i > 1) secs.splice(1, 0, secs.splice(i, 1)[0]); }
+    return `<div class="rp"><div class="basis">골목의 연대기 · 기록 기준 리포트${f ? " · 질문의 관점을 앞에 놓았습니다" : ""}</div>${secs.map(s => `<div class="${s[0] === f ? "focus" : ""}"><h3>${s[1]}</h3>${s[2]}</div>`).join("")}</div>`;
+  }
+  async function arAsk(text) {
+    text = (text || "").trim(); if (agBusy) return;
+    if (!area.length) { const n = document.createElement("div"); n.className = "aga"; n.innerHTML = `<div class="ans">먼저 지도에서 영역을 선택해 주세요. □를 누르고 지도를 드래그하면 됩니다.</div>`; arLog.appendChild(n); agNew.hidden = false; n.scrollIntoView({ block: "nearest" }); return; }
+    agBusy = true; agGo.disabled = true; agText.value = ""; refreshGo();
+    const u = document.createElement("div"); u.className = "agu"; u.textContent = `[필지 ${area.length}개] ${text || "선택 영역 분석"}`; arLog.appendChild(u);
+    const box = document.createElement("div"); box.className = "aga"; box.textContent = "분석 중…"; arLog.appendChild(box); agNew.hidden = false;
+    try {
+      const r = await fetch("/api/area", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, jibuns: area }) });
+      if (!r.ok) throw new Error(`분석 서버가 응답하지 않습니다(${r.status}). python3 server/app.py 로 실행했는지 확인해 주세요`);
+      box.innerHTML = arReport((await r.json()).report);
+      box.querySelectorAll(".hl[data-j]").forEach(a => a.onclick = () => { focusBiz = null; goParcel(a.dataset.j); });
+    } catch (e) { box.textContent = "⚠ " + e.message; }
+    agBusy = false; agGo.disabled = false; box.scrollIntoView({ block: "nearest" });
+  }
+
   map.on("mousedown", () => { if (document.activeElement === qInput) qInput.blur(); });
   map.on("click", e => {
+    if (areaDragged) { areaDragged = false; return; }   // 영역 그리기 드래그 직후의 클릭은 무시
+    if (mode === "area") return;   // 골목의 연대기 모드에서는 지도 클릭으로 필지를 고르지 않는다
     if (placing) { tryDrop(e.point); return; }   // 캐릭터를 들고 있을 때의 클릭은 '내려놓기'
     if (lookDragged) { lookDragged = false; return; }   // 걷기 모드에서 시점 드래그 뒤의 클릭은 무시
     const L = ["bld", "ghost", "parcel-fill", "ctx-bld", "ctx-prog", "ctx-fill"].filter(id => map.getLayer(id));
