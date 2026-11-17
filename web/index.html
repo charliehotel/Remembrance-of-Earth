@@ -1136,6 +1136,7 @@ function init(S) {
       const row = (name, g) => `<tr><td>${esc(name)}</td><td>${g.n}</td><td>${pc(g.at["3"])}</td><td>${pc(g.at["5"])}<div class="bar"><i style="left:${Math.round(g.at["5"][0] * 100)}%;width:${Math.max(2, Math.round((g.at["5"][1] - g.at["5"][0]) * 100))}%"></i></div></td><td>${pc(g.at["10"])}</td><td>${g.median[0] == null && g.median[1] == null ? "—" : g.median[0] == null ? "≥" + g.median[1] : g.median[1] == null ? "≥" + g.median[0] : span(g.median[0], g.median[1])}</td></tr>`;
       secs.push(["survival", "영업 기간", `<table><tr><th>업종</th><th>표본</th><th>3년 생존</th><th>5년 생존</th><th>10년 생존</th><th>중앙값(년)</th></tr>${row("전체", V.all)}${V.groups.map(g => row(g.group, g)).join("")}</table>
         ${V.insufficient.length ? `<div class="basis">표본 부족(수치 없음): ${V.insufficient.map(x => esc(x.group) + " " + x.n + "곳").join(", ")}</div>` : ""}
+        ${V.sensitivity ? `<div class="basis">폐업 지연 가정을 바꾸면(전체 5년 생존): ${V.sensitivity.map(x => `${x.delay}년 ${pc(x.at5)}`).join(" · ")}</div>` : ""}
         <div class="basis">범위는 폐업 시점의 불확실성을 반영한 하한–상한입니다. 영업 중인 업소는 아직 끝나지 않은 것으로 계산했고, 종료 시점 불명 ${V.excluded}곳은 제외했습니다.</div>`]);
     }
     const H = R.history;
