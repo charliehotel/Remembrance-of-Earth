@@ -1041,9 +1041,10 @@ function init(S) {
     }
     return false;
   }
-  function parcelsInRect(r) {   // 도로 필지는 제외. 조사 자료가 있는 필지(핵심 25 + 반경 150m)만 대상
-    const cand = S.parcels.features.filter(f => f.properties.jimok !== "도");
-    if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties; if (p.r150 && p.jimok !== "도" && !coreJ.has(p.jibun)) cand.push(f); });
+  const NONSITE = new Set(["도", "철", "구", "천", "제", "하", "유", "수"]);   // 도로·철도·구거·하천·제방·유지·수도용지는 영업할 자리가 아니므로 선택에서 뺀다
+  function parcelsInRect(r) {   // 조사 자료가 있는 필지(핵심 25 + 반경 150m) 중 영업할 수 있는 필지만 대상
+    const cand = S.parcels.features.filter(f => !NONSITE.has(f.properties.jimok));
+    if (S.context) S.context.parcels.features.forEach(f => { const p = f.properties; if (p.r150 && !NONSITE.has(p.jimok) && !coreJ.has(p.jibun)) cand.push(f); });
     return cand.filter(f => parcelHitsRect(f, r)).map(f => f.properties.jibun);
   }
   const cpt = e => { const b = map.getCanvas().getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
