@@ -15,7 +15,7 @@ from pathlib import Path
 import sys
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
-from match_restaurants import SOURCES, date10, parse_floor, parse_jibun  # noqa: E402
+from match_restaurants import SOURCES, date10, fix_name, parse_floor, parse_jibun  # noqa: E402
 
 PARCELS = ROOT / "data/parcels_r150.csv"
 OUT = ROOT / "data/timeline_businesses_r150.csv"
@@ -36,14 +36,15 @@ def main():
             if j not in new:
                 continue
             start = date10(r["인허가일자"])
-            key = (j, r["사업장명"], start)
+            name = fix_name(r["관리번호"], r["사업장명"])
+            key = (j, name, start)
             if key in seen:
                 continue
             seen.add(key)
             end = date10(r.get("폐업일자")) or date10(r.get("인허가취소일자"))
             flags = "stale_open" if (not end and start and start < "2000" and r["영업상태명"].startswith("영업")) else ""
             rows.append({
-                "jibun": j, "name": r["사업장명"], "license_type": kind,
+                "jibun": j, "name": name, "license_type": kind,
                 "category": r.get("업태구분명") or kind,
                 "floor": parse_floor(r["지번주소"] or r["도로명주소"]),
                 "start": start, "start_basis": "인허가일",

@@ -6518,5 +6518,12 @@
 "basis": "사용자 확인",
 "need_search": false,
 "searched": false
+},
+"힏스|일반음식점|경양식": {
+"category_ai": "양식당",
+"conf": "보통",
+"basis": "상가정보",
+"need_search": false,
+"searched": false
 }
 }

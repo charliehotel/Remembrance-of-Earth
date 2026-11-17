@@ -38,6 +38,22 @@ REVIEW = ROOT / "data/review_queue_restaurants.csv"
 to_4326 = Transformer.from_crs("EPSG:2097", "EPSG:4326", always_xy=True).transform
 
 
+def load_name_fixes():
+    """인허가 원본(CP949)에서 한글이 '?'로 깨진 상호를 소상공인 상가정보로 복구한 표(data/name_fixes.csv, 관리번호 기준)."""
+    p = ROOT / "data/name_fixes.csv"
+    if not p.exists():
+        return {}
+    with p.open(encoding="utf-8-sig") as fh:
+        return {r["mgmt_no"]: r["fixed"] for r in csv.DictReader(fh)}
+
+
+NAME_FIXES = load_name_fixes()
+
+
+def fix_name(mgmt_no, name):
+    return NAME_FIXES.get(mgmt_no, name)
+
+
 def date10(s):
     return (s or "").strip()[:10]
 
@@ -91,7 +107,7 @@ def main():
                 "jibun": target["jibun"],
                 "match_method": "jibun" if jp else "coord",
                 "coord_conflict": bool(jp and coord_parcel and coord_parcel["jibun"] != jp["jibun"]),
-                "name": r["사업장명"],
+                "name": fix_name(r["관리번호"], r["사업장명"]),
                 "license_type": r["_kind"],
                 "category": r.get("업태구분명") or r["_kind"],
                 "status": r["영업상태명"],
