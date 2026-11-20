@@ -144,6 +144,13 @@ def floor_key(f):
     m = re.fullmatch(r"(?:지하|B)(\d*)", f, re.I)
     return "B" + (m.group(1) or "1") if m else f
 
+def sign_floors(r):
+    """로드뷰 간판 판독 메모(sign_units: '2층 좌측', '1층|2층', '지하 1층' 등)에서 층 값을 모은다. 층 칸이 비어 있어도 판독으로 층을 알 수 있는 업소를 위해."""
+    out = set()
+    for m in re.finditer(r"지하\s*(\d*)|B(\d+)|(\d+)층", r.get("sign_units") or ""):
+        out.add("B" + (m.group(1) or "1") if m.group(0).startswith("지하") else "B" + m.group(2) if m.group(2) else m.group(3))
+    return out
+
 def row_key(r): return f"{r['jibun']}|{r['name']}|{r['start']}"
 
 def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
@@ -167,8 +174,9 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
         for h in clue["name_hints"]:
             pts, full = _hint_score(h, r); hint_pts += pts; hint_all &= full
         fl = floor_key(clue["floor"])
-        floor_known = bool(r["floor"] or "층" in r["observed_as"])
-        floor_ok = (not fl) or (floor_known and (r["floor"] == fl or f"{fl}층" in r["observed_as"]))
+        sf = sign_floors(r)
+        floor_known = bool(r["floor"] or "층" in r["observed_as"] or sf)
+        floor_ok = (not fl) or (floor_known and (r["floor"] == fl or f"{fl}층" in r["observed_as"] or fl in sf))
         sc = 1.0 + hint_pts + (2 if cat_ok and terms else 0) + (1 if fl and floor_ok else 0) + (0.5 if r["grade"] == "A" else 0)
         sc -= 0 if in_exact_years else 1.0                                          # 시기를 벗어나면 감점
         is_exact = in_exact_years and cat_ok and hint_all and floor_ok and (r_exact is None or (d is not None and d <= r_exact))
@@ -269,13 +277,13 @@ def judge(text, clue, cands, ev, web_used, rejected=()):
     sys = ("너는 도시 기록 검증 에이전트다. 사용자의 기억 단서와 내부 이력 후보(D로 시작, tier는 '정밀'=질문 조건과 그대로 일치, '확장'=시기·위치를 넓혀 찾은 것), "
            "웹 검색 근거(W로 시작)가 주어진다. 각 후보가 단서에 맞는지 판정하라. 규칙: (1) 주어진 자료에 없는 사실은 쓰지 않는다. "
            "(2) 웹에서 찾지 못한 것은 반증이 아니다. 웹 근거가 없다는 이유로 내부 인허가 일치를 깎지 않는다(근거가 웹에 없음을 reason에 밝힐 뿐). verdict '확인'은 단서의 시기·업종·층이 내부 이력과 일치하고, 인허가 기록(등급 A는 공공 인허가 기록이므로 그 자체가 근거) 또는 웹 근거가 뒷받침할 때. "
-           "상호 조각까지 맞으면 확신을 높인다. 일부만 맞으면 '추정', 근거가 없거나 충돌하면 '미확인'. 확장 tier는 시기나 위치가 어긋난다는 점을 reason에 밝힌다. "
+           "등급 C는 로드뷰에서 그 상호의 간판을 직접 판독한 기록이다. 그 시기에 그 상호가 실제로 있었다는 직접 증거이므로 존재 자체를 약하게 보지 말고, 판독 사이의 영업 여부·개업과 폐업 시점·정확한 층만 불확실하다고 밝힌다('등급 C라 근거가 약하다'는 식으로 쓰지 않는다). 상호 조각까지 맞으면 확신을 높인다. 일부만 맞으면 '추정', 근거가 없거나 충돌하면 '미확인'. 확장 tier는 시기나 위치가 어긋난다는 점을 reason에 밝힌다. "
            "(3) reason은 무엇이 일치·충돌하는지 100자 이내로, id(D·W 번호)와 'tier'라는 말 대신 상호명과 '정밀 조건'·'넓힌 범위' 같은 표현을 쓴다. (4) evidence_ids는 주어진 W·D id만. "
            "(5) 웹 근거에서 내부 후보에 없는 새 상호가 단서와 맞아 보이면 leads에 넣는다. name에는 상호만, 설명은 why에. 단서와 실제로 맞는 경우에만 넣고, 맞지 않는 곳은 아예 넣지 않는다(불일치를 설명하려고 넣지 말 것). 항상 미검증이다. "
            "(5-1) 후보의 'AI추정업종'은 공식 인허가 업종이 아니라 상호나 웹 검색으로 AI가 추정한 값이다. 업종 일치를 판단할 때 참고는 하되, 공식 업종보다 약한 근거로 다루고, 업종 일치를 이 값에 의존했다면 reason과 answer에 '업종은 AI가 상호로 추정한 것이라 정확하지 않을 수 있다'고 밝힌다. 공식 업종과 AI 추정이 다르면 공식 업종을 우선한다. "
            "(6) answer는 사용자에게 보일 2문장 요약. 정밀 검색 결과가 있으면 그것을 먼저 말하고, 확신이 낮으면 그렇게 말한다. 웹 검색을 쓰지 않았다면 쓰지 않았다고 사실대로 둔다. "
            "(7) 제외한 후보가 있으면 answer에서 그 후보를 뺐다고 밝히고, 남은 후보 중 위치·시기가 가까운 것을 말한다. follow_ups는 결과를 좁히거나 바로잡기 위해 사용자에게 되물을 짧은 질문 0~3개(예: 큰길 쪽이었나요? 간판 색이 기억나나요?). 근거 없이 묻지 말고 후보 사이를 가르는 질문만.")
-    fmt = lambda c: f"{c['id']} | tier:{'정밀' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']}{(' | AI추정업종(' + c['category_ai_basis'] + ', 확신 ' + c['category_ai_conf'] + '):' + c['category_ai']) if c.get('category_ai') else ''} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
+    fmt = lambda c: f"{c['id']} | tier:{'정밀' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']}{(' | AI추정업종(' + c['category_ai_basis'] + ', 확신 ' + c['category_ai_conf'] + '):' + c['category_ai']) if c.get('category_ai') else ''} | {c['start']}~{c['end']} | 층:{c['floor'] or ('간판 판독 ' + c['sign_units'] if c.get('sign_units') else '?')} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{(' ' + c['sign_first'] + '~' + c['sign_last'] + ' ' + c['sign_count'] + '회 판독') if c.get('sign_count') not in (None, '', '0') else ''}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
     cl = "\n".join(fmt(c) for c in cands) or "(내부 후보 없음)"
     wl = "\n".join(f"{e['id']} | {e['title'][:80]} | {e['desc'][:160]} | {e['date']}" for e in ev) if web_used else "(웹 검색 안 함)"
     if web_used and not ev: wl = "(웹 근거 없음)"
