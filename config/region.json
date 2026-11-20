@@ -33,6 +33,9 @@
   },
   "title": "대지의 기억 · 연세로12길",
   "search_placeholder": "예: 창천동 2-7, 아웃백",
+  "anchor_aliases": {
+    "47-2": ["창천교회"]
+  },
   "extra_anchors": {
     "31-4": "독수리다방"
   },

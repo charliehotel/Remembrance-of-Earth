@@ -1,7 +1,7 @@
 """에이전트 검색 단계 평가 (LLM·네트워크 호출 없음, 비용 0).
 
 정답을 아는 업소 기록 하나하나를 '사용자가 기억을 말했다면 이런 단서였을 것'으로 바꿔서
-server/agent.py 의 search_tiers(정확/확장 검색)에 넣고, 정답이 후보에 들어오는지·몇 번째인지 잰다.
+server/agent.py 의 search_tiers(정밀/확장 검색)에 넣고, 정답이 후보에 들어오는지·몇 번째인지 잰다.
 단서 해석(LLM)은 이 평가에 포함되지 않는다. 해석이 완벽하다고 가정한 상한선이다.
 
 사용: python3 scripts/eval_search.py [--misses N]
@@ -17,7 +17,7 @@ args = ap.parse_args()
 
 db, parcels = agent.load_db()
 ANCHORS = [(j, p) for j, p in parcels.items() if p.get("anchor")]
-TOP = 5                                    # 화면에 보이는 후보 수(정확·확장 각각)
+TOP = 5                                    # 화면에 보이는 후보 수(정밀·확장 각각)
 
 def years_of(r):
     s, e = agent._ym(r["start"], 1992), agent._ym(r["end"], 2026.9)
@@ -36,7 +36,7 @@ def clue(r, year, *, name=False, floor=False, anchor="", terms=None):
             "anchor": anchor, "radius_m": 0}
 
 def near_anchor(r, lo=0, hi=50):
-    """가장 가까운 랜드마크가 lo 초과 hi 이하 거리에 있으면 그 이름. (기본 확장 반경이 50m 이므로 hi 기본값도 50)"""
+    """가장 가까운 랜드마크가 lo 초과 hi 이하 거리에 있으면 그 이름. (정밀 검색 반경이 50m 이므로 hi 기본값도 50)"""
     if not r["lon"]: return None
     best = min(((agent._dist_m((float(p["lon"]), float(p["lat"])), (r["lon"], r["lat"])), p["anchor"]) for _, p in ANCHORS), default=None)
     return best[1] if best and lo < best[0] <= hi else None
@@ -80,7 +80,8 @@ SCEN = [
     ("S2 +층",             "S1에 층까지 기억",                          lambda r: (clue(r, mid(r), floor=True), 0) if terms_of(r) and r["floor"] else None),
     ("S3 +상호 앞 두 글자", "S1에 상호 앞 두 글자까지 기억",            lambda r: (clue(r, mid(r), name=True), 0) if terms_of(r) else None),
     ("S4 +랜드마크 근처(50m 이내)", "S1에 '창천감리교회 근처' 같은 위치까지 기억(실제 거리 50m 이내)", lambda r: (clue(r, mid(r), anchor=near_anchor(r)), 0) if terms_of(r) and near_anchor(r) else None),
-    ("S4b 랜드마크에서 50~100m", "위치를 '근처'라고만 기억했지만 실제로는 50~100m. '범위 넓히기' 1회 후(반경 100m)", lambda r: (clue(r, mid(r), anchor=near_anchor(r, 50, 100)), 1) if terms_of(r) and near_anchor(r, 50, 100) else None),
+    ("S4b 랜드마크에서 50~100m", "위치를 '근처'라고만 기억했지만 실제로는 50~100m. 기본 확장 검색(반경 100m)에서 나옴", lambda r: (clue(r, mid(r), anchor=near_anchor(r, 50, 100)), 0) if terms_of(r) and near_anchor(r, 50, 100) else None),
+    ("S4c 랜드마크에서 100~200m", "위치를 '근처'라고만 기억했지만 실제로는 100~200m. '범위 넓히기' 1회 후(반경 200m)", lambda r: (clue(r, mid(r), anchor=near_anchor(r, 100, 200)), 1) if terms_of(r) and near_anchor(r, 100, 200) else None),
     ("S7 가르는 질문에 답함", "S1 단서로 검색 → 에이전트가 되물은 질문(층 또는 위치)에 사용자가 사실대로 한 번 답한 뒤", asked),
     ("S5a 시기 1년 착오(±1)", "기억한 시기가 실제 영업 기간에서 1년 벗어남(이른 쪽·늦은 쪽 둘 다). 기본 범위(±2년)에서 확장 구간으로 나옴", lambda r: shifts(r, 1, 0)),
     ("S5b 시기 2년 착오(±2)", "2년 벗어남. 기본 범위의 한계", lambda r: shifts(r, 2, 0)),
@@ -103,7 +104,7 @@ def group_of(r):
 def pct(n, d): return f"{100 * n / d:.0f}%" if d else "-"
 
 targets = [r for r in db if r["start"] and (r["category"] or r.get("category_ai"))]
-print(f"정답 후보 업소 {len(targets)}건 · 시나리오 {len(SCEN)}개 · 화면 노출 상위 {TOP}건(정확/확장 각각)\n")
+print(f"정답 후보 업소 {len(targets)}건 · 시나리오 {len(SCEN)}개 · 화면 노출 상위 {TOP}건(정밀/확장 각각)\n")
 
 for name, desc, build in SCEN:
     rows, miss = {}, []
@@ -116,7 +117,7 @@ for name, desc, build in SCEN:
             rows.setdefault("전체", []).append((tier, rank, nex))
             if tier == "miss" or (rank or 0) > TOP * 2: miss.append((r, tier, rank, nex))
     print(f"### {name} — {desc}")
-    print("| 구분 | 건수 | 정확 구간에 포함 | 상위5 안(정확·확장 합산 순서) | 후보에 들어옴(전체) | 놓침 | 순위 중앙값 | 정확 구간 후보 수 중앙값 |")
+    print("| 구분 | 건수 | 정밀 구간에 포함 | 상위5 안(정밀·확장 합산 순서) | 후보에 들어옴(전체) | 놓침 | 순위 중앙값 | 정밀 구간 후보 수 중앙값 |")
     print("|---|---|---|---|---|---|---|---|")
     for g in sorted(rows, key=lambda g: (g != "전체", g)):
         v = rows[g]; n = len(v)
@@ -131,8 +132,8 @@ for name, desc, build in SCEN:
         rs = [run(r, clue(r, mid(r)), 0) for r in same]
         top5 = sum(1 for tr, rk, _ in rs if rk and rk <= TOP)
         print(f"- 질문이 만들어진 경우 {Q['asked']}건/{Q['total']}건, 그중 정답이 선택지에 속한 경우 {Q['answerable']}건")
-        print(f"- 같은 {len(same)}건의 질문 전(S1): 상위5 안 {pct(top5, len(rs))} · 순위 중앙값 {statistics.median(rk for _, rk, _ in rs if rk):.0f} · 정확 구간 후보 수 중앙값 {statistics.median(n for _, _, n in rs):.0f}")
+        print(f"- 같은 {len(same)}건의 질문 전(S1): 상위5 안 {pct(top5, len(rs))} · 순위 중앙값 {statistics.median(rk for _, rk, _ in rs if rk):.0f} · 정밀 구간 후보 수 중앙값 {statistics.median(n for _, _, n in rs):.0f}")
         print()
     for r, tier, rank, nex in miss[:args.misses]:
-        print(f"   · 놓침/하위: {r['jibun']} {r['name']} ({r['start'][:7]}~{r['end'][:7]}, {r['category'] or r.get('category_ai')}) → {tier}, 순위 {rank}, 정확 후보 {nex}건")
+        print(f"   · 놓침/하위: {r['jibun']} {r['name']} ({r['start'][:7]}~{r['end'][:7]}, {r['category'] or r.get('category_ai')}) → {tier}, 순위 {rank}, 정밀 후보 {nex}건")
     if args.misses and miss: print()

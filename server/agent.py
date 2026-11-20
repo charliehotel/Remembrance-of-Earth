@@ -2,9 +2,9 @@
 
 한 번의 질문에서 하는 일
   1. 단서 해석(Liner Model): 질문과 이전 대화에서 시기·업종·상호 조각·층·위치를 추려 낸다.
-  2. 정확 검색(코드): 질문에 적힌 조건 그대로 내부 이력에서 찾는다.
-  3. 확장 검색(코드): 기억이 틀렸을 수 있으니 시기(±2년)와 위치(반경 50m)를 넓혀 다시 찾는다. 정확 결과는 위에, 확장 결과는 아래에 둔다.
-  4. 웹 검색(Liner Search): 정확 결과가 약하거나 사용자가 원하면 웹에서도 찾는다. 사용했는지 항상 표시한다.
+  2. 정밀 검색(코드): 질문에 적힌 조건 그대로 내부 이력에서 찾는다.
+  3. 확장 검색(코드): 기억이 틀렸을 수 있으니 시기(±2년)와 위치(반경 100m)를 넓혀 다시 찾는다. 정밀 검색 결과는 위에, 확장 결과는 아래에 둔다.
+  4. 웹 검색(Liner Search): 정밀 검색 결과가 약하거나 사용자가 원하면 웹에서도 찾는다. 사용했는지 항상 표시한다.
   5. 판정(Liner Model): 근거를 대조해 확인 / 추정 / 미확인으로 구분한다. 근거 없는 내용은 만들지 않는다.
 상태(state)는 서버에 저장하지 않고 화면이 들고 다니며, 질문마다 다시 보낸다."""
 import csv, json, math, re
@@ -13,9 +13,11 @@ from pathlib import Path
 import liner, region
 
 DATA = Path(__file__).resolve().parent.parent / "data"
-EXPAND_YEARS, EXPAND_RADIUS_M, MAX_LEVEL = 2, 50, 3     # 확장 단계(level)마다 ±2년·반경 50m씩 넓어진다
+EXPAND_YEARS, EXPAND_RADIUS_M, MAX_LEVEL = 2, 100, 3    # 확장 단계(level)마다 ±2년·반경 100m씩 넓어진다
+EXACT_RADIUS_M = 50                                      # 정밀 검색 반경(위치를 말했을 때)
 
 # ---------- 데이터 ----------
+ALIASES = region.R.get("anchor_aliases", {})      # 같은 장소의 다른 이름(예: 창천감리교회 = 창천교회)
 EXTRA_ANCHORS = region.R["extra_anchors"]      # 독수리빌딩(독수리다방, 2013~). 사용자가 위치 기준으로 자주 떠올릴 만한 곳
 def load_db():
     """연세로12길 구간(timeline_businesses.csv)과 반경 150m 확장 구간(timeline_businesses_r150.csv)을 함께 읽는다.
@@ -78,7 +80,8 @@ def resolve_anchor(text, parcels):
     t = (text or "").replace(" ", "")
     if t:
         for j, p in parcels.items():
-            if j == t.replace(region.DONG, "") or (p["anchor"] and (p["anchor"].replace(" ", "") in t or t in p["anchor"].replace(" ", ""))):
+            names = [n.replace(" ", "") for n in ([p["anchor"]] if p["anchor"] else []) + ALIASES.get(j, [])]
+            if j == t.replace(region.DONG, "") or any(n in t or t in n for n in names):
                 return (float(p["lon"]), float(p["lat"])), (p["anchor"] or f"{region.DONG} {j}"), True
         for tok in re.findall(r"\d+-\d+", t):
             if tok in parcels: return (float(parcels[tok]["lon"]), float(parcels[tok]["lat"])), f"{region.DONG} {tok}", True
@@ -107,7 +110,7 @@ def parse_clue(text, prev, pending=None):
     user = f"현재 해석(prev): {prev if prev else '없음'}\n직전 제안(pending): {pending['text'] if pending else '없음'}\n새 메시지: {text}"
     return liner.chat_json(sys, user, CLUE_SCHEMA, "clue", 500)
 
-# ---------- 2·3. 정확 / 확장 검색 ----------
+# ---------- 2·3. 정밀 / 확장 검색 ----------
 SYN = {"인도": ["인도", "네팔", "커리", "카레", "탄두리", "naan"], "카레": ["카레", "커리", "인도"], "커리": ["커리", "카레", "인도"],
        "호프": ["호프", "통닭", "맥주", "주점", "소주방", "대포"], "카페": ["카페", "커피", "다방", "휴게음식점", "제과"],
        "분식": ["분식", "떡볶이", "김밥"], "미용": ["미용", "헤어", "머리"], "중식": ["중식", "중국", "짜장", "마라"], "일식": ["일식", "초밥", "라멘", "일본"],
@@ -146,7 +149,7 @@ def row_key(r): return f"{r['jibun']}|{r['name']}|{r['start']}"
 def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
     y0, y1 = clue["year_from"], clue["year_to"] + 1
     anchor_pt, anchor_name, anchored = resolve_anchor(clue["anchor"], parcels)
-    r_exact = clue["radius_m"] or (30 if anchored else None)                       # 위치를 말했으면 그 근처, 아니면 제한 없음
+    r_exact = clue["radius_m"] or (EXACT_RADIUS_M if anchored else None)                       # 위치를 말했으면 그 근처, 아니면 제한 없음
     r_wide = max(EXPAND_RADIUS_M * (level + 1), (r_exact or 0)) if (anchored or clue["radius_m"]) else None
     margin = EXPAND_YEARS * (level + 1)
     exact, wide = [], []
@@ -187,7 +190,7 @@ def search_tiers(db, parcels, clue, level, rejected=(), nearby=False, limit=5):
 SPLIT_RADIUS_M, STREET_SPLIT_RADIUS_M, SHOWN = 80, 50, 5
 
 def split_question(exact_all, parcels, clue):
-    """정확 후보가 화면에 다 보이지 않을 만큼 많으면, 후보를 가장 잘 나눌 단서(층·위치)를 골라 되묻는다.
+    """정밀 후보가 화면에 다 보이지 않을 만큼 많으면, 후보를 가장 잘 나눌 단서(층·위치)를 골라 되묻는다.
     사용자가 답했을 때 남을 후보 수의 기댓값이 가장 작은 질문을 고른다. 답할 수 없는 후보(층 미상 등)는 줄어들지 않는 것으로 계산한다."""
     n = len(exact_all)
     if n <= SHOWN: return None
@@ -243,8 +246,8 @@ def gather_web(clue, exact, wide, n_each=4, max_queries=5):
 def web_decision(clue, exact):
     if clue["web"] == "skip": return False, "사용자가 웹 검색을 원하지 않음"
     if clue["web"] == "force": return True, "사용자가 웹 검색을 요청함"
-    if not exact: return True, "정확히 맞는 내부 기록이 없어 웹에서 보완"
-    if max(c["score"] for c in exact) < 6: return True, "정확 결과의 근거가 약해 웹으로 교차 확인"
+    if not exact: return True, "정밀 검색에 맞는 내부 기록이 없어 웹에서 보완"
+    if max(c["score"] for c in exact) < 6: return True, "정밀 검색 결과의 근거가 약해 웹으로 교차 확인"
     return False, "내부 기록만으로 충분히 일치해 웹 검색은 쓰지 않음"
 
 # ---------- 5. 판정 ----------
@@ -263,16 +266,16 @@ JUDGE_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["j
       "follow_ups": {"type": "array", "items": {"type": "string"}}}}
 
 def judge(text, clue, cands, ev, web_used, rejected=()):
-    sys = ("너는 도시 기록 검증 에이전트다. 사용자의 기억 단서와 내부 이력 후보(D로 시작, tier는 '정확'=질문 조건과 그대로 일치, '확장'=시기·위치를 넓혀 찾은 것), "
+    sys = ("너는 도시 기록 검증 에이전트다. 사용자의 기억 단서와 내부 이력 후보(D로 시작, tier는 '정밀'=질문 조건과 그대로 일치, '확장'=시기·위치를 넓혀 찾은 것), "
            "웹 검색 근거(W로 시작)가 주어진다. 각 후보가 단서에 맞는지 판정하라. 규칙: (1) 주어진 자료에 없는 사실은 쓰지 않는다. "
            "(2) 웹에서 찾지 못한 것은 반증이 아니다. 웹 근거가 없다는 이유로 내부 인허가 일치를 깎지 않는다(근거가 웹에 없음을 reason에 밝힐 뿐). verdict '확인'은 단서의 시기·업종·층이 내부 이력과 일치하고, 인허가 기록(등급 A는 공공 인허가 기록이므로 그 자체가 근거) 또는 웹 근거가 뒷받침할 때. "
            "상호 조각까지 맞으면 확신을 높인다. 일부만 맞으면 '추정', 근거가 없거나 충돌하면 '미확인'. 확장 tier는 시기나 위치가 어긋난다는 점을 reason에 밝힌다. "
-           "(3) reason은 무엇이 일치·충돌하는지 100자 이내로, id(D·W 번호)와 'tier'라는 말 대신 상호명과 '정확 조건'·'넓힌 범위' 같은 표현을 쓴다. (4) evidence_ids는 주어진 W·D id만. "
+           "(3) reason은 무엇이 일치·충돌하는지 100자 이내로, id(D·W 번호)와 'tier'라는 말 대신 상호명과 '정밀 조건'·'넓힌 범위' 같은 표현을 쓴다. (4) evidence_ids는 주어진 W·D id만. "
            "(5) 웹 근거에서 내부 후보에 없는 새 상호가 단서와 맞아 보이면 leads에 넣는다. name에는 상호만, 설명은 why에. 단서와 실제로 맞는 경우에만 넣고, 맞지 않는 곳은 아예 넣지 않는다(불일치를 설명하려고 넣지 말 것). 항상 미검증이다. "
            "(5-1) 후보의 'AI추정업종'은 공식 인허가 업종이 아니라 상호나 웹 검색으로 AI가 추정한 값이다. 업종 일치를 판단할 때 참고는 하되, 공식 업종보다 약한 근거로 다루고, 업종 일치를 이 값에 의존했다면 reason과 answer에 '업종은 AI가 상호로 추정한 것이라 정확하지 않을 수 있다'고 밝힌다. 공식 업종과 AI 추정이 다르면 공식 업종을 우선한다. "
-           "(6) answer는 사용자에게 보일 2문장 요약. 정확 결과가 있으면 그것을 먼저 말하고, 확신이 낮으면 그렇게 말한다. 웹 검색을 쓰지 않았다면 쓰지 않았다고 사실대로 둔다. "
+           "(6) answer는 사용자에게 보일 2문장 요약. 정밀 검색 결과가 있으면 그것을 먼저 말하고, 확신이 낮으면 그렇게 말한다. 웹 검색을 쓰지 않았다면 쓰지 않았다고 사실대로 둔다. "
            "(7) 제외한 후보가 있으면 answer에서 그 후보를 뺐다고 밝히고, 남은 후보 중 위치·시기가 가까운 것을 말한다. follow_ups는 결과를 좁히거나 바로잡기 위해 사용자에게 되물을 짧은 질문 0~3개(예: 큰길 쪽이었나요? 간판 색이 기억나나요?). 근거 없이 묻지 말고 후보 사이를 가르는 질문만.")
-    fmt = lambda c: f"{c['id']} | tier:{'정확' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']}{(' | AI추정업종(' + c['category_ai_basis'] + ', 확신 ' + c['category_ai_conf'] + '):' + c['category_ai']) if c.get('category_ai') else ''} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
+    fmt = lambda c: f"{c['id']} | tier:{'정밀' if c['tier']=='exact' else '확장'} | {c['jibun']} | {c['name']} | {c['category'] or c['license_type']}{(' | AI추정업종(' + c['category_ai_basis'] + ', 확신 ' + c['category_ai_conf'] + '):' + c['category_ai']) if c.get('category_ai') else ''} | {c['start']}~{c['end']} | 층:{c['floor'] or '?'} | 등급{c['grade']} | 거리:{c['dist_m']}m | 관찰(로드뷰 간판):{(c['observed_as'] or '')[:60]}{' | 기존 수집 웹 언급:' + c['web_state'] + '(' + (c['web_n'] or '?') + '건)' if c.get('web_state') in ('strong', 'weak') else ''}"
     cl = "\n".join(fmt(c) for c in cands) or "(내부 후보 없음)"
     wl = "\n".join(f"{e['id']} | {e['title'][:80]} | {e['desc'][:160]} | {e['date']}" for e in ev) if web_used else "(웹 검색 안 함)"
     if web_used and not ev: wl = "(웹 근거 없음)"
@@ -313,7 +316,7 @@ def make_suggestion(res, cands, clue, scope, ref=None):
     if scope["anchor"] is None and ref:    # 사용자가 이미 아니라고 한 후보 위치 기준
         return {"type": "radius", "anchor": ref["jibun"], "radius_m": EXPAND_RADIUS_M, "reject": None,
                 "text": f"{ref['name']}{josa(ref['name'], '이', '가')} 아니라면, 그 위치({region.DONG} {ref['jibun']})를 기준으로 반경 {EXPAND_RADIUS_M}m 안에서 다시 찾아볼까요?"}
-    if scope["anchor"] is None:        # 위치를 말하지 않았다 → 유력 후보 위치 기준 반경 50m
+    if scope["anchor"] is None:        # 위치를 말하지 않았다 → 유력 후보 위치 기준 반경 100m
         return {"type": "radius", "anchor": top["jibun"], "radius_m": EXPAND_RADIUS_M, "reject": row_key(top),
                 "text": f"가장 유력했던 {top['name']}{josa(top['name'], '이', '가')} 아닌 것 같다면, 그 위치({region.DONG} {top['jibun']})를 기준으로 반경 {EXPAND_RADIUS_M}m 안에서 다시 찾아볼까요? ({top['name']}{josa(top['name'], '은', '는')} 제외합니다)"}
     cur = scope["radius_wide"] or EXPAND_RADIUS_M
@@ -350,7 +353,7 @@ def run(text, state=None):
     exact_all, wide_all, scope = search_tiers(db, parcels, clue, level, rejected, nearby, limit=10 ** 6)
     exact, wide = exact_all[:SHOWN], wide_all[:SHOWN]
     split = split_question(exact_all, parcels, clue)
-    yield {"step": "cands", "msg": f"정확 검색 {len(exact)}건 · 확장 검색 {len(wide)}건", "scope": scope,
+    yield {"step": "cands", "msg": f"정밀 검색 {len(exact)}건 · 확장 검색 {len(wide)}건", "scope": scope,
            "cands": [{k: x[k] for k in SLIM} for x in exact + wide]}
     use_web, why = web_decision(clue, exact)
     ev, queries = [], []
