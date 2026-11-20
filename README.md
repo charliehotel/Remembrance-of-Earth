@@ -43,7 +43,6 @@ flowchart LR
   F --> G[후보 + 근거 + 되묻는 질문]
 ```
 
-<!-- TODO(제출 전): 04_agent.png, 06_question.png 는 테스트용 프록시로 찍어 화면에 '테스트용 프록시' 표시가 보인다. Liner로 최종 평가할 때 scripts/capture_readme_1.mjs, _2.mjs 로 다시 찍는다. -->
 ![기억 속 장소 찾기: 단서를 말하면 후보와 되묻는 질문이 나온다](assets/readme/04_agent.png)
 
 ### 2. 골목의 연대기 (영역 분석)
