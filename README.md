@@ -89,7 +89,7 @@ MapLibre 2.5D 지도에 시간 슬라이더와 three.js 걷기 모드를 얹었�
 | `server/area_agent.py` | Search | 원인을 묻는 질문에서만 외부 맥락 수집 |
 | `scripts/estimate_category.py` | Model + Search | 업종 불명 상호의 업종 추정(빌드 단계) |
 
-클라이언트는 `server/liner.py`(표준 라이브러리만 사용)입니다. 기본 모델은 `anthropic/claude-haiku-5.5`이고 `LINER_MODEL`로 바꿉니다. 키 오류(401/402/403)가 나면 `LINER_API_KEY_fallback`으로 넘어갑니다. 개발·테스트용으로 `LLM_PROVIDER=cliproxyapi`를 지원하지만 기본값은 Liner입니다.
+클라이언트는 `server/liner.py`(표준 라이브러리만 사용)입니다. 기본 모델은 `anthropic/claude-haiku-5.5`이고 `LINER_MODEL`로 바꿉니다. 키 오류(401/402/403)가 나면 `LINER_API_KEY_fallback`으로 넘어갑니다.
 
 ## 실행
 
@@ -108,7 +108,7 @@ python3 server/app.py 8765  # http://localhost:8765
 ```bash
 python3 -I scripts/eval_search.py      # 기억 찾기: 정답 가게가 후보 상위에 오르는가(AI 호출 없음)
 python3 -I scripts/eval_area.py        # 영역 리포트 불변식·결정성·구간 보정 효과(AI 호출 없음)
-python3 -I scripts/eval_area.py --ai   # AI 해설 평가(호출 발생. --liner 는 --max-cost 필수)
+python3 -I scripts/eval_area.py --ai --liner --max-cost 0.1   # AI 해설 평가(Liner 호출 발생, 비용 상한 필수)
 ```
 
 ## 데이터와 한계

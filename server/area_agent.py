@@ -46,7 +46,7 @@ def verify(answer, allowed):
 def ask(rep, text):
     fx = analysis.facts(rep)
     if not fx: return {"answer": "이 영역에는 조사된 업소 기록이 없어 답할 내용이 없습니다.", "focus": "none", "web": {"used": False, "reason": "자료 없음"}, "dropped": 0, "model": "", "cost_usd": 0}
-    MDL, SCH = ("Liner Model", "Liner Search") if liner.provider() == "liner" else ("테스트용 프록시 모델", "테스트용 프록시 검색")
+    MDL, SCH = "Liner Model", "Liner Search"
     web = {"used": False, "n": 0, "label": SCH, "reason": "원인을 묻는 질문이 아니라 웹 검색은 쓰지 않음", "evidence": []}
     if WHY.search(text):
         try:

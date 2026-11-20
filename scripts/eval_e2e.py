@@ -5,8 +5,7 @@
   2턴: 층이 기록에 있으면 층, 없으면 상호 첫 글자  →  3턴: 상호 앞 두 글자
 상호는 마지막 단서로만 쓰고, 정답을 말해 주지는 않는다.
 
-모델 호출 공급자는 .env 의 LLM_PROVIDER 를 따른다. 개발 중에는 cliproxyapi 로 돌리고(비용 0),
-실수로 Liner 크레딧을 쓰지 않도록 Liner 일 때는 --liner 와 --max-cost 를 함께 줘야 실행된다.
+실수로 Liner 크레딧을 쓰지 않도록 --liner 와 --max-cost 를 함께 줘야 실행된다.
 
 사용: python3 scripts/eval_e2e.py [--per-group 8] [--turns 3] [--workers 3] [--out 경로.jsonl]
 """
@@ -29,10 +28,8 @@ ap.add_argument("--from-log", default="", help="실행 없이 저장된 로그(j
 ap.add_argument("--max-errors", type=int, default=5, help="연속 오류가 이 수를 넘으면 중단")
 args = ap.parse_args()
 
-prov = liner.provider()
-if not args.from_log and prov != "cliproxyapi" and not (args.liner and args.max_cost > 0):
-    sys.exit(f"현재 공급자가 '{prov}'(Liner)입니다. 크레딧 보호를 위해 중단합니다.\n"
-             "  · 테스트: .env 에 LLM_PROVIDER=cliproxyapi\n  · 최종 평가: --liner --max-cost 0.1 처럼 상한을 함께 지정")
+if not args.from_log and not (args.liner and args.max_cost > 0):
+    sys.exit("크레딧 보호를 위해 중단합니다. Liner 호출이 발생하므로 --liner 와 --max-cost 0.1 처럼 상한을 함께 지정하세요.")
 
 db, parcels = agent.load_db()
 rng = random.Random(args.seed)
@@ -99,7 +96,7 @@ def run_case(r):
             state_["errors"] = state_["errors"] + 1 if err else 0
             if done: state_["cost"] += done.get("cost_usd") or 0
             if state_["errors"] >= args.max_errors: state_["stop"] = "연속 오류"
-            if prov != "cliproxyapi" and state_["cost"] > args.max_cost: state_["stop"] = "비용 상한 초과"
+            if state_["cost"] > args.max_cost: state_["stop"] = "비용 상한 초과"
         if err or not done:
             turns.append({"turn": i + 1, "msg": msg, "error": err or "응답 없음", "sec": round(time.time() - t0, 1)}); break
         state, split = done["state"], done.get("split")
@@ -124,7 +121,7 @@ done_cases = []
 if args.from_log:
     done_cases = [json.loads(l) for l in open(args.from_log, encoding="utf-8")]
     targets = []
-print(f"공급자 {prov} · 정답 {len(targets)}건 · 최대 {args.turns}턴 · 동시 {args.workers}", flush=True)
+print(f"정답 {len(targets)}건 · 최대 {args.turns}턴 · 동시 {args.workers}", flush=True)
 t_start = time.time()
 with ThreadPoolExecutor(args.workers) as ex: list(ex.map(run_case, targets))
 outf.close()
@@ -132,7 +129,7 @@ if args.from_log: Path(args.out).unlink(missing_ok=True)
 
 # ---------- 요약 ----------
 def pct(n, d): return f"{100 * n / d:.0f}%" if d else "-"
-print(f"\n소요 {time.time() - t_start:.0f}초" + (f" · 중단: {state_['stop']}" if state_["stop"] else "") + (f" · 누적 비용 ${state_['cost']:.4f}" if prov != "cliproxyapi" else ""))
+print(f"\n소요 {time.time() - t_start:.0f}초" + (f" · 중단: {state_['stop']}" if state_["stop"] else "") + f" · 누적 비용 ${state_['cost']:.4f}")
 print("| 구분 | 건수 | 1턴 1순위 | 1턴 후보에 포함 | 2턴 안 1순위 | 3턴 안 1순위 | 최종 못 맞힘 | 오답을 '확인'(건/턴) | '확인'의 정답률 | 정답 1순위 중 '확인' | 웹 사용(턴) | 턴당 소요(초) | 맞힌 건 평균 턴 |")
 print("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 groups = ["전체"] + sorted({c["target"]["group"] for c in done_cases})

@@ -4,11 +4,11 @@ A. 오프라인 검증(AI·네트워크 없음, 비용 0)
    1. 불변식: 임의 영역 N개에서 리포트의 합계·순서·범위가 모순되지 않는지
    2. 결정성: 같은 영역을 두 번 돌리면 리포트가 완전히 같은지
    3. 구간 보정 효과: 관측이 있는 업소에서 '기록만'의 구간 폭 대비 보정 후 폭, 기록상 폐업일이 얼마나 늦은지
-B. AI 해설 평가(--ai, 공급자는 .env 의 LLM_PROVIDER 를 따른다. 개발 중에는 cliproxyapi)
+B. AI 해설 평가(--ai, Liner API 호출이 발생한다)
    질문 40개 × 영역 몇 개에서 관점(focus) 분류 정확도, 숫자 충실도(모델이 지어낸 숫자가 든 문장 비율),
    답을 피하는 비율, 범위 밖 질문을 정확히 거절하는 비율, 웹 검색 사용의 적절성, 한계 언급 비율을 잰다.
 
-실수로 Liner 크레딧을 쓰지 않도록 Liner 일 때는 --liner 와 --max-cost 를 함께 줘야 AI 평가가 실행된다.
+실수로 Liner 크레딧을 쓰지 않도록 --liner 와 --max-cost 를 함께 줘야 AI 평가가 실행된다.
 사용: python3 scripts/eval_area.py [--areas 12] [--ai] [--ai-areas 2] [--workers 3] [--out 경로.jsonl]
 """
 import sys, json, re, random, statistics, argparse, threading, time
@@ -105,9 +105,8 @@ if not args.ai and not args.from_log:
     print("\n(AI 해설 평가는 --ai 로 실행)"); sys.exit(0)
 
 # =============== B. AI 해설 ===============
-prov = liner.provider()
-if not args.from_log and prov != "cliproxyapi" and not (args.liner and args.max_cost > 0):
-    sys.exit(f"\n현재 공급자가 '{prov}'(Liner)입니다. 크레딧 보호를 위해 AI 평가를 중단합니다.\n  · 테스트: .env 에 LLM_PROVIDER=cliproxyapi\n  · 최종 평가: --ai --liner --max-cost 0.1 처럼 상한을 함께 지정")
+if not args.from_log and not (args.liner and args.max_cost > 0):
+    sys.exit("\n크레딧 보호를 위해 AI 평가를 중단합니다. Liner 호출이 발생하므로 --ai --liner --max-cost 0.1 처럼 상한을 함께 지정하세요.")
 
 # (질문, 기대 관점, 분류) 분류: ans=자료로 답할 수 있음 · out=범위 밖(거절이 정답) · why=원인 질문(웹 검색 기대)
 Q = [
@@ -168,7 +167,7 @@ def run_one(task):
         st["errors"] = st["errors"] + 1 if rec.get("error") else 0
         st["cost"] += rec.get("cost") or 0
         if st["errors"] >= args.max_errors: st["stop"] = "연속 오류"
-        if prov != "cliproxyapi" and st["cost"] > args.max_cost: st["stop"] = "비용 상한 초과"
+        if st["cost"] > args.max_cost: st["stop"] = "비용 상한 초과"
         outf.write(json.dumps(rec, ensure_ascii=False) + "\n"); outf.flush(); done.append(rec)
         print(f"  [{len(done)}] {q[:22]:<22} {aname} → " + (rec.get("error") or f"{rec['focus']}{' 웹' if rec['web'] else ''}{' 거절' if rec['refuse_first'] else ''}{' 숫자제외' + str(rec['dropped']) if rec['dropped'] else ''}"), flush=True)
     return rec
@@ -177,11 +176,11 @@ if args.from_log:
     done = [json.loads(l) for l in open(args.from_log, encoding="utf-8")]
 else:
     tasks = [(q, r) for q in Q for r in [(a, js, rp) for a, js, rp in reports]]
-    print(f"\n## B. AI 해설 평가 — 공급자 {prov} · 질문 {len(Q)}개 × 영역 {len(reports)}개 = {len(tasks)}회\n", flush=True)
+    print(f"\n## B. AI 해설 평가 — 질문 {len(Q)}개 × 영역 {len(reports)}개 = {len(tasks)}회\n", flush=True)
     t_start = time.time()
     with ThreadPoolExecutor(args.workers) as ex: list(ex.map(run_one, tasks))
     outf.close()
-    print(f"\n소요 {time.time() - t_start:.0f}초" + (f" · 중단: {st['stop']}" if st["stop"] else "") + (f" · 누적 비용 ${st['cost']:.4f}" if prov != "cliproxyapi" else ""), flush=True)
+    print(f"\n소요 {time.time() - t_start:.0f}초" + (f" · 중단: {st['stop']}" if st["stop"] else "") + f" · 누적 비용 ${st['cost']:.4f}", flush=True)
 
 ok = [r for r in done if not r.get("error")]
 print(f"\n응답 {len(ok)}건 / 오류 {len(done) - len(ok)}건\n")

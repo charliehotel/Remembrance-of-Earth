@@ -329,7 +329,7 @@ def run(text, state=None):
     """단계마다 dict를 yield 한다. 마지막 'done' 이벤트의 state를 화면이 보관했다가 다음 질문에 다시 보낸다."""
     state = state or {}
     total = 0.0
-    MDL, SCH = ("Liner Model", "Liner Search") if liner.provider() == "liner" else ("테스트용 프록시 모델", "테스트용 프록시 검색")
+    MDL, SCH = "Liner Model", "Liner Search"
     yield {"step": "clue", "msg": f"질문에서 정확한 정보를 추리는 중 ({MDL})"}
     pending = state.get("pending")
     clue, m, c = parse_clue(text, state.get("clue"), pending); total += c or 0
