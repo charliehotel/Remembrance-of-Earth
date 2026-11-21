@@ -7,8 +7,7 @@
 
 라이너 .EXE-THON 출품작입니다. **기억 속 장소 찾기**(AI 에이전트)와 **골목의 연대기**(영역 분석 리포트) 두 기능에 Liner Model과 Liner Search를 사용했습니다. 지금은 MVP라서 연세로12길 구간과 그 주변 반경 150m만 구현했습니다.
 
-**제출 자료:** [기획서(PDF)](%EB%8C%80%EC%A7%80%EC%9D%98%20%EA%B8%B0%EC%96%B5%28Remembrance%20of%20Earth%29%20%EA%B8%B0%ED%9A%8D%EC%84%9C.pdf)
-<!-- TODO(제출 전): 데모 영상 링크를 위 줄에 ' · [데모 영상](URL)' 형태로 추가 -->
+**제출 자료:** [기획서(PDF)](%EB%8C%80%EC%A7%80%EC%9D%98%20%EA%B8%B0%EC%96%B5%28Remembrance%20of%20Earth%29%20%EA%B8%B0%ED%9A%8D%EC%84%9C.pdf) · [데모 영상](https://youtu.be/tsZ58sQ1QgE)
 
 ## 왜 '대지의 기억'인가
 
